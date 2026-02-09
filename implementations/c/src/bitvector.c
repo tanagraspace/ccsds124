@@ -158,7 +158,8 @@ void bitvector_not(bitvector_t *result, const bitvector_t *a) {
             for (size_t byte = 0U; byte < bytes_in_last_word; byte++) {
                 uint8_t byte_mask;
                 if (byte == (bytes_in_last_word - 1U)) {
-                    byte_mask = (uint8_t)((1U << bits_in_last_byte) - 1U);
+                    /* MSB-aligned: valid bits are at the top of the byte */
+                    byte_mask = (uint8_t)(0xFFU << (8U - bits_in_last_byte));
                 } else {
                     byte_mask = 0xFFU;
                 }

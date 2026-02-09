@@ -24,6 +24,8 @@ Each gotcha includes:
 6. [Component kₜ: Forward Extraction Order (Not Reverse!)](#6--component-kₜ-forward-extraction-order-not-reverse)
 7. [Reference Implementation's Final Padding (FIXED)](#-gotcha-7-reference-implementations-final-padding-fixed)
 8. [cₜ Calculation: Include Current Packet's pₜ Flag!](#8-cₜ-calculation-include-current-packets-pₜ-flag)
+19. [D₀ Must Be Zero at Initialization (Not M₀!)](#19-d₀-must-be-zero-at-initialization-not-m₀)
+20. [Bitvector NOT: MSB-Aligned Masking for Non-Byte-Aligned Lengths](#20-bitvector-not-msb-aligned-masking-for-non-byte-aligned-lengths)
 
 ### High-Level API Gotchas
 
@@ -40,6 +42,8 @@ Each gotcha includes:
 14. [ḋₜ Flag Optimization](#14-ḋₜ-flag-optimization)
 15. [Vₜ=0 Special Case: Toggle Mask Bits](#15-vₜ0-special-case-toggle-mask-bits)
 16. [Extraction Mask: cₜ Affects Which Bits to Read](#16-extraction-mask-cₜ-affects-which-bits-to-read)
+21. [Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets](#21-decoder-must-validate-bitstream-integrity-to-reject-corrupt-packets)
+22. [Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees](#22-decoder-cross-validation-mask-synchronization-and-accuracy-guarantees)
 
 ---
 
@@ -477,13 +481,15 @@ i=40 → packet 41 : ft=1, rt=0, pt=1  (ft + pt)
 i=50 → packet 51 : ft=0, rt=1, pt=1  (first rt trigger + pt)
 ```
 
-**Vₜ progression for typical input:**
+**Vₜ progression for typical input (M₀ = 0):**
 ```
 Packet 0: Vt=1 (Rt, init phase)
 Packet 1: Vt=1 (Rt, init phase)
-Packet 2: Vt=2 (Rt + Ct, where Ct=1 from D0=∅)
+Packet 2: Vt=2 (Rt + Ct, where Ct=1 from D0=0)
 Packet 3+: Varies based on mask changes
 ```
+
+**Note:** D₀ is always 0 (see [Gotcha #19](#19-d₀-must-be-zero-at-initialization-not-m₀)). At t=0 the caller sets M₋₁ = M₀, so D₀ = M₀ XOR M₀ = 0 regardless of M₀'s value.
 
 ---
 
@@ -506,6 +512,8 @@ Before declaring your implementation "working":
 - BE operation uses reverse extraction order
 - Mask inversion is applied before kₜ extraction
 - Both R=1 AND R=2 test vectors pass (different code paths!)
+- D₀ = 0 at initialization (RLE(X₀) = '10' for any M₀)
+- Bitvector NOT preserves zero padding in MSB-aligned non-byte-aligned vectors
 
 ---
 
@@ -524,6 +532,8 @@ Before declaring your implementation "working":
 | Size matches but content wrong | Bit-level issues | Check #5 and #6 |
 | Size off by ~100 bytes (10KB test) | cₜ missing current flag (#8) | Include current pₜ in cₜ count |
 | edge-cases fails, simple passes | cₜ calculation wrong (#8) | Check Vₜ+1 entries for cₜ |
+| First 2 bits `11...` not `10` with non-zero M₀ | D₀ = M₀ instead of 0 (#19) | Set prev_mask = mask before t=0 |
+| Extra 1-bits in non-byte-aligned vectors | NOT masks low bits not high (#20) | Use MSB-aligned byte mask in NOT |
 
 ---
 
@@ -1162,6 +1172,208 @@ return value + 2;
 2. **Common in first packets** - COUNT(720) for full packet uses extended format
 3. **Subtle shift** - Data looks almost right, just shifted
 4. **C uses do-while** - Different from typical while-peek pattern
+
+---
+
+---
+
+## 19. D₀ Must Be Zero at Initialization (Not M₀!)
+
+**⭐ Discovery - February 2026 (CCSDS Cross-Validation)**
+
+### ✅ What the Spec Says
+
+CCSDS Equation 8 defines the change vector as:
+```
+Dₜ = Mₜ XOR Mₜ₋₁
+```
+
+At t=0, there is no previous mask, so D₀ should represent "no change" — i.e., D₀ = 0.
+
+### ❌ Common Mistake
+
+Special-casing t=0 by copying the mask:
+
+```c
+// WRONG: D₀ = M₀ (treats the initial mask as a "change")
+if (t == 0) {
+    bitvector_copy(change, mask);  // ❌ D₀ = M₀
+} else {
+    bitvector_xor(change, mask, prev_mask);
+}
+```
+
+**Why this seems reasonable:** At t=0 there is no M₋₁, so you might assume D₀ = M₀ XOR 0 = M₀, treating the "previous mask" as all zeros.
+
+**Why it's wrong:** The standard treats initialization as a known state — both encoder and decoder start with the same M₀, so there is no change to communicate. D₀ = M₀ would incorrectly encode the initial mask as a change in the first packet's X₀ vector, producing a longer RLE(X₀) and wrong compressed output.
+
+### 🔧 Correct Implementation
+
+Set `prev_mask = mask` before the first call, then always use XOR:
+
+```c
+// In compressor init or before first packet:
+bitvector_copy(&comp->prev_mask, &comp->mask);  // M₋₁ = M₀
+
+// In pocket_compute_change (no special case for t=0):
+bitvector_xor(change, mask, prev_mask);  // D₀ = M₀ XOR M₀ = 0
+```
+
+**What changes in the compressed output:**
+- **D₀ = 0** → X₀ is zero → RLE(X₀) = `'10'` (just the terminator, 2 bits)
+- **D₀ = M₀ (wrong)** → X₀ is non-zero when M₀ ≠ 0 → RLE(X₀) is longer
+
+### 📊 Impact
+
+- **Divergence:** First packet when M₀ is non-zero
+- **Symptom:** First 2 bits of compressed output are `'11...'` instead of `'10'` (RLE encodes mask changes that don't exist)
+- **Size error:** First packet is larger than expected (extra bits for phantom mask change)
+- **Detection:** Check first 2 bits: should be `'10'` (RLE terminator for empty X₀)
+- **Affected tests:** Any test with non-zero initial mask; all 24,900 CCSDS cross-validation vectors
+
+### 🔍 Why This Was Hard to Find
+
+1. **M₀ = 0 hides the bug** — When M₀ is all zeros (the typical case for reference test vectors), D₀ = M₀ = 0 = M₀ XOR M₀, so both approaches give the same result
+2. **Only triggers with non-zero M₀** — The CCSDS cross-validation suite exercises non-zero initial masks, which exposed this
+3. **Spec doesn't define M₋₁** — The spec says D₀ = M₀ XOR M₋₁ but doesn't explicitly define M₋₁; the correct interpretation is M₋₁ = M₀ (no change at init)
+4. **Small output difference** — For small M₀ hamming weights, the size difference is only a few bits
+
+---
+
+## 20. Bitvector NOT: MSB-Aligned Masking for Non-Byte-Aligned Lengths
+
+**⭐ Discovery - February 2026 (CCSDS Cross-Validation)**
+
+### ✅ What POCKET+ Requires
+
+POCKET+ uses **MSB-first bit packing** (CCSDS convention). In a bitvector of length F, the valid bits occupy the **high** (most significant) bits of each byte. When F is not a multiple of 8, the last byte has padding bits in the **low** positions.
+
+### ❌ Common Mistake
+
+Masking the low bits as valid when computing NOT on non-byte-aligned vectors:
+
+```c
+// WRONG: Assumes valid bits are in the LOW positions
+uint8_t byte_mask = (uint8_t)((1U << bits_in_last_byte) - 1U);
+result_byte = (~input_byte) & byte_mask;
+```
+
+**Example for 4-bit vector `0000`:**
+- Input byte: `0x00` (bits: `0000 0000`)
+- Wrong mask: `0x0F` (low 4 bits)
+- Wrong NOT result: `0x0F` = `0000 1111` — puts 1s in padding bits!
+- Correct mask: `0xF0` (high 4 bits)
+- Correct NOT result: `0xF0` = `1111 0000` — 1s in valid bits only
+
+### 🔧 Correct Implementation
+
+```c
+// CORRECT: MSB-aligned — valid bits are at the TOP of the byte
+uint8_t byte_mask = (uint8_t)(0xFFU << (8U - bits_in_last_byte));
+result_byte = (~input_byte) & byte_mask;
+```
+
+**Why this matters for POCKET+:**
+- The NOT operation is used to compute the inverted mask for kₜ extraction
+- If padding bits become `1` instead of `0`, the hamming weight is wrong, changing eₜ and kₜ encoding
+- Downstream: wrong RLE, wrong bit counts, complete output divergence
+
+### 📊 Impact
+
+- **Divergence:** First packet where NOT is applied to a non-byte-aligned vector
+- **Symptom:** Extra `1` bits in padding positions corrupt hamming weight calculations
+- **Size error:** Variable — depends on how padding bits propagate through encoding
+- **Detection:** Check `bitvector_not` output for vectors with length not divisible by 8; padding bits must remain `0`
+- **Affected tests:** Any F that is not a multiple of 8 (e.g., F=4, F=12, F=100)
+
+### 🔍 Why This Was Hard to Find
+
+1. **F=720 (90 bytes) is byte-aligned** — All reference test vectors use byte-aligned lengths, so this never triggered
+2. **Only exposed by cross-validation** — The CCSDS cross-validation suite includes vectors with non-byte-aligned F values
+3. **Subtle bit-level corruption** — The extra `1` bits in padding positions only affect operations that inspect bit values (hamming weight, extraction), not simple copies or XORs
+
+---
+
+## 21. Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets
+
+**Category:** Decompression
+**Discovery:** CCSDS cross-validation (decoder vectors include intentionally corrupt/fuzzed packets)
+
+### The Problem
+
+The POCKET+ decoder must not silently produce wrong output when given corrupt compressed data. The UAB reference decoder implements strict validation checks (documented in README_crossvalidation.md v1.4-v1.13) that reject invalid packets. Without these checks, the decoder happily decompresses garbage into wrong output, causing cross-validation failures where the expected behavior is an error status (0x01).
+
+### Three Categories of Validation
+
+**Bitstream underflow detection:** Every `bitreader_read_bit` and `bitreader_read_bits` call can fail if the packet is truncated or the RLE/COUNT encoding is corrupt. The decoder must check return values and abort with an error if the bitstream is exhausted mid-packet.
+
+Key locations:
+- `bitreader_read_bits`: check `bitreader_remaining(reader) >= num_bits` upfront
+- `pocket_count_decode`: check remaining bits before Case 3 (5-bit read) and Case 4 (variable-length read); check `bitreader_read_bit` return during zero-counting
+- `pocket_bit_insert`: check `bitreader_remaining(reader) >= hamming` before insert loop
+- `pocket_decompress_packet`: check return values for Vt, et, kt, ct, dt, ft, rt, and I_t reads
+
+**RLE delta bounds checking:** In `pocket_rle_decode`, when a delta exceeds the remaining bit position, the mask position is invalid. Return an error instead of silently ignoring the delta.
+
+```c
+/* Before fix: silently ignored invalid deltas */
+if (delta <= bit_position) {
+    bit_position -= delta;
+    bitvector_set_bit(result, bit_position, 1);
+}
+
+/* After fix: return error on invalid delta */
+if (delta > bit_position) {
+    return POCKET_ERROR_OVERFLOW;
+}
+bit_position -= delta;
+bitvector_set_bit(result, bit_position, 1);
+```
+
+**Post-decompression padding verification (v1.10):** After successfully decompressing a single packet, at most 7 padding bits should remain in the bitreader. If 8 or more bits remain, the packet was not fully consumed — this indicates corrupt data. Note: this check must be applied per-packet (not in multi-packet stream decompression where remaining bits include subsequent packets).
+
+### 📊 Impact
+
+- **Symptom:** Decoder produces output that doesn't match expected SHA-256 for corrupt test vectors
+- **Scope:** Affects only invalid/fuzzed packets — all valid packets continue to decompress correctly
+- **Cross-validation improvement:** Decoder pass count increased from 10,496 to 12,315 (of 16,965 vectors)
+- **Detection:** Cross-validation with UAB test suite; the remaining 4,650 failures likely require additional validation rules
+
+---
+
+## 22. Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees
+
+**Category:** Decompression
+**Discovery:** CCSDS cross-validation (decoder vectors with unknown initial mask and fuzzed packets)
+
+### The Problem
+
+When the decoder doesn't know the encoder's initial mask (`large_m_0`), it starts with an all-zero mask. This creates a mask desynchronization that persists until a full mask transmission (`ft=1`) is received. A naive decoder that ignores desynchronization will produce too many "guaranteed" outputs (status `0x00`) for packets that the reference decoder correctly marks as unguaranteed (`0x01`).
+
+### Key Behaviors the Decoder Must Implement
+
+**1. Mask synchronization tracking (`mask_synced`):**
+The decoder must track whether its mask has been synchronized with the encoder's via a full mask transmission (`ft=1`). Start with `mask_synced=0`. Set to `1` only when a guaranteed (`0x00`) packet with `ft=1` is successfully decoded. Reset to `0` on decompression failure, packet loss, or mask inconsistency detection.
+
+**2. Reference packet guarantee (rt=1):**
+A reference packet (uncompressed, `rt=1`) is only guaranteed if the mask is synchronized (`mask_synced=1`) or the packet itself provides a full mask (`ft=1`) to resynchronize. Without this check, desynchronized decoders incorrectly accept reference packets.
+
+**3. Mask inconsistency detection (ft=1):**
+When `ft=1`, compare the delta-updated mask with the full mask received. If they differ (`mask_inconsistent`), the packet is corrupt or the decoder is desynchronized. When detected while synced: restore state, lose sync, output `0x01`. When detected while not synced: expected behavior — keep state (full mask is correct) but still output `0x01`.
+
+**4. COUNT(F) validation:**
+For `rt=1` packets, the self-delimiting `COUNT(F)` field encodes the packet length. If `COUNT(F)` doesn't match the expected `F`, the packet bitstream is corrupt (wrong bit offset for `I_t` data). Flag as diagnostic (`count_f_mismatch`) and let the harness decide whether to accept or reject.
+
+**5. Robustness window for non-reference packets (rt=0):**
+Non-reference packets are only guaranteed if the preceding `Vt` received packets were all successful (`0x00`). Skip lost packets (`0x02`) in the window since the robustness guarantee applies to decoded packets only.
+
+**6. State management on failure:**
+On decompression failure or unguaranteed status: restore the decompressor state from a saved copy to prevent error propagation to subsequent packets.
+
+### 📊 Impact
+
+- **Cross-validation improvement:** Decoder pass count increased from 12,315 to 14,924 (of 16,965 vectors)
+- **Remaining failures (2,041):** Fuzzed packets with corrupted `COUNT(F)` fields and complex mask synchronization edge cases where the reference implementation handles specific corruption patterns differently
 
 ---
 

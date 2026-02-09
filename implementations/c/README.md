@@ -36,6 +36,7 @@ make coverage      # Run tests with coverage report
 make coverage-html # Run tests with coverage report in html (requires lcov)
 make misra         # Run MISRA-C:2012 compliance check (requires cppcheck)
 make docs          # Generate API documentation (requires doxygen)
+make crossvalidation # Run CCSDS cross-validation (requires test data)
 make clean         # Clean build artifacts
 ```
 
@@ -45,6 +46,7 @@ make clean         # Clean build artifacts
 docker-compose run --rm c                    # Build, test, coverage
 docker-compose run --rm c make misra         # Run MISRA check
 docker-compose run --rm --build c            # Rebuild after changes
+docker-compose run --rm c-crossvalidation    # CCSDS cross-validation
 ```
 
 ## CLI
@@ -115,6 +117,7 @@ See [docs/TESTING.md](../../docs/TESTING.md) for detailed test documentation inc
 - Packet loss recovery simulation
 - Fuzzing results
 - CCSDS-style GB-scale validation
+- CCSDS cross-validation (24,900 vectors from UAB suite)
 
 ## File Structure
 
@@ -130,7 +133,8 @@ implementations/c/
 │   ├── decompress.c         # Decompression algorithm
 │   └── cli.c                # Command-line interface
 ├── tests/                   # Unit and integration tests
-└── fuzz/                    # Fuzzing harnesses
+├── fuzz/                    # Fuzzing harnesses
+└── ../../crossvalidation/c/  # CCSDS cross-validation harnesses (shared infra)
 ```
 
 ## API

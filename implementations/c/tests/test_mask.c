@@ -254,7 +254,8 @@ TEST(test_update_mask_no_change) {
  * ======================================================================== */
 
 TEST(test_compute_change_at_t0) {
-    /* At t=0, Dₜ should be Mₜ (initial mask) */
+    /* At t=0, D₀ = M₀ XOR M₋₁. In the compression flow, prev_mask is set
+     * to mask before calling, so D₀ = M₀ XOR M₀ = 0 (no change at init). */
     bitvector_t change, mask, prev_mask;
 
     bitvector_init(&change, 8);
@@ -262,13 +263,13 @@ TEST(test_compute_change_at_t0) {
     bitvector_init(&prev_mask, 8);
 
     mask.data[0] = 0xFF000000;
-    prev_mask.data[0] = 0xAA000000;
+    prev_mask.data[0] = 0xFF000000;  /* Same as mask (mimics compress.c line 359) */
     change.data[0] = 0xBB000000;  /* Some initial value */
 
     pocket_compute_change(&change, &mask, &prev_mask, 0);
 
-    /* At t=0, D₀ = M₀ (assuming M₋₁ = 0) */
-    assert(change.data[0] == 0xFF000000);
+    /* D₀ = M₀ XOR M₀ = 0 */
+    assert(change.data[0] == 0x00000000);
 }
 
 TEST(test_compute_change_normal_case) {

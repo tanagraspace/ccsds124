@@ -116,6 +116,11 @@ uint32_t bitreader_read_bits(bitreader_t *reader, size_t num_bits) {
     uint32_t value = 0U;
 
     if ((reader != NULL) && (num_bits <= 32U)) {
+        /* Check sufficient bits remain before reading */
+        if (bitreader_remaining(reader) < num_bits) {
+            return 0U;
+        }
+
         for (size_t i = 0U; i < num_bits; i++) {
             int bit = bitreader_read_bit(reader);
             if (bit >= 0) {
@@ -199,6 +204,9 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
 
             if (bit2 == 0) {
                 /* Case 3: '110' + 5 bits → value + 2 */
+                if (bitreader_remaining(reader) < 5U) {
+                    return POCKET_ERROR_UNDERFLOW;
+                }
                 uint32_t raw = bitreader_read_bits(reader, 5U);
                 *value = raw + 2U;
                 result = POCKET_OK;
@@ -211,14 +219,22 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
                 /* Count zeros to determine field size */
                 do {
                     next_bit = bitreader_read_bit(reader);
+                    if (next_bit < 0) {
+                        return POCKET_ERROR_UNDERFLOW;
+                    }
                     size++;
-                } while ((next_bit == 0) && (bitreader_remaining(reader) > 0U));
+                } while (next_bit == 0);
 
                 /* Size of value field is size + 5 */
                 size_t value_bits = size + 5U;
 
                 /* Back up one bit since the '1' is part of the value */
                 reader->bit_pos--;
+
+                /* Check sufficient bits remain for value field */
+                if (bitreader_remaining(reader) < value_bits) {
+                    return POCKET_ERROR_UNDERFLOW;
+                }
 
                 /* Read the value field */
                 uint32_t raw = bitreader_read_bits(reader, value_bits);
@@ -252,11 +268,13 @@ int pocket_rle_decode(bitreader_t *reader, bitvector_t *result, size_t length) {
 
     while ((status == POCKET_OK) && (delta != 0U)) {
         /* Delta represents (count of zeros + 1) */
-        if (delta <= bit_position) {
-            bit_position -= delta;
-            /* Set the bit at this position */
-            bitvector_set_bit(result, bit_position, 1);
+        if (delta > bit_position) {
+            /* Invalid: delta exceeds remaining positions (v1.6/v1.7/v1.8) */
+            return POCKET_ERROR_OVERFLOW;
         }
+        bit_position -= delta;
+        /* Set the bit at this position */
+        bitvector_set_bit(result, bit_position, 1);
 
         /* Read next delta */
         status = pocket_count_decode(reader, &delta);
@@ -284,6 +302,11 @@ int pocket_bit_insert(bitreader_t *reader, bitvector_t *data, const bitvector_t 
         return POCKET_OK;
     }
 
+    /* Check sufficient bits remain before reading */
+    if (bitreader_remaining(reader) < hamming) {
+        return POCKET_ERROR_UNDERFLOW;
+    }
+
     /* Collect positions of '1' bits in mask using word-level processing */
     size_t positions[POCKET_MAX_PACKET_LENGTH];
     size_t pos_count = bitvector_get_set_positions(mask, positions, hamming);
@@ -291,9 +314,10 @@ int pocket_bit_insert(bitreader_t *reader, bitvector_t *data, const bitvector_t 
     /* Insert bits in reverse order (matching BE extraction) */
     for (size_t i = pos_count; i > 0U; i--) {
         int bit = bitreader_read_bit(reader);
-        if (bit >= 0) {
-            bitvector_set_bit(data, positions[i - 1U], bit);
+        if (bit < 0) {
+            return POCKET_ERROR_UNDERFLOW;
         }
+        bitvector_set_bit(data, positions[i - 1U], bit);
     }
 
     status = POCKET_OK;
@@ -344,6 +368,10 @@ int pocket_decompressor_init(
         bitvector_zero(&decomp->initial_mask);
         bitvector_zero(&decomp->mask);
     }
+
+    /* Initialize diagnostics */
+    decomp->mask_inconsistent = 0U;
+    decomp->count_f_mismatch = 0U;
 
     /* Reset state */
     pocket_decompressor_reset(decomp);
@@ -439,6 +467,9 @@ int pocket_decompress_packet(
     }
 
     /* Read BIT₄(Vₜ) - effective robustness */
+    if (bitreader_remaining(reader) < 4U) {
+        return POCKET_ERROR_UNDERFLOW;
+    }
     uint32_t vt_raw = bitreader_read_bits(reader, 4U);
     uint8_t Vt = (uint8_t)(vt_raw & 0x0FU);
 
@@ -449,6 +480,9 @@ int pocket_decompress_packet(
     if ((Vt > 0U) && (change_count > 0U)) {
         /* Read eₜ */
         int et = bitreader_read_bit(reader);
+        if (et < 0) {
+            return POCKET_ERROR_UNDERFLOW;
+        }
 
         /* Pre-extract positions of set bits in Xt (word-level, much faster than bit-by-bit) */
         size_t change_positions[POCKET_MAX_PACKET_LENGTH];
@@ -460,8 +494,14 @@ int pocket_decompress_packet(
             uint8_t kt_bits[POCKET_MAX_PACKET_LENGTH];
 
             /* Read kt bits using pre-extracted positions */
+            if (bitreader_remaining(reader) < num_changes) {
+                return POCKET_ERROR_UNDERFLOW;
+            }
             for (size_t idx = 0U; idx < num_changes; idx++) {
                 int bit_val = bitreader_read_bit(reader);
+                if (bit_val < 0) {
+                    return POCKET_ERROR_UNDERFLOW;
+                }
                 kt_bits[idx] = (bit_val > 0) ? 1U : 0U;
             }
 
@@ -480,6 +520,9 @@ int pocket_decompress_packet(
 
             /* Read cₜ */
             ct = bitreader_read_bit(reader);
+            if (ct < 0) {
+                return POCKET_ERROR_UNDERFLOW;
+            }
         } else {
             /* et = 0: all updates are negative (mask bits become 1) */
             for (size_t idx = 0U; idx < num_changes; idx++) {
@@ -507,6 +550,9 @@ int pocket_decompress_packet(
 
     /* Read ḋₜ */
     int dt = bitreader_read_bit(reader);
+    if (dt < 0) {
+        return POCKET_ERROR_UNDERFLOW;
+    }
 
     /* ====================================================================
      * Parse qₜ: Optional full mask
@@ -514,13 +560,25 @@ int pocket_decompress_packet(
 
     int rt = 0;
 
+    /* Reset diagnostics flags */
+    decomp->mask_inconsistent = 0U;
+    decomp->count_f_mismatch = 0U;
+
     /* dt=1 means both ft=0 and rt=0 (optimization per CCSDS Eq. 13) */
     /* dt=0 means we need to read ft and rt from the stream */
+
     if (dt == 0) {
         /* Read ft flag */
         int ft = bitreader_read_bit(reader);
+        if (ft < 0) {
+            return POCKET_ERROR_UNDERFLOW;
+        }
 
         if (ft == 1) {
+            /* Save delta-updated mask before full mask replacement (v1.11) */
+            bitvector_t delta_mask;
+            bitvector_copy(&delta_mask, &decomp->mask);
+
             /* Full mask follows: decode RLE(M XOR (M<<)) */
             bitvector_t mask_diff;
             status = pocket_rle_decode(reader, &mask_diff, decomp->F);
@@ -547,10 +605,19 @@ int pocket_decompress_packet(
                 current = hxor_bit ^ current;
                 bitvector_set_bit(&decomp->mask, pos, current);
             }
+
+            /* Check delta/full mask consistency (v1.11) */
+            if (bitvector_equals(&delta_mask, &decomp->mask) == 0) {
+                decomp->mask_inconsistent = 1U;
+            }
+
         }
 
         /* Read rt flag */
         rt = bitreader_read_bit(reader);
+        if (rt < 0) {
+            return POCKET_ERROR_UNDERFLOW;
+        }
     }
 
     if (rt == 1) {
@@ -561,14 +628,23 @@ int pocket_decompress_packet(
             return status;
         }
 
+        /* Check COUNT(F) against expected packet length (diagnostic flag).
+         * A mismatch indicates corruption but we still attempt decompression
+         * so the harness can decide whether to accept or reject. */
+        if (packet_length != (uint32_t)decomp->F) {
+            decomp->count_f_mismatch = 1U;
+        }
+
         /* Read full packet */
+        if (bitreader_remaining(reader) < decomp->F) {
+            return POCKET_ERROR_UNDERFLOW;
+        }
         for (size_t i = 0U; i < decomp->F; i++) {
             int bit = bitreader_read_bit(reader);
-            int bit_val = 0;
-            if (bit > 0) {
-                bit_val = 1;
+            if (bit < 0) {
+                return POCKET_ERROR_UNDERFLOW;
             }
-            bitvector_set_bit(output, i, bit_val);
+            bitvector_set_bit(output, i, bit);
         }
     } else {
         /* Compressed: extract unpredictable bits */

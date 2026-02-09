@@ -111,11 +111,13 @@ void pocket_update_mask(
  * @name Change Vector Functions
  *
  * CCSDS Equation 8:
- * - Dₜ = Mₜ XOR Mₜ₋₁ (if t > 0)
- * - Dₜ = Mₜ (if t = 0, assuming M₋₁ = 0)
+ * - Dₜ = Mₜ XOR Mₜ₋₁
  *
  * The change vector tracks which mask bits changed between time steps.
  * This is used in encoding to communicate mask updates.
+ *
+ * At t=0, the caller sets Mₜ₋₁ = M₀ so that D₀ = M₀ XOR M₀ = 0
+ * (no change at initialization).
  * @{
  */
 
@@ -126,13 +128,9 @@ void pocket_compute_change(
     const bitvector_t *prev_mask,
     size_t t
 ) {
-    if (t == 0U) {
-        /* At t=0, D₀ = M₀ (all initially predictable bits) */
-        bitvector_copy(change, mask);
-    } else {
-        /* Dₜ = Mₜ XOR Mₜ₋₁ */
-        bitvector_xor(change, mask, prev_mask);
-    }
+    (void)t;  /* Always use XOR — caller sets prev_mask appropriately */
+    /* Dₜ = Mₜ XOR Mₜ₋₁ */
+    bitvector_xor(change, mask, prev_mask);
 }
 
 /** @} */ /* End of Change Vector Functions */

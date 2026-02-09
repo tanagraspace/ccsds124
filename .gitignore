@@ -27,3 +27,10 @@ test-vectors/input/*.bin.pkt
 test-vectors/input/*.dat.pkt
 test-vectors/*.bin.pkt
 test-vectors/*.dat.pkt
+
+# Third-party cross-validation files
+ccsds124_full_crossvalidation_20220309.zip
+ccsds124_full_crossvalidation/
+
+# Cross-validation results (generated at runtime)
+crossvalidation-results.txt

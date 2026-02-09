@@ -444,6 +444,21 @@ TEST(test_bitvector_not_16bits) {
     assert(result.data[0] == 0x54320000);
 }
 
+TEST(test_bitvector_not_non_byte_aligned) {
+    /* Regression test: NOT with non-byte-aligned length must mask
+     * the HIGH bits (MSB-aligned packing), not the low bits. */
+    bitvector_t a, result;
+    bitvector_init(&a, 4);       /* 4 bits in 1 byte */
+    bitvector_init(&result, 4);
+
+    a.data[0] = 0x00000000;     /* 0000 in top 4 bits */
+
+    bitvector_not(&result, &a);
+
+    /* NOT 0000 = 1111 in top 4 bits of byte = 0xF0000000, NOT 0x0F000000 */
+    assert(result.data[0] == 0xF0000000);
+}
+
 TEST(test_bitvector_reverse_16bits) {
     bitvector_t a, result;
     bitvector_init(&a, 16);      /* 2 bytes in 1 word */
@@ -541,6 +556,7 @@ int main(void) {
     RUN_TEST(test_bitvector_or_b_smaller);
     RUN_TEST(test_bitvector_and_b_smaller);
     RUN_TEST(test_bitvector_not_16bits);
+    RUN_TEST(test_bitvector_not_non_byte_aligned);
     RUN_TEST(test_bitvector_reverse_16bits);
     RUN_TEST(test_bitvector_hamming_weight_excess_bits);
 

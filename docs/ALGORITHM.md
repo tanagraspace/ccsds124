@@ -219,10 +219,12 @@ Initial condition: M₀ is user-specified (typically all zeros)
 
 #### Change Vector Update
 ```
-         ⎧ Mₜ XOR Mₜ₋₁,  if t > 0
-Dₜ =     ⎨
-         ⎩ 0,            if t = 0
+Dₜ = Mₜ XOR Mₜ₋₁
 ```
+
+Initial condition: Set M₋₁ = M₀ so that D₀ = M₀ XOR M₀ = 0 (no change at initialization).
+
+⚠️ **See [GOTCHAS.md #19](GOTCHAS.md#19-d₀-must-be-zero-at-initialization-not-m₀)** — A common mistake is special-casing t=0 with D₀ = M₀, which is wrong. The correct approach is to always use XOR, with the caller setting M₋₁ = M₀ before the first packet.
 
 **Flow Diagram:**
 ```

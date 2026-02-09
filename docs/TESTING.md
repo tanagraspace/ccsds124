@@ -28,14 +28,14 @@ docker-compose run c make test
 
 | Module | Tests | Description |
 |--------|-------|-------------|
-| Bit Vector | 33 | Init, get/set, XOR/OR/AND/NOT, shift, reverse, hamming weight |
+| Bit Vector | 34 | Init, get/set, XOR/OR/AND/NOT, shift, reverse, hamming weight, MSB-aligned NOT |
 | Bit Buffer | 14 | Init, append bits, append bitvector, to_bytes, overflow |
-| Compression | 23 | Compressor init, packet compression, CCSDS helpers, eₜ/kₜ/cₜ |
+| Compression | 24 | Compressor init, packet compression, CCSDS helpers, eₜ/kₜ/cₜ, D₀ zero initialization |
 | Decompression | 54 | Bit reader, COUNT/RLE decode, packet decompression, error paths |
 | Encoding | 16 | COUNT encode, RLE encode, bit extraction |
 | Mask | 12 | Update build/mask vectors, compute change vector |
 
-**Total**: 152 unit tests passed
+**Total**: 154 unit tests passed
 
 ## Malformed Input Tests
 
@@ -245,6 +245,39 @@ python ../scripts/validate_ccsds_style.py --vectors ./vectors
 **Malformed Packet Handling**: All 119,304 malformed packets across both tests were handled gracefully with zero crashes, demonstrating robust error handling.
 
 **Result**: Pass - Implementation correctly implements CCSDS 124.0-B-1 robustness semantics.
+
+## CCSDS Cross-Validation
+
+**Goal**: Validate byte-for-byte correctness against the comprehensive CCSDS 124.0-B-1 cross-validation test suite produced by the Universitat Autonoma de Barcelona (UAB) team.
+
+**Method**: Run encoder and decoder harnesses against all test vectors. Compare generated output file sizes and SHA-256 hashes against the canonical manifest (`file_list.csv`).
+
+**Source**: [crossvalidation/](../crossvalidation/)
+
+**Run**:
+```bash
+# Docker (recommended)
+docker-compose run --rm c-crossvalidation
+
+# Local
+cd implementations/c
+make crossvalidation \
+  CROSSVAL_DIR=../../crossvalidation/c \
+  CROSSVAL_SCRIPT=../../crossvalidation/run_crossvalidation.sh
+```
+
+**Prerequisites**: The cross-validation data (`ccsds124_full_crossvalidation/`) must be obtained separately and placed at the project root. See [crossvalidation/README.md](../crossvalidation/README.md) for details.
+
+**Result**: Partial pass (encoder 100%, decoder 88.0%)
+
+| Direction | Passed | Total | Rate | Description |
+|-----------|--------|-------|------|-------------|
+| Encoder | 7,935 | 7,935 | 100% | Compress `.raw+config` → `.124`, validate size + SHA-256 |
+| Decoder | 14,924 | 16,965 | 88.0% | Decompress `.124+config` → `.raw+large_f`, validate size + SHA-256 |
+
+**Total**: 22,859 of 24,900 cross-validation vectors passed
+
+The encoder passes all 7,935 vectors. The decoder passes 14,924 of 16,965 vectors — the remaining 2,041 failures are fuzzed packets with corrupted COUNT(F) fields and complex mask synchronization edge cases where the reference implementation handles specific corruption patterns differently. The suite covers valid and invalid parameters, non-byte-aligned packet lengths, non-zero initial masks, packet loss scenarios, and edge cases. Four gotchas were discovered and fixed during cross-validation (see [GOTCHAS.md](GOTCHAS.md) #19, #20, #21, and #22).
 
 ## Run All Tests
 

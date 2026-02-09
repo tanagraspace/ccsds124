@@ -62,7 +62,9 @@
 #define POCKET_MAX_ROBUSTNESS 7U     /**< Maximum robustness level (Rₜ) */
 #define POCKET_MAX_HISTORY 16U       /**< History depth for change vectors */
 #define POCKET_MAX_VT_HISTORY 16U    /**< History size for Vₜ calculation */
-#define POCKET_MAX_OUTPUT_BYTES ((POCKET_MAX_PACKET_BYTES) * 6U)  /**< Max output buffer size */
+#ifndef POCKET_MAX_OUTPUT_BYTES
+#define POCKET_MAX_OUTPUT_BYTES ((POCKET_MAX_PACKET_BYTES) * 12U) /**< Max output buffer size (12× for worst-case RLE expansion) */
+#endif
 /** @} */
 
 /**
@@ -411,12 +413,13 @@ void pocket_update_mask(
 /**
  * @brief Compute change vector (CCSDS Equation 8).
  *
- * The change vector tracks mask changes between iterations.
+ * Dₜ = Mₜ XOR Mₜ₋₁. The caller sets prev_mask = mask before
+ * calling at t=0 so that D₀ = 0 (no change at initialization).
  *
  * @param[out] change     Change vector Dₜ
  * @param[in]  mask       Current mask Mₜ
  * @param[in]  prev_mask  Previous mask Mₜ₋₁
- * @param[in]  t          Time index (0 = first packet)
+ * @param[in]  t          Time index (unused, kept for API compatibility)
  */
 void pocket_compute_change(
     bitvector_t *change,
@@ -863,6 +866,12 @@ struct pocket_decompressor {
     /** @name Cycle counter */
     /** @{ */
     size_t t;                   /**< Current time index */
+    /** @} */
+
+    /** @name Diagnostics */
+    /** @{ */
+    uint8_t mask_inconsistent;  /**< Set when ft=1 full mask differs from delta-updated mask */
+    uint8_t count_f_mismatch;   /**< Set when COUNT(F) in rt=1 packet differs from expected F */
     /** @} */
 };
 

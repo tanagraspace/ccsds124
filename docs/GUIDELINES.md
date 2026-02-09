@@ -2,7 +2,7 @@
 
 ## Before You Start
 
-**Read [GOTCHAS.md](GOTCHAS.md) first!** It documents 18 critical pitfalls that will cause your implementation to fail silently.
+**Read [GOTCHAS.md](GOTCHAS.md) first!** It documents 21 critical pitfalls that will cause your implementation to fail silently.
 
 ## Validation Requirements
 
@@ -28,6 +28,9 @@ These are **not obvious** from the CCSDS spec:
 4. **BE extraction** - Use reverse order (high to low position)
 5. **Flag counters** - Use countdown counters, not modulo arithmetic
 6. **Init phase** - First Rt+1 packets have ft=1, rt=1, pt=0
+7. **D₀ = 0** - Set prev_mask = mask at init so D₀ = M₀ XOR M₀ = 0
+8. **NOT masking** - MSB-aligned: mask high bits, not low bits, for non-byte-aligned vectors
+9. **Decoder validation** - Validate bitstream integrity (sufficient bits, valid RLE deltas, consumed padding) to reject corrupt packets per CCSDS cross-validation expectations
 
 ## Implementation Checklist
 
@@ -54,8 +57,10 @@ These are **not obvious** from the CCSDS spec:
 3. **Then housekeeping.bin** (R=2) - validates Vt calculation
 4. **Then edge-cases.bin** (R=1) - validates ct calculation
 5. **Finally venus-express** (R=2, large) - validates at scale
+6. **CCSDS cross-validation** (24,900 vectors) - validates non-byte-aligned F, non-zero M₀, packet loss
 
 If simple passes but others fail, check Vt and ct calculations.
+If cross-validation fails but reference vectors pass, check D₀ initialization and NOT masking for non-byte-aligned lengths.
 
 ## Language-Specific Notes
 
@@ -214,5 +219,7 @@ mvn checkstyle:check      # Check style
 | edge-cases fails, simple passes | ct missing current flag |
 | Bit-level errors mid-stream | kt using wrong extraction order |
 | Size off by 10%+ | Flag timing wrong |
+| First packet wrong with non-zero M₀ | D₀ = M₀ instead of 0 |
+| Non-byte-aligned F fails | NOT masks low bits not high |
 
 See [GOTCHAS.md](GOTCHAS.md) for detailed diagnosis.

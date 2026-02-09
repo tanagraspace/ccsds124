@@ -1,4 +1,29 @@
 services:
+  c-crossvalidation:
+    build:
+      context: .
+      dockerfile: crossvalidation/c/Dockerfile
+    volumes:
+      - type: bind
+        source: ./ccsds124_full_crossvalidation
+        target: /app/ccsds124_full_crossvalidation
+        read_only: true
+      - type: bind
+        source: ./implementations/c/build
+        target: /app/implementations/c/build
+        bind:
+          create_host_path: true
+
+  c-crossvalidation-sandbox:
+    build:
+      context: .
+      dockerfile: crossvalidation/sandbox/Dockerfile
+    volumes:
+      - type: bind
+        source: ./ccsds124_full_crossvalidation
+        target: /app/ccsds124_full_crossvalidation
+        read_only: true
+
   c-fuzz:
     build:
       context: ./implementations/c

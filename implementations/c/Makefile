@@ -17,6 +17,8 @@ TEST_DIR = tests
 BUILD_DIR = build
 DOCS_DIR = $(BUILD_DIR)/docs
 COV_DIR = $(BUILD_DIR)/coverage
+CROSSVAL_DIR ?= crossvalidation
+CROSSVAL_SCRIPT ?= $(CROSSVAL_DIR)/run_crossvalidation.sh
 
 # Source files (exclude CLI which has main())
 SRCS = $(filter-out $(SRC_DIR)/cli.c, $(wildcard $(SRC_DIR)/*.c))
@@ -37,7 +39,14 @@ COV_LIB = $(COV_DIR)/libpocketplus.a
 MISRA_SRCS = $(SRC_DIR)/bitvector.c $(SRC_DIR)/bitbuffer.c $(SRC_DIR)/compress.c \
              $(SRC_DIR)/decompress.c $(SRC_DIR)/encode.c $(SRC_DIR)/mask.c
 
-.PHONY: all clean test test-report test-cli test-reference cli coverage coverage-html docs misra valgrind bench
+# Cross-validation data directory (overridable)
+CROSSVAL_DATA ?= ../../ccsds124_full_crossvalidation
+
+# Cross-validation harness binaries
+CROSSVAL_SRCS = $(wildcard $(CROSSVAL_DIR)/*.c)
+CROSSVAL_BINS = $(CROSSVAL_SRCS:$(CROSSVAL_DIR)/%.c=$(BUILD_DIR)/%)
+
+.PHONY: all clean test test-report test-cli test-reference cli coverage coverage-html docs misra valgrind bench crossvalidation
 
 all: $(LIB) $(CLI)
 
@@ -193,6 +202,18 @@ valgrind: $(TEST_BINS)
 	@valgrind --leak-check=full --error-exitcode=1 $(BUILD_DIR)/test_vectors
 	@echo ""
 	@echo "Memory check passed - no leaks detected"
+
+$(BUILD_DIR)/crossvalidation_%: $(CROSSVAL_DIR)/crossvalidation_%.c $(LIB) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -lpocketplus $(LDFLAGS) -o $@
+
+# Usage: make crossvalidation [CROSSVAL_MODE=encoder|decoder|both]
+CROSSVAL_MODE ?= both
+CROSSVAL_RESULTS ?= $(BUILD_DIR)/crossvalidation-results.txt
+crossvalidation: $(CROSSVAL_BINS)
+	@ENCODER_BIN=$(BUILD_DIR)/crossvalidation_encoder \
+	 DECODER_BIN=$(BUILD_DIR)/crossvalidation_decoder \
+	 RESULTS_FILE=$(CROSSVAL_RESULTS) \
+	 bash $(CROSSVAL_SCRIPT) $(CROSSVAL_MODE) $(CROSSVAL_DATA)
 
 clean:
 	rm -rf $(BUILD_DIR)/* $(BUILD_DIR)/.[!.]* 2>/dev/null || true

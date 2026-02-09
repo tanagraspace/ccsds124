@@ -17,6 +17,15 @@ pocket-plus/
 │   ├── go/         # Go implementation
 │   ├── rust/       # Rust implementation
 │   └── java/       # Java implementation (enterprise/ground)
+├── crossvalidation/                    # Shared cross-validation infrastructure
+│   ├── file_list.csv                   # Canonical manifest (expected sizes + SHA-256)
+│   ├── run_crossvalidation.sh          # Shared runner (parameterized for binary paths)
+│   ├── c/                              # C harness (encoder + decoder + Dockerfile)
+│   ├── sandbox/                        # ESA reference code harness
+│   ├── cpp/                            # C++ harness (TODO)
+│   ├── go/                             # Go harness (TODO)
+│   ├── rust/                           # Rust harness (TODO)
+│   └── java/                           # Java harness (TODO)
 ├── docs/           # Shared documentation
 └── test-vectors/   # Shared test data
 ```
@@ -68,6 +77,7 @@ python: fix decompression bug
 - Use fixed-size integer types (`uint8_t`, etc.)
 - Provide clear error codes
 - Test with Makefile: `cd implementations/c && make test`
+- Cross-validate: `docker-compose run --rm c-crossvalidation` (results saved to `implementations/c/build/crossvalidation-results.txt`)
 
 ### C++ Implementation
 - Target embedded systems with C++17 support
@@ -130,6 +140,47 @@ python: fix decompression bug
 - `docs/ALGORITHM.md` - Algorithm specification
 - `test-vectors/README.md` - Test data format and usage
 - Each implementation's `README.md` and `CHANGELOG.md`
+
+## Cross-Validation
+
+Cross-validation runs encoder and decoder harnesses against 24,900 test vectors (7,935 encoder + 16,965 decoder) from the UAB suite and validates output via file size + SHA-256 against `crossvalidation/file_list.csv`.
+
+### Running
+
+```bash
+# Docker (recommended, from project root)
+docker-compose run --rm c-crossvalidation
+
+# Local (from implementations/c/)
+make crossvalidation
+```
+
+### Results
+
+The runner script writes a results file (defaults to `build/crossvalidation-results.txt` when invoked via `make`). Override via `RESULTS_FILE` env var. The file contains a header (date, binaries, mode), per-phase pass/fail counts, failure details, and a final PASS/FAIL verdict.
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ENCODER_BIN` | Path to encoder harness binary | (required) |
+| `DECODER_BIN` | Path to decoder harness binary | (required) |
+| `RESULTS_FILE` | Path to results output file | `crossvalidation-results.txt` next to script |
+
+### Adding a New Language Harness
+
+1. Create `crossvalidation/<lang>/crossvalidation_encoder.<ext>` and `crossvalidation_decoder.<ext>`
+2. Add a `crossvalidation/<lang>/Dockerfile` that builds the harness and sets `ENTRYPOINT` to invoke `run_crossvalidation.sh`
+3. Add a `<lang>-crossvalidation` service to `docker-compose.yml`
+4. The shared `run_crossvalidation.sh` is language-agnostic — just point `ENCODER_BIN` and `DECODER_BIN` at the compiled binaries
+
+### Test Data
+
+The cross-validation test vectors are **not committed**. Download and extract them at the project root:
+
+```bash
+unzip ccsds124_full_crossvalidation_20220309.zip -d ccsds124_full_crossvalidation
+```
 
 ## What NOT to Do
 

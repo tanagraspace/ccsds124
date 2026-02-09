@@ -151,6 +151,42 @@ TEST(test_compress_first_packet) {
     assert(comp.t == 1);           /* Time should advance */
 }
 
+TEST(test_compress_d0_zero_with_nonzero_mask) {
+    /* Regression test: D_0 must be 0 when M_0 is non-zero.
+     * With a non-zero initial mask, D_0 = M_0 XOR M_{-1} = M_0 XOR M_0 = 0.
+     * This means X_0 is a zero vector and RLE(X_0) = '10' (just terminator).
+     * The first 2 bits of the compressed output must be '1','0'. */
+    pocket_compressor_t comp;
+    bitvector_t input, initial_mask;
+    bitbuffer_t output;
+    pocket_params_t params;
+
+    bitvector_init(&initial_mask, 8);
+    initial_mask.data[0] = 0xFF000000;  /* Non-zero mask: all bits unpredictable */
+
+    pocket_compressor_init(&comp, 8, &initial_mask, 0, 0, 0, 0);
+    bitvector_init(&input, 8);
+    bitbuffer_init(&output);
+
+    input.data[0] = 0xAA000000;  /* 10101010 */
+
+    params.min_robustness = 0;
+    params.new_mask_flag = 0;
+    params.send_mask_flag = 0;
+    params.uncompressed_flag = 0;
+
+    int result = pocket_compress_packet(&comp, &input, &output, &params);
+    assert(result == POCKET_OK);
+
+    /* Convert to bytes and check first 2 bits are '10' (RLE terminator for zero X_0) */
+    uint8_t out_bytes[POCKET_MAX_OUTPUT_BYTES];
+    size_t out_size = bitbuffer_to_bytes(&output, out_bytes, sizeof(out_bytes));
+    assert(out_size > 0);
+
+    /* First byte's top 2 bits must be '10' (0x80 masked) not '11' (0xC0 masked) */
+    assert((out_bytes[0] & 0xC0) == 0x80);
+}
+
 TEST(test_compress_two_identical_packets) {
     /* Two identical packets should compress well (no changes) */
     pocket_compressor_t comp;
@@ -650,6 +686,7 @@ int main(void) {
 
     printf("\nSimple Compression Tests:\n");
     RUN_TEST(test_compress_first_packet);
+    RUN_TEST(test_compress_d0_zero_with_nonzero_mask);
     RUN_TEST(test_compress_two_identical_packets);
     RUN_TEST(test_compress_with_change);
     RUN_TEST(test_compress_null_params);

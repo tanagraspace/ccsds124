@@ -51,6 +51,13 @@
 /** @} */
 
 /**
+ * @defgroup status Status Codes
+ * @{
+ */
+#define POCKET_STATUS_UNGUARANTEED 1  /**< Decompressed successfully but accuracy not guaranteed */
+/** @} */
+
+/**
  * @defgroup config Configuration Constants
  * @{
  */
@@ -89,6 +96,19 @@ typedef struct {
     uint8_t send_mask_flag;    /**< ḟₜ: Include mask in output (0 or 1) */
     uint8_t uncompressed_flag; /**< ṙₜ: Send uncompressed (0 or 1) */
 } pocket_params_t;
+
+/**
+ * @brief Decompression result with accuracy guarantee status.
+ *
+ * Populated by pocket_decompress_packet_checked() to report whether
+ * the decompressed output is accuracy-guaranteed per CCSDS 124.0-B-1.
+ */
+typedef struct {
+    uint8_t status;  /**< 0x00=guaranteed, 0x01=unguaranteed */
+    uint8_t Vt;      /**< Effective robustness (0-15) */
+    uint8_t ft;      /**< Send mask flag (0 or 1) */
+    uint8_t rt;      /**< Reference/uncompressed flag (0 or 1) */
+} pocket_decompress_result_t;
 /** @} */
 
 /**
@@ -873,6 +893,14 @@ struct pocket_decompressor {
     uint8_t mask_inconsistent;  /**< Set when ft=1 full mask differs from delta-updated mask */
     uint8_t count_f_mismatch;   /**< Set when COUNT(F) in rt=1 packet differs from expected F */
     /** @} */
+
+    /** @name Accuracy guarantee tracking */
+    /** @{ */
+    uint8_t mask_synced;        /**< 1 when decoder mask is known to match encoder mask */
+    uint8_t received_status_ring[POCKET_MAX_VT_HISTORY]; /**< Status history: 0x00=guaranteed, 0x01=unguaranteed, 0x02=lost */
+    uint8_t received_status_count;  /**< Number of valid entries in status ring */
+    uint8_t received_status_index;  /**< Write position in status ring */
+    /** @} */
 };
 
 /**
@@ -945,6 +973,55 @@ int pocket_decompress_packet(
     pocket_decompressor_t *decomp,
     bitreader_t *reader,
     bitvector_t *output
+);
+
+/**
+ * @brief Decompress a single packet with accuracy guarantee checking.
+ *
+ * Like pocket_decompress_packet() but additionally tracks mask
+ * synchronization and evaluates the accuracy guarantee decision tree
+ * per CCSDS 124.0-B-1.
+ *
+ * If the output is not accuracy-guaranteed, the decompressor state is
+ * restored to its pre-call value (except for count_f_mismatch cases
+ * where the mask was resynchronized via ft=1).
+ *
+ * @param[in,out] decomp   Decompressor state (updated in place)
+ * @param[in]     data     Compressed packet bytes
+ * @param[in]     num_bits Number of valid bits in data
+ * @param[out]    output   Decompressed output packet (length F)
+ * @param[out]    result   Optional result details (NULL to skip)
+ * @return POCKET_OK if guaranteed, POCKET_STATUS_UNGUARANTEED if not,
+ *         or negative error code on failure
+ */
+int pocket_decompress_packet_checked(
+    pocket_decompressor_t *decomp,
+    const uint8_t *data,
+    size_t num_bits,
+    bitvector_t *output,
+    pocket_decompress_result_t *result
+);
+
+/**
+ * @brief Discover packet length (F) from a compressed packet.
+ *
+ * Parses the self-delimiting bitstream structure of a compressed packet
+ * to discover the packet length F from reference packets (rt=1) that
+ * contain COUNT(F). Non-reference packets cannot reveal F.
+ *
+ * This is useful when receiving compressed data without out-of-band
+ * metadata about the original packet size.
+ *
+ * @param[in]  data          Compressed packet bytes
+ * @param[in]  num_bits      Number of valid bits in data
+ * @param[out] packet_length Discovered F value (0 if not discoverable)
+ * @return POCKET_OK on success (check packet_length for result),
+ *         POCKET_ERROR_INVALID_ARG for NULL pointers or zero bits
+ */
+int pocket_discover_packet_length(
+    const uint8_t *data,
+    size_t num_bits,
+    uint32_t *packet_length
 );
 
 /**

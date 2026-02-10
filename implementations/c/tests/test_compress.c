@@ -489,7 +489,7 @@ TEST(test_compute_ct_flag_multiple_updates) {
 
 TEST(test_pocket_compress_invalid_size) {
     pocket_compressor_t comp;
-    uint8_t input[11];  /* Not a multiple of packet size */
+    uint8_t input[11] = {0};  /* Not a multiple of packet size */
     uint8_t output[100];
     size_t output_size;
 
@@ -499,6 +499,22 @@ TEST(test_pocket_compress_invalid_size) {
     int result = pocket_compress(&comp, input, 11, output, sizeof(output), &output_size);
 
     assert(result == POCKET_ERROR_INVALID_ARG);
+}
+
+TEST(test_pocket_compress_manual_mode) {
+    /* pocket_compress() with all limits=0 triggers manual control mode
+     * (else branch: ft=0, rt=0, pt=0 for all packets). */
+    pocket_compressor_t comp;
+    uint8_t input_data[4] = {0xAA, 0xBB, 0xAA, 0xBB};  /* 2 identical 16-bit packets */
+    uint8_t output[256];
+    size_t output_size = 0;
+
+    pocket_compressor_init(&comp, 16, NULL, 0, 0, 0, 0);  /* All limits = 0 */
+
+    int result = pocket_compress(&comp, input_data, 4, output, sizeof(output), &output_size);
+
+    assert(result == POCKET_OK);
+    assert(output_size > 0);
 }
 
 /* ========================================================================
@@ -704,8 +720,9 @@ int main(void) {
     RUN_TEST(test_compute_ct_flag_single_update);
     RUN_TEST(test_compute_ct_flag_multiple_updates);
 
-    printf("\nHigh-Level API Error Tests:\n");
+    printf("\nHigh-Level API Tests:\n");
     RUN_TEST(test_pocket_compress_invalid_size);
+    RUN_TEST(test_pocket_compress_manual_mode);
 
     printf("\nCCSDS Encoding Component Tests:\n");
     RUN_TEST(test_robustness_window_rt_zero);

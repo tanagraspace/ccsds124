@@ -373,6 +373,12 @@ int pocket_decompressor_init(
     decomp->mask_inconsistent = 0U;
     decomp->count_f_mismatch = 0U;
 
+    /* Initialize accuracy guarantee tracking */
+    decomp->mask_synced = 0U;
+    decomp->received_status_count = 0U;
+    decomp->received_status_index = 0U;
+    (void)memset(decomp->received_status_ring, 0, sizeof(decomp->received_status_ring));
+
     /* Reset state */
     pocket_decompressor_reset(decomp);
 
@@ -386,6 +392,16 @@ void pocket_decompressor_reset(pocket_decompressor_t *decomp) {
         bitvector_copy(&decomp->mask, &decomp->initial_mask);
         bitvector_zero(&decomp->prev_output);
         bitvector_zero(&decomp->Xt);
+
+        /* Reset diagnostics */
+        decomp->mask_inconsistent = 0U;
+        decomp->count_f_mismatch = 0U;
+
+        /* Reset accuracy guarantee tracking */
+        decomp->mask_synced = 0U;
+        decomp->received_status_count = 0U;
+        decomp->received_status_index = 0U;
+        (void)memset(decomp->received_status_ring, 0, sizeof(decomp->received_status_ring));
     }
 }
 
@@ -426,6 +442,18 @@ int pocket_decompressor_notify_packet_loss(
      * always uncompressed, providing natural synchronization points.
      */
 
+    /* Packet loss breaks mask synchronization */
+    decomp->mask_synced = 0U;
+
+    /* Record 0x02 (lost) status entries in the ring buffer */
+    for (uint32_t i = 0U; i < lost_count; i++) {
+        decomp->received_status_ring[decomp->received_status_index] = 0x02U;
+        decomp->received_status_index = (decomp->received_status_index + 1U) % POCKET_MAX_VT_HISTORY;
+        if (decomp->received_status_count < POCKET_MAX_VT_HISTORY) {
+            decomp->received_status_count++;
+        }
+    }
+
     return POCKET_OK;
 }
 
@@ -436,11 +464,35 @@ int pocket_decompressor_notify_packet_loss(
  * @{
  */
 
+/**
+ * @brief Internal flags extracted during decompression.
+ *
+ * Used by pocket_decompress_packet_checked() to make accuracy
+ * guarantee decisions without re-parsing the bitstream.
+ */
+typedef struct {
+    uint8_t Vt;  /**< Effective robustness (0-15) */
+    uint8_t ft;  /**< Send mask flag (0 or 1) */
+    uint8_t rt;  /**< Reference/uncompressed flag (0 or 1) */
+} pocket_decompress_flags_t;
 
-int pocket_decompress_packet(
+/**
+ * @brief Internal decompression with optional flag extraction.
+ *
+ * Core decompression logic shared by both pocket_decompress_packet()
+ * and pocket_decompress_packet_checked().
+ *
+ * @param[in,out] decomp Decompressor state
+ * @param[in,out] reader Bit reader
+ * @param[out]    output Decompressed output
+ * @param[out]    flags  Optional extracted flags (NULL to skip)
+ * @return POCKET_OK or negative error code
+ */
+static int pocket_decompress_packet_internal(
     pocket_decompressor_t *decomp,
     bitreader_t *reader,
-    bitvector_t *output
+    bitvector_t *output,
+    pocket_decompress_flags_t *flags
 ) {
     if ((decomp == NULL) || (reader == NULL) || (output == NULL)) {
         return POCKET_ERROR_INVALID_ARG;
@@ -558,6 +610,7 @@ int pocket_decompress_packet(
      * Parse qₜ: Optional full mask
      * ==================================================================== */
 
+    int ft = 0;
     int rt = 0;
 
     /* Reset diagnostics flags */
@@ -569,7 +622,7 @@ int pocket_decompress_packet(
 
     if (dt == 0) {
         /* Read ft flag */
-        int ft = bitreader_read_bit(reader);
+        ft = bitreader_read_bit(reader);
         if (ft < 0) {
             return POCKET_ERROR_UNDERFLOW;
         }
@@ -618,6 +671,13 @@ int pocket_decompress_packet(
         if (rt < 0) {
             return POCKET_ERROR_UNDERFLOW;
         }
+    }
+
+    /* Populate flags if requested */
+    if (flags != NULL) {
+        flags->Vt = Vt;
+        flags->ft = (ft != 0) ? 1U : 0U;
+        flags->rt = (rt != 0) ? 1U : 0U;
     }
 
     if (rt == 1) {
@@ -673,6 +733,310 @@ int pocket_decompress_packet(
     bitvector_copy(&decomp->prev_output, output);
     decomp->t++;
 
+    return POCKET_OK;
+}
+
+
+int pocket_decompress_packet(
+    pocket_decompressor_t *decomp,
+    bitreader_t *reader,
+    bitvector_t *output
+) {
+    return pocket_decompress_packet_internal(decomp, reader, output, NULL);
+}
+
+
+int pocket_decompress_packet_checked(
+    pocket_decompressor_t *decomp,
+    const uint8_t *data,
+    size_t num_bits,
+    bitvector_t *output,
+    pocket_decompress_result_t *result
+) {
+    if ((decomp == NULL) || (data == NULL) || (output == NULL)) {
+        return POCKET_ERROR_INVALID_ARG;
+    }
+
+    if (num_bits == 0U) {
+        return POCKET_ERROR_INVALID_ARG;
+    }
+
+    /* Save decompressor state before attempting decompression.
+     * Per cross-validation v1.9: restore state if packet is invalid
+     * to avoid propagating errors to subsequent packets. */
+    pocket_decompressor_t saved_decomp;
+    (void)memcpy(&saved_decomp, decomp, sizeof(*decomp));
+
+    /* Create bit reader and decompress with flag extraction */
+    bitreader_t reader;
+    bitreader_init(&reader, data, num_bits);
+
+    pocket_decompress_flags_t flags;
+    int rc = pocket_decompress_packet_internal(decomp, &reader, output, &flags);
+
+    /* Validate: only padding bits should remain (at most 7) (v1.10) */
+    if ((rc == POCKET_OK) && (bitreader_remaining(&reader) >= 8U)) {
+        rc = POCKET_ERROR_OVERFLOW;
+    }
+
+    if (rc != POCKET_OK) {
+        /* Decompression failed: restore state */
+        (void)memcpy(decomp, &saved_decomp, sizeof(*decomp));
+        decomp->mask_synced = 0U;
+
+        /* Record 0x01 in status ring */
+        decomp->received_status_ring[decomp->received_status_index] = 0x01U;
+        decomp->received_status_index = (decomp->received_status_index + 1U) % POCKET_MAX_VT_HISTORY;
+        if (decomp->received_status_count < POCKET_MAX_VT_HISTORY) {
+            decomp->received_status_count++;
+        }
+
+        if (result != NULL) {
+            result->status = 0x01U;
+            result->Vt = 0U;
+            result->ft = 0U;
+            result->rt = 0U;
+        }
+        return rc;
+    }
+
+    /* Decompression succeeded — evaluate accuracy guarantee decision tree */
+    uint8_t mask_inconsistent_detected = ((decomp->mask_synced != 0U) &&
+                                          (decomp->mask_inconsistent != 0U)) ? 1U : 0U;
+    uint8_t count_f_mismatch_detected = (decomp->count_f_mismatch != 0U) ? 1U : 0U;
+
+    uint8_t guaranteed;
+    if (mask_inconsistent_detected != 0U) {
+        guaranteed = 0U;
+    } else if (count_f_mismatch_detected != 0U) {
+        guaranteed = 0U;
+    } else if (flags.rt == 1U) {
+        /* Reference packet: guaranteed if mask is synced or ft=1 resynchronizes */
+        if ((decomp->mask_synced != 0U) || (flags.ft == 1U)) {
+            guaranteed = 1U;
+        } else {
+            guaranteed = 0U;
+        }
+    } else {
+        /* Non-reference packet: check preceding Vt received packets.
+         * Skip lost packets (0x02) in the window. */
+        guaranteed = 1U;
+        if (flags.Vt > 0U) {
+            size_t checked = 0U;
+            /* Walk backwards through the ring buffer (before current entry) */
+            size_t ring_walk = decomp->received_status_count;
+            size_t idx = (decomp->received_status_index + POCKET_MAX_VT_HISTORY - 1U) % POCKET_MAX_VT_HISTORY;
+
+            while ((checked < (size_t)flags.Vt) && (ring_walk > 0U)) {
+                uint8_t st = decomp->received_status_ring[idx];
+                if (st == 0x02U) {
+                    /* Skip lost packets */
+                    idx = (idx + POCKET_MAX_VT_HISTORY - 1U) % POCKET_MAX_VT_HISTORY;
+                    ring_walk--;
+                    continue;
+                }
+                if (st != 0x00U) {
+                    guaranteed = 0U;
+                    break;
+                }
+                checked++;
+                idx = (idx + POCKET_MAX_VT_HISTORY - 1U) % POCKET_MAX_VT_HISTORY;
+                ring_walk--;
+            }
+            /* If we checked fewer than Vt received packets because history
+             * is too short, trust the guarantee (early packets are reliable). */
+        }
+    }
+
+    /* Apply state decisions based on guarantee result */
+    uint8_t out_status;
+    int ret;
+
+    if (guaranteed != 0U) {
+        out_status = 0x00U;
+        ret = POCKET_OK;
+
+        /* ft=1 resynchronizes the mask */
+        if (flags.ft == 1U) {
+            decomp->mask_synced = 1U;
+        }
+    } else if (mask_inconsistent_detected != 0U) {
+        /* Mask inconsistency while synced: restore state, clear sync */
+        (void)memcpy(decomp, &saved_decomp, sizeof(*decomp));
+        decomp->mask_synced = 0U;
+        out_status = 0x01U;
+        ret = POCKET_STATUS_UNGUARANTEED;
+    } else if (count_f_mismatch_detected != 0U) {
+        /* COUNT(F) mismatch: keep state (ft=1 still syncs mask) */
+        out_status = 0x01U;
+        ret = POCKET_STATUS_UNGUARANTEED;
+        if (flags.ft == 1U) {
+            decomp->mask_synced = 1U;
+        }
+    } else {
+        /* Unguaranteed for other reasons: restore state, clear sync */
+        (void)memcpy(decomp, &saved_decomp, sizeof(*decomp));
+        decomp->mask_synced = 0U;
+        out_status = 0x01U;
+        ret = POCKET_STATUS_UNGUARANTEED;
+    }
+
+    /* Record status in ring buffer */
+    decomp->received_status_ring[decomp->received_status_index] = out_status;
+    decomp->received_status_index = (decomp->received_status_index + 1U) % POCKET_MAX_VT_HISTORY;
+    if (decomp->received_status_count < POCKET_MAX_VT_HISTORY) {
+        decomp->received_status_count++;
+    }
+
+    /* Populate result struct if requested */
+    if (result != NULL) {
+        result->status = out_status;
+        result->Vt = flags.Vt;
+        result->ft = flags.ft;
+        result->rt = flags.rt;
+    }
+
+    return ret;
+}
+
+
+/**
+ * @brief Skip COUNT values in an RLE sequence until the terminator.
+ *
+ * Reads and discards COUNT values from the reader until a terminator
+ * (COUNT value 0) is found. Returns the hamming weight (number of
+ * non-terminator values decoded) via output parameter.
+ *
+ * @param[in,out] reader         Bit reader
+ * @param[out]    hamming_weight Number of non-terminator COUNTs decoded
+ * @return POCKET_OK on success, error code on decode failure
+ */
+static int skip_rle_sequence(bitreader_t *reader, uint32_t *hamming_weight) {
+    uint32_t hw = 0U;
+    uint32_t count_val = 0U;
+    int rc = pocket_count_decode(reader, &count_val);
+
+    while ((rc == POCKET_OK) && (count_val != 0U)) {
+        hw++;
+        rc = pocket_count_decode(reader, &count_val);
+    }
+
+    if (rc == POCKET_OK) {
+        *hamming_weight = hw;
+    }
+
+    return rc;
+}
+
+
+int pocket_discover_packet_length(
+    const uint8_t *data,
+    size_t num_bits,
+    uint32_t *packet_length
+) {
+    if ((data == NULL) || (packet_length == NULL)) {
+        return POCKET_ERROR_INVALID_ARG;
+    }
+
+    if (num_bits == 0U) {
+        return POCKET_ERROR_INVALID_ARG;
+    }
+
+    /* Default: not discoverable from this packet */
+    *packet_length = 0U;
+
+    bitreader_t reader;
+    bitreader_init(&reader, data, num_bits);
+
+    /* 1. Skip RLE(Xt) — self-delimiting, doesn't need F */
+    uint32_t H_Xt = 0U;
+    if (skip_rle_sequence(&reader, &H_Xt) != POCKET_OK) {
+        return POCKET_OK;  /* Parse error — not discoverable */
+    }
+
+    /* 2. BIT4(Vt) — 4 bits */
+    if (bitreader_remaining(&reader) < 4U) {
+        return POCKET_OK;
+    }
+    uint32_t Vt = bitreader_read_bits(&reader, 4U);
+
+    /* 3. If H(Xt) > 0 and Vt > 0: read et, then kt+ct only if et==1 */
+    if ((H_Xt > 0U) && (Vt > 0U)) {
+        int et = bitreader_read_bit(&reader);
+        if (et < 0) {
+            return POCKET_OK;
+        }
+        if (et == 1) {
+            /* kt: H(Xt) bits — skip them */
+            if (bitreader_remaining(&reader) < (size_t)H_Xt) {
+                return POCKET_OK;
+            }
+            for (uint32_t i = 0U; i < H_Xt; i++) {
+                (void)bitreader_read_bit(&reader);
+            }
+            /* ct: 1 bit */
+            if (bitreader_read_bit(&reader) < 0) {
+                return POCKET_OK;
+            }
+        }
+        /* et==0: all changes are negative — no kt or ct in bitstream */
+    }
+    /* If H(Xt) > 0 and Vt == 0: no et/kt/ct (toggle mode) */
+
+    /* 4. dt — 1 bit */
+    int dt = bitreader_read_bit(&reader);
+    if (dt < 0) {
+        return POCKET_OK;
+    }
+
+    if (dt == 1) {
+        /* dt=1 means ft=0 and rt=0 — can't discover F */
+        return POCKET_OK;
+    }
+
+    /* 5. dt=0: read ft flag */
+    int ft = bitreader_read_bit(&reader);
+    if (ft < 0) {
+        return POCKET_OK;
+    }
+
+    if (ft == 1) {
+        /* Full mask follows as RLE — skip it */
+        uint32_t mask_hw = 0U;
+        if (skip_rle_sequence(&reader, &mask_hw) != POCKET_OK) {
+            return POCKET_OK;
+        }
+    }
+
+    /* Read rt flag */
+    int rt = bitreader_read_bit(&reader);
+    if (rt < 0) {
+        return POCKET_OK;
+    }
+
+    if (rt != 1) {
+        /* Not a reference packet — can't discover F */
+        return POCKET_OK;
+    }
+
+    /* 6. rt=1: read COUNT(F) */
+    uint32_t discovered_F = 0U;
+    int rc = pocket_count_decode(&reader, &discovered_F);
+    if ((rc != POCKET_OK) || (discovered_F == 0U)) {
+        return POCKET_OK;
+    }
+
+    /* Validate: enough bits remaining for I_t data */
+    if (bitreader_remaining(&reader) < (size_t)discovered_F) {
+        return POCKET_OK;
+    }
+
+    /* Validate: after I_t, at most 7 padding bits should remain */
+    if ((bitreader_remaining(&reader) - (size_t)discovered_F) >= 8U) {
+        return POCKET_OK;
+    }
+
+    *packet_length = discovered_F;
     return POCKET_OK;
 }
 

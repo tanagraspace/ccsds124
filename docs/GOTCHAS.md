@@ -1350,7 +1350,15 @@ bitvector_set_bit(result, bit_position, 1);
 
 When the decoder doesn't know the encoder's initial mask (`large_m_0`), it starts with an all-zero mask. This creates a mask desynchronization that persists until a full mask transmission (`ft=1`) is received. A naive decoder that ignores desynchronization will produce too many "guaranteed" outputs (status `0x00`) for packets that the reference decoder correctly marks as unguaranteed (`0x01`).
 
+### Library Support
+
+The C implementation internalizes all accuracy guarantee logic in `pocket_decompress_packet_checked()`, which handles mask synchronization tracking, status history, state save/restore, and the guarantee decision tree. This means implementations using this function get correct guarantee behavior automatically — the cross-validation decoder harness is reduced to thin I/O glue.
+
+The function returns `POCKET_OK` for guaranteed packets, `POCKET_STATUS_UNGUARANTEED` for unguaranteed packets (with state restored), or a negative error code. An optional `pocket_decompress_result_t` struct provides Vt, ft, and rt values.
+
 ### Key Behaviors the Decoder Must Implement
+
+These behaviors are handled automatically by `pocket_decompress_packet_checked()` in the C library. Other language implementations must replicate this logic:
 
 **1. Mask synchronization tracking (`mask_synced`):**
 The decoder must track whether its mask has been synchronized with the encoder's via a full mask transmission (`ft=1`). Start with `mask_synced=0`. Set to `1` only when a guaranteed (`0x00`) packet with `ft=1` is successfully decoded. Reset to `0` on decompression failure, packet loss, or mask inconsistency detection.

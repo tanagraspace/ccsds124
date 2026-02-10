@@ -139,7 +139,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         working-directory: implementations/cpp/build
         run: |
-          sudo apt-get install -y valgrind
+          sudo apt-get update && sudo apt-get install -y valgrind
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Valgrind Memory Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

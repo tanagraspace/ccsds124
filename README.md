@@ -36,12 +36,12 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 
 | Language | Version | Status | Target | Location |
 |----------|---------|--------|--------|----------|
-| C | 1.0.0 | Complete | Embedded / Desktop / Server | [`implementations/c/`](implementations/c/) |
-| C++ | 1.0.0 | Complete | Embedded / Desktop / Server | [`implementations/cpp/`](implementations/cpp/) |
-| Python | 1.0.0 | Complete | Embedded Linux / Desktop / Server | [`implementations/python/`](implementations/python/) |
-| Go | 1.0.0 | Complete | Embedded Linux / Desktop / Server | [`implementations/go/`](implementations/go/) |
-| Rust | 1.0.0 | Complete | Embedded Linux / Desktop / Server | [`implementations/rust/`](implementations/rust/) |
-| Java | 1.0.0 | Complete | Embedded Linux / Desktop / Server | [`implementations/java/`](implementations/java/) |
+| C | 1.0.0 | Ongoing cross-validation | Embedded / Desktop / Server | [`implementations/c/`](implementations/c/) |
+| C++ | 1.0.0 | Ongoing cross-validation | Embedded / Desktop / Server | [`implementations/cpp/`](implementations/cpp/) |
+| Python | 1.0.0 | Ongoing cross-validation | Embedded Linux / Desktop / Server | [`implementations/python/`](implementations/python/) |
+| Go | 1.0.0 | Ongoing cross-validation | Embedded Linux / Desktop / Server | [`implementations/go/`](implementations/go/) |
+| Rust | 1.0.0 | Ongoing cross-validation | Embedded Linux / Desktop / Server | [`implementations/rust/`](implementations/rust/) |
+| Java | 1.0.0 | Ongoing cross-validation | Embedded Linux / Desktop / Server | [`implementations/java/`](implementations/java/) |
 
 ### Which implementation should I use?
 

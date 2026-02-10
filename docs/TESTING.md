@@ -17,7 +17,7 @@ docker-compose build c && docker-compose run c sh -c "make clean && make test"
 
 **Method**: Test individual modules with known inputs and expected outputs.
 
-**Source**: [test_bitvector.c](../implementations/c/tests/test_bitvector.c), [test_bitbuffer.c](../implementations/c/tests/test_bitbuffer.c), [test_compress.c](../implementations/c/tests/test_compress.c), [test_decompress.c](../implementations/c/tests/test_decompress.c), [test_encode.c](../implementations/c/tests/test_encode.c), [test_mask.c](../implementations/c/tests/test_mask.c)
+**Source**: [test_bitvector.c](../implementations/c/tests/test_bitvector.c), [test_bitbuffer.c](../implementations/c/tests/test_bitbuffer.c), [test_compress.c](../implementations/c/tests/test_compress.c), [test_decompress.c](../implementations/c/tests/test_decompress.c), [test_decompress_checked.c](../implementations/c/tests/test_decompress_checked.c), [test_discover.c](../implementations/c/tests/test_discover.c), [test_encode.c](../implementations/c/tests/test_encode.c), [test_mask.c](../implementations/c/tests/test_mask.c)
 
 **Run**:
 ```bash
@@ -30,12 +30,14 @@ docker-compose run c make test
 |--------|-------|-------------|
 | Bit Vector | 34 | Init, get/set, XOR/OR/AND/NOT, shift, reverse, hamming weight, MSB-aligned NOT |
 | Bit Buffer | 14 | Init, append bits, append bitvector, to_bytes, overflow |
-| Compression | 24 | Compressor init, packet compression, CCSDS helpers, eₜ/kₜ/cₜ, D₀ zero initialization |
-| Decompression | 54 | Bit reader, COUNT/RLE decode, packet decompression, error paths |
+| Compression | 25 | Compressor init, packet compression, CCSDS helpers, eₜ/kₜ/cₜ, D₀ zero initialization, manual mode |
+| Decompression | 57 | Bit reader (including byte alignment), COUNT/RLE decode, packet decompression, error paths |
+| Checked Decompression | 69 | Accuracy guarantee decision tree, mask sync, status ring (including 0x02 skip), state save/restore |
+| Packet Length Discovery | 26 | Reference packet discovery, various F values, non-discoverable packets, et=1/kt path, edge cases |
 | Encoding | 16 | COUNT encode, RLE encode, bit extraction |
 | Mask | 12 | Update build/mask vectors, compute change vector |
 
-**Total**: 154 unit tests passed
+**Total**: 253 unit tests passed
 
 ## Malformed Input Tests
 

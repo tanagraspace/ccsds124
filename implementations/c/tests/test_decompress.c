@@ -573,6 +573,36 @@ static void test_decompressor_init_with_mask(void) {
 }
 
 /* ============================================================================
+ * Bit Reader Alignment Tests
+ * ============================================================================ */
+
+/**
+ * @brief Test bitreader_align_byte() aligns to next byte boundary.
+ */
+static void test_bitreader_align_byte(void) {
+    uint8_t data[2] = {0xFF, 0xAA};
+    bitreader_t reader;
+    bitreader_init(&reader, data, 16U);
+
+    /* Read 3 bits to get mid-byte position */
+    (void)bitreader_read_bit(&reader);
+    (void)bitreader_read_bit(&reader);
+    (void)bitreader_read_bit(&reader);
+    TEST_ASSERT(bitreader_position(&reader) == 3U,
+                "test_bitreader_align_byte: position is 3 after reading 3 bits");
+
+    /* Align to next byte boundary */
+    bitreader_align_byte(&reader);
+    TEST_ASSERT(bitreader_position(&reader) == 8U,
+                "test_bitreader_align_byte: position is 8 after align");
+
+    /* Already at byte boundary — should not move */
+    bitreader_align_byte(&reader);
+    TEST_ASSERT(bitreader_position(&reader) == 8U,
+                "test_bitreader_align_byte: position unchanged when already aligned");
+}
+
+/* ============================================================================
  * Main Test Runner
  * ============================================================================ */
 
@@ -584,6 +614,7 @@ int main(void) {
     test_bitreader_init();
     test_bitreader_read_bit();
     test_bitreader_read_bits();
+    test_bitreader_align_byte();
 
     printf("\nCOUNT Decoding Tests:\n");
     test_count_decode_1();

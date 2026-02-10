@@ -147,6 +147,8 @@ implementations/c/
 ### Low-Level
 
 - `pocket_compress_packet()` / `pocket_decompress_packet()` - Single packet
+- `pocket_decompress_packet_checked()` - Single packet with accuracy guarantee tracking
+- `pocket_discover_packet_length()` - Discover F from compressed packet bitstream
 - `pocket_count_encode()` / `pocket_count_decode()` - Counter encoding (Eq. 9)
 - `pocket_rle_encode()` / `pocket_rle_decode()` - Run-length encoding (Eq. 10)
 - `pocket_bit_extract()` / `pocket_bit_insert()` - Bit extraction (Eq. 11)

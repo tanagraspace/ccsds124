@@ -9,8 +9,8 @@ services:
         target: /app/ccsds124_full_crossvalidation
         read_only: true
       - type: bind
-        source: ./implementations/c/build
-        target: /app/implementations/c/build
+        source: ./implementations/c/build/crossvalidation-results
+        target: /app/implementations/c/build/crossvalidation-results
         bind:
           create_host_path: true
 

@@ -57,7 +57,7 @@ jobs:
       - name: Run with valgrind
         working-directory: implementations/c
         run: |
-          sudo apt-get install -y valgrind
+          sudo apt-get update && sudo apt-get install -y valgrind
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Valgrind Memory Check (Malformed)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -127,7 +127,7 @@ jobs:
       - name: Run with valgrind
         working-directory: implementations/c
         run: |
-          sudo apt-get install -y valgrind
+          sudo apt-get update && sudo apt-get install -y valgrind
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Valgrind Memory Check (Robustness)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

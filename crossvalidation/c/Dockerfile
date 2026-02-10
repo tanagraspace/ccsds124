@@ -19,5 +19,5 @@ COPY crossvalidation/file_list.csv ./crossvalidation/file_list.csv
 # Build the crossvalidation binaries (but don't run - data mounted at runtime)
 RUN make build/crossvalidation_encoder build/crossvalidation_decoder
 
-ENTRYPOINT ["make", "crossvalidation", "CROSSVAL_DATA=/app/ccsds124_full_crossvalidation"]
+ENTRYPOINT ["make", "crossvalidation", "CROSSVAL_DATA=/app/ccsds124_full_crossvalidation", "CROSSVAL_RESULTS=build/crossvalidation-results/crossvalidation-results.txt"]
 CMD []

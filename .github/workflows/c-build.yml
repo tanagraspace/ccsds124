@@ -93,14 +93,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         working-directory: implementations/c
         run: |
-          sudo apt-get install -y cppcheck
+          sudo apt-get update && sudo apt-get install -y cppcheck
           make misra
 
       - name: Run valgrind memory check
         if: matrix.os == 'ubuntu-latest'
         working-directory: implementations/c
         run: |
-          sudo apt-get install -y valgrind
+          sudo apt-get update && sudo apt-get install -y valgrind
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Valgrind Memory Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

@@ -36,9 +36,18 @@ static void write_be32(uint8_t *buf, uint32_t val) {
 /**
  * Walk through the decoder input file trying each received packet
  * until F is discovered from a reference packet (rt=1).
+ *
+ * Two-tier: a fully-validated reference packet (strict discovery) wins.
+ * If no packet validates strictly, fall back to the first truncated
+ * reference packet's signaled COUNT(F) — per the cross-validation rules
+ * a signaled length is to be considered even when the bitstream runs out
+ * before the full I_t ("stored as the actual packet length if it is
+ * valid and was not known before").
  */
-static uint32_t discover_F_from_file(const uint8_t *file_data, size_t file_size) {
+static uint32_t discover_F_from_file(const uint8_t *file_data, size_t file_size,
+                                     uint32_t *weak_F_out) {
     size_t pos = 0;
+    uint32_t weak_F = 0;
 
     while (pos < file_size) {
         uint8_t reception_byte = file_data[pos];
@@ -51,32 +60,41 @@ static uint32_t discover_F_from_file(const uint8_t *file_data, size_t file_size)
 
         /* Type 1: received packet */
         if (pos + 4U > file_size) {
-            return 0; /* Truncated */
+            break; /* Truncated */
         }
 
         uint32_t length_bits = read_be32(&file_data[pos]);
         pos += 4U;
 
         if (length_bits == 0U || length_bits > MAX_COMPRESSED_BITS) {
-            return 0; /* Invalid length — stop processing */
+            break; /* Invalid length — stop processing */
         }
 
         uint32_t length_bytes = (length_bits + 7U) / 8U;
         if (pos + length_bytes > file_size) {
-            return 0; /* Truncated */
+            break; /* Truncated */
         }
 
         /* Try to discover F from this packet's bitstream */
         uint32_t F = 0;
-        pocket_discover_packet_length(&file_data[pos], (size_t)length_bits, &F);
-        if (F > 0U) {
-            return F; /* Found F */
+        int rc = pocket_discover_packet_length(&file_data[pos], (size_t)length_bits, &F);
+        if (rc == POCKET_OK && F > 0U) {
+            return F; /* Strict discovery — found F */
+        }
+        if (rc == POCKET_STATUS_TRUNCATED_LENGTH && F > 0U && weak_F == 0U) {
+            weak_F = F; /* Remember first signaled length; keep scanning */
         }
 
         /* F not found in this packet — try next received packet */
         pos += length_bytes;
     }
 
+    /* No fully-validated reference packet: report the first signaled
+     * length (if any) for the output trailer only — it is not reliable
+     * enough to decode with. */
+    if (weak_F_out != NULL) {
+        *weak_F_out = weak_F;
+    }
     return 0;
 }
 
@@ -147,11 +165,12 @@ int main(int argc, char *argv[]) {
 
     /* Discover F via pre-scan */
     uint32_t discovered_F = 0;
+    uint32_t weak_F = 0;
     int F_known = 0;
     pocket_decompressor_t decomp;
 
     if (file_data != NULL && file_size > 0) {
-        discovered_F = discover_F_from_file(file_data, (size_t)file_size);
+        discovered_F = discover_F_from_file(file_data, (size_t)file_size, &weak_F);
         if (discovered_F > 0U && discovered_F <= POCKET_MAX_PACKET_LENGTH) {
             F_known = 1;
             pocket_decompressor_init(&decomp, (size_t)discovered_F, NULL, 0);
@@ -238,10 +257,12 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    /* Append final 32-bit BE packet length (0 if unknown) */
+    /* Append final 32-bit BE packet length (0 if unknown). A signaled
+     * length from a truncated reference packet counts as known for the
+     * trailer even though it is not reliable enough to decode with. */
     {
         uint8_t f_bytes[4];
-        write_be32(f_bytes, F_known ? discovered_F : 0U);
+        write_be32(f_bytes, F_known ? discovered_F : weak_F);
         append_output(&output_data, &output_size, &output_cap, f_bytes, 4);
     }
 

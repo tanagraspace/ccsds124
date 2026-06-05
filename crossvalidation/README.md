@@ -8,7 +8,7 @@ Cross-validation against the comprehensive test vector suite produced by the Uni
 crossvalidation/
   README.md                 # This file
   file_list.csv             # Canonical manifest (expected sizes + SHA-256 hashes)
-  known-failures.txt        # Documented-gap baseline (2,041 decoder vectors)
+  known-failures.txt        # Documented-gap baseline (1,863 decoder vectors)
   run_crossvalidation.sh    # Shared runner script (parameterized for binary paths)
   c/                        # C implementation harness
   cpp/                      # C++ implementation harness (TODO)
@@ -65,7 +65,7 @@ ENCODER_BIN=./build/encoder DECODER_BIN=./build/decoder bash crossvalidation/run
 
 ## Known-Failures Baseline
 
-The C decoder has **2,041 documented gaps** in the accuracy guarantee accept/reject logic (see [docs/TESTING.md](../docs/TESTING.md#known-gaps-2041-decoder-vectors) for the full analysis). These vector names are recorded in `known-failures.txt`. The runner's verdict is:
+The C decoder has **1,863 documented gaps** in the accuracy guarantee accept/reject logic (see [docs/TESTING.md](../docs/TESTING.md#known-gaps-1863-decoder-vectors) for the full analysis). These vector names are recorded in `known-failures.txt`. The runner's verdict is:
 
 - **PASS** — zero failures
 - **PASS (matches known-failures baseline)** — every failure is listed in the baseline; any baseline entries that now pass are reported so the file can be trimmed

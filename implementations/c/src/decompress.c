@@ -774,8 +774,13 @@ int pocket_decompress_packet_checked(
     pocket_decompress_flags_t flags;
     int rc = pocket_decompress_packet_internal(decomp, &reader, output, &flags);
 
-    /* Validate: only padding bits should remain (at most 7) (v1.10) */
-    if ((rc == POCKET_OK) && (bitreader_remaining(&reader) >= 8U)) {
+    /* Validate: only padding bits should remain (at most 7) (v1.10).
+     * Reference packets (rt=1) are exempt: they are self-delimiting via
+     * COUNT(F), and per the cross-validation rules a Received Packet
+     * Length larger than the bits actually needed means the remainder is
+     * simply ignored. */
+    if ((rc == POCKET_OK) && (flags.rt == 0U) &&
+        (bitreader_remaining(&reader) >= 8U)) {
         rc = POCKET_ERROR_OVERFLOW;
     }
 
@@ -911,18 +916,35 @@ int pocket_decompress_packet_checked(
  * @param[out]    hamming_weight Number of non-terminator COUNTs decoded
  * @return POCKET_OK on success, error code on decode failure
  */
-static int skip_rle_sequence(bitreader_t *reader, uint32_t *hamming_weight) {
+/**
+ * @brief Skip an RLE-encoded sequence, tracking hamming weight and span.
+ *
+ * The span is the sum of all RLE deltas, which equals one plus the highest
+ * '1' position encoded. An RLE sequence for a vector of length F must have
+ * span <= F — a larger span means the h or q vector is inconsistent with F
+ * (cross-validation rule v1.6).
+ *
+ * @param[in,out] reader         Bit reader
+ * @param[out]    hamming_weight Number of non-terminator COUNTs decoded
+ * @param[out]    span           Sum of decoded deltas (1 + highest position)
+ * @return POCKET_OK on success, error code on decode failure
+ */
+static int skip_rle_sequence_span(bitreader_t *reader, uint32_t *hamming_weight,
+                                  uint64_t *span) {
     uint32_t hw = 0U;
+    uint64_t total = 0U;
     uint32_t count_val = 0U;
     int rc = pocket_count_decode(reader, &count_val);
 
     while ((rc == POCKET_OK) && (count_val != 0U)) {
         hw++;
+        total += (uint64_t)count_val;
         rc = pocket_count_decode(reader, &count_val);
     }
 
     if (rc == POCKET_OK) {
         *hamming_weight = hw;
+        *span = total;
     }
 
     return rc;
@@ -950,7 +972,8 @@ int pocket_discover_packet_length(
 
     /* 1. Skip RLE(Xt) — self-delimiting, doesn't need F */
     uint32_t H_Xt = 0U;
-    if (skip_rle_sequence(&reader, &H_Xt) != POCKET_OK) {
+    uint64_t Xt_span = 0U;
+    if (skip_rle_sequence_span(&reader, &H_Xt, &Xt_span) != POCKET_OK) {
         return POCKET_OK;  /* Parse error — not discoverable */
     }
 
@@ -1000,10 +1023,11 @@ int pocket_discover_packet_length(
         return POCKET_OK;
     }
 
+    uint64_t mask_span = 0U;
     if (ft == 1) {
         /* Full mask follows as RLE — skip it */
         uint32_t mask_hw = 0U;
-        if (skip_rle_sequence(&reader, &mask_hw) != POCKET_OK) {
+        if (skip_rle_sequence_span(&reader, &mask_hw, &mask_span) != POCKET_OK) {
             return POCKET_OK;
         }
     }
@@ -1026,16 +1050,31 @@ int pocket_discover_packet_length(
         return POCKET_OK;
     }
 
-    /* Validate: enough bits remaining for I_t data */
+    /* Validity (cross-validation rule v1.6): the signaled length must be
+     * within the standard's range (1..65535), and the packet's own h and q
+     * vectors must be consistent with it — an RLE span exceeding F encodes
+     * positions beyond the packet, making the signaled length
+     * untrustworthy. */
+    if ((discovered_F > 65535U) ||
+        (Xt_span > (uint64_t)discovered_F) ||
+        (mask_span > (uint64_t)discovered_F)) {
+        return POCKET_OK;
+    }
+
+    /* Truncated reference packet: the bitstream ran out after COUNT(F) but
+     * before the full I_t. Per the cross-validation rules the signaled
+     * length is still to be considered ("stored as the actual packet length
+     * if it is valid and was not known before"), but it is weaker evidence
+     * than a fully-validated reference packet — report it distinctly so
+     * callers can prefer a strict discovery elsewhere in the stream. */
     if (bitreader_remaining(&reader) < (size_t)discovered_F) {
-        return POCKET_OK;
+        *packet_length = discovered_F;
+        return POCKET_STATUS_TRUNCATED_LENGTH;
     }
 
-    /* Validate: after I_t, at most 7 padding bits should remain */
-    if ((bitreader_remaining(&reader) - (size_t)discovered_F) >= 8U) {
-        return POCKET_OK;
-    }
-
+    /* Excess bits after I_t are ignored: reference packets are
+     * self-delimiting via COUNT(F), and a Received Packet Length larger
+     * than the bits actually needed means the remainder is ignored. */
     *packet_length = discovered_F;
     return POCKET_OK;
 }

@@ -11,12 +11,14 @@ crossvalidation/
   known-failures.txt        # Documented-gap baseline (1,863 decoder vectors)
   run_crossvalidation.sh    # Shared runner script (parameterized for binary paths)
   c/                        # C implementation harness
-  cpp/                      # C++ implementation harness (TODO)
-  go/                       # Go implementation harness (TODO)
-  rust/                     # Rust implementation harness (TODO)
-  java/                     # Java implementation harness (TODO)
+  cpp/                      # C++ implementation harness (TODO: #93)
+  go/                       # Go implementation harness (TODO: #93)
+  rust/                     # Rust implementation harness (TODO: #93)
+  java/                     # Java implementation harness (TODO: #93)
   sandbox/                  # Original ESA reference code harness
 ```
+
+Harnesses for the other languages are tracked in [#93](https://github.com/tanagraspace/pocket-plus/issues/93) — deliberately deferred until the C accept/reject ruleset is finalized ([#89](https://github.com/tanagraspace/pocket-plus/issues/89)), with decoder bitstream hardening ([#92](https://github.com/tanagraspace/pocket-plus/issues/92)) as a prerequisite.
 
 ## Test Vectors
 
@@ -75,7 +77,7 @@ When a known failure is fixed, remove its line from `known-failures.txt`. Never 
 
 ## Prerequisites
 
-The cross-validation test vector data is **not committed** to this repository. You must obtain it separately:
+The cross-validation test vector data is **not committed** to this repository. You must obtain it separately from ESA's OPS-SAT mission control team:
 
 ```bash
 # From the project root:

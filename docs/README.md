@@ -9,6 +9,7 @@ Shared documentation for all POCKET+ implementations.
 - [Gotchas](GOTCHAS.md) - Critical pitfalls (read this first!)
 - [Benchmark](BENCHMARK.md) - Performance comparison across implementations
 - [Testing](TESTING.md) - Test report and validation procedures
+- [Cross-Validation](../crossvalidation/README.md) - CCSDS 124.0-B-1 cross-validation suite, runner, and known-failures baseline
 - [Test Vectors](../test-vectors/README.md) - Validation data
 - [Test Vector Generator](../test-vector-generator/README.md) - Deterministic test vector generation
 

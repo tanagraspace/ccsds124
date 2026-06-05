@@ -22,10 +22,10 @@ pocket-plus/
 │   ├── run_crossvalidation.sh          # Shared runner (parameterized for binary paths)
 │   ├── c/                              # C harness (encoder + decoder + Dockerfile)
 │   ├── sandbox/                        # ESA reference code harness
-│   ├── cpp/                            # C++ harness (TODO)
-│   ├── go/                             # Go harness (TODO)
-│   ├── rust/                           # Rust harness (TODO)
-│   └── java/                           # Java harness (TODO)
+│   ├── cpp/                            # C++ harness (TODO: #93)
+│   ├── go/                             # Go harness (TODO: #93)
+│   ├── rust/                           # Rust harness (TODO: #93)
+│   └── java/                           # Java harness (TODO: #93)
 ├── docs/           # Shared documentation
 └── test-vectors/   # Shared test data
 ```
@@ -177,9 +177,11 @@ The verdict honors the known-failures baseline (`crossvalidation/known-failures.
 3. Add a `<lang>-crossvalidation` service to `docker-compose.yml`
 4. The shared `run_crossvalidation.sh` is language-agnostic — just point `ENCODER_BIN` and `DECODER_BIN` at the compiled binaries
 
+Harness ports for C++/Python/Go/Rust/Java are tracked in issue #93 (blocked on #89; decoder hardening prerequisite in #92) — don't start them without checking those issues first.
+
 ### Test Data
 
-The cross-validation test vectors are **not committed**. Download and extract them at the project root:
+The cross-validation test vectors are **not committed**. Obtain them from ESA's OPS-SAT mission control team and extract them at the project root:
 
 ```bash
 unzip ccsds124_full_crossvalidation_20220309.zip -d ccsds124_full_crossvalidation

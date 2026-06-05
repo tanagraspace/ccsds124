@@ -8,6 +8,7 @@ Cross-validation against the comprehensive test vector suite produced by the Uni
 crossvalidation/
   README.md                 # This file
   file_list.csv             # Canonical manifest (expected sizes + SHA-256 hashes)
+  known-failures.txt        # Documented-gap baseline (2,041 decoder vectors)
   run_crossvalidation.sh    # Shared runner script (parameterized for binary paths)
   c/                        # C implementation harness
   cpp/                      # C++ implementation harness (TODO)
@@ -53,9 +54,24 @@ The shared `run_crossvalidation.sh` script requires two environment variables:
 - `ENCODER_BIN`: Path to the encoder harness binary
 - `DECODER_BIN`: Path to the decoder harness binary
 
+Optional:
+
+- `RESULTS_FILE`: Path to the results output file (default: `crossvalidation-results.txt` next to the script)
+- `KNOWN_FAILURES`: Path to the known-failures baseline (default: `known-failures.txt` next to the script)
+
 ```bash
 ENCODER_BIN=./build/encoder DECODER_BIN=./build/decoder bash crossvalidation/run_crossvalidation.sh [encoder|decoder|both] [data_dir]
 ```
+
+## Known-Failures Baseline
+
+The C decoder has **2,041 documented gaps** in the accuracy guarantee accept/reject logic (see [docs/TESTING.md](../docs/TESTING.md#known-gaps-2041-decoder-vectors) for the full analysis). These vector names are recorded in `known-failures.txt`. The runner's verdict is:
+
+- **PASS** — zero failures
+- **PASS (matches known-failures baseline)** — every failure is listed in the baseline; any baseline entries that now pass are reported so the file can be trimmed
+- **FAIL** — one or more failures are *not* in the baseline (a regression or new failure)
+
+When a known failure is fixed, remove its line from `known-failures.txt`. Never add entries without investigating the cause.
 
 ## Prerequisites
 

@@ -55,6 +55,7 @@
  * @{
  */
 #define POCKET_STATUS_UNGUARANTEED 1  /**< Decompressed successfully but accuracy not guaranteed */
+#define POCKET_STATUS_TRUNCATED_LENGTH 2 /**< Packet length signaled by a truncated reference packet (weak discovery) */
 /** @} */
 
 /**

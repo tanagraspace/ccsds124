@@ -1380,8 +1380,16 @@ On decompression failure or unguaranteed status: restore the decompressor state 
 
 ### 📊 Impact
 
-- **Cross-validation improvement:** Decoder pass count increased from 12,315 to 14,924 (of 16,965 vectors)
-- **Remaining failures (2,041):** Fuzzed packets with corrupted `COUNT(F)` fields and complex mask synchronization edge cases where the reference implementation handles specific corruption patterns differently
+- **Cross-validation improvement:** Decoder pass count increased from 12,315 to 14,924, then to 15,102 with additional reverse-engineered rules (of 16,965 vectors)
+- **Remaining failures (1,863):** Fuzzed packets with corrupted `COUNT(F)` fields and complex mask synchronization edge cases where the reference implementation handles specific corruption patterns differently — see TESTING.md "Known Gaps" for the full categorization
+
+### Additional Reverse-Engineered Rules (June 2026)
+
+Three more reference behaviors were identified from the test vectors and implemented in `pocket_discover_packet_length()` and `pocket_decompress_packet_checked()`:
+
+1. **Truncated reference packets signal F:** `pocket_discover_packet_length()` returns `POCKET_STATUS_TRUNCATED_LENGTH` with the signaled length when the bitstream ends inside `I_t` — per the cross-validation rule that a decodable `COUNT(F)` "is to be considered" even from a packet that cannot be fully decoded. Harnesses report it in the output trailer when no fully-valid reference packet exists.
+2. **Signaled-length validity (v1.6):** a signaled `COUNT(F)` is only trusted when it is in range (1–65535) and the packet's own RLE spans fit within it (X_t span ≤ F, full-mask span ≤ F). Corrupt `COUNT(F)` values betray themselves by encoding bit positions beyond the signaled length.
+3. **Excess-bits tolerance for reference packets:** `rt=1` packets are self-delimiting via `COUNT(F)`, so excess trailing bits are ignored rather than rejected; `rt=0` packets keep the strict at-most-7-padding-bits rule (v1.10).
 
 ---
 

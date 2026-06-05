@@ -296,27 +296,38 @@ static void test_guaranteed_advances_state(void) {
  * ============================================================================ */
 
 /**
- * @brief Padding validation rejects packets with >= 8 remaining bits.
+ * @brief Padding validation rejects rt=0 packets with >= 8 remaining bits.
+ *
+ * Compressed (rt=0) packets must consume the whole bitstream (at most 7
+ * padding bits). Reference packets (rt=1) are exempt: they are
+ * self-delimiting via COUNT(F) and excess trailing bits are ignored per
+ * the cross-validation rules.
  */
 static void test_padding_validation(void) {
     size_t F = 16;
     uint8_t robustness = 0;
 
-    uint8_t input[][8] = {{0xAB, 0xCD}};
-    uint8_t compressed[1][256];
-    size_t bits[1], bytes[1];
-    compress_packets(F, robustness, input, 1, compressed, bits, bytes);
+    uint8_t input[][8] = {{0xAB, 0xCD}, {0xAB, 0xCD}};
+    uint8_t compressed[2][256];
+    size_t bits[2], bytes[2];
+    compress_packets(F, robustness, input, 2, compressed, bits, bytes);
 
     pocket_decompressor_t decomp;
     pocket_decompressor_init(&decomp, F, NULL, robustness);
 
-    /* Add 8 extra padding bits to the stream (>7 should be rejected) */
-    size_t padded_bits = bits[0] + 8;
     bitvector_t output;
     pocket_decompress_result_t result;
-    int rc = pocket_decompress_packet_checked(&decomp, compressed[0], padded_bits, &output, &result);
 
-    TEST_ASSERT(rc != POCKET_OK, "padding: rejects >= 8 remaining bits");
+    /* Packet 0 (init phase, rt=1): excess trailing bits are ignored */
+    int rc = pocket_decompress_packet_checked(&decomp, compressed[0], bits[0] + 8,
+                                              &output, &result);
+    TEST_ASSERT(rc == POCKET_OK, "padding: rt=1 tolerates excess bits");
+    TEST_ASSERT(result.rt == 1, "padding: first packet is a reference packet");
+
+    /* Packet 1 (rt=0, compressed): >= 8 remaining bits rejected */
+    rc = pocket_decompress_packet_checked(&decomp, compressed[1], bits[1] + 8,
+                                          &output, &result);
+    TEST_ASSERT(rc != POCKET_OK, "padding: rt=0 rejects >= 8 remaining bits");
 }
 
 /* ============================================================================

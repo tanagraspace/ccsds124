@@ -307,6 +307,40 @@ static void test_discover_with_robustness(void) {
     TEST_ASSERT(discovered == 16, "robustness: discovers F=16");
 }
 
+static void test_discover_truncated_reference(void) {
+    /* A reference packet cut short inside I_t still signals its length:
+     * COUNT(F) is decodable, so the signaled length is reported with
+     * POCKET_STATUS_TRUNCATED_LENGTH (weak discovery). */
+    uint8_t data[] = {0x55, 0xAA};
+    uint8_t compressed[256];
+    size_t bits, bytes;
+
+    int rc = compress_reference_packet(16, 0, data, compressed, &bits, &bytes);
+    TEST_ASSERT(rc == POCKET_OK, "trunc_ref: compression OK");
+
+    uint32_t discovered = 0;
+    rc = pocket_discover_packet_length(compressed, bits - 8, &discovered);
+    TEST_ASSERT(rc == POCKET_STATUS_TRUNCATED_LENGTH,
+                "trunc_ref: returns TRUNCATED_LENGTH");
+    TEST_ASSERT(discovered == 16, "trunc_ref: signaled F=16 reported");
+}
+
+static void test_discover_excess_bits(void) {
+    /* A reference packet with excess trailing bits is self-delimiting via
+     * COUNT(F): the remainder is ignored and discovery succeeds. */
+    uint8_t data[] = {0x55, 0xAA};
+    uint8_t compressed[256] = {0};
+    size_t bits, bytes;
+
+    int rc = compress_reference_packet(16, 0, data, compressed, &bits, &bytes);
+    TEST_ASSERT(rc == POCKET_OK, "excess: compression OK");
+
+    uint32_t discovered = 0;
+    rc = pocket_discover_packet_length(compressed, bits + 64, &discovered);
+    TEST_ASSERT(rc == POCKET_OK, "excess: returns POCKET_OK");
+    TEST_ASSERT(discovered == 16, "excess: discovers F=16 despite excess");
+}
+
 static void test_discover_rt1_without_ft(void) {
     /* Compress with rt=1 but ft=0 — should still discover F */
     pocket_compressor_t comp;
@@ -419,6 +453,8 @@ int main(void) {
     test_discover_with_robustness();
     test_discover_rt1_without_ft();
     test_discover_with_et1_kt_bits();
+    test_discover_truncated_reference();
+    test_discover_excess_bits();
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_total);
     return (tests_passed == tests_total) ? 0 : 1;

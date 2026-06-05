@@ -43,7 +43,7 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 | Rust | 1.0.0 | Validated² | Embedded Linux / Desktop / Server | [`implementations/rust/`](implementations/rust/) |
 | Java | 1.0.0 | Validated² | Embedded Linux / Desktop / Server | [`implementations/java/`](implementations/java/) |
 
-¹ Validated against the UAB CCSDS 124.0-B-1 cross-validation suite (24,900 vectors): encoder 100%, decoder 88% with [documented gaps](docs/TESTING.md#known-gaps-2041-decoder-vectors) in the accuracy guarantee logic for fuzzed packets.
+¹ Validated against the UAB CCSDS 124.0-B-1 cross-validation suite (24,900 vectors): encoder 100%, decoder 89% with [documented gaps](docs/TESTING.md#known-gaps-1863-decoder-vectors) in the accuracy guarantee logic for fuzzed packets.
 ² Byte-for-byte validated against the ESA reference via the shared [test vectors](test-vectors/); UAB cross-validation harness not yet implemented.
 
 ### Which implementation should I use?

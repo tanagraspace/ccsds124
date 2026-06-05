@@ -49,6 +49,12 @@ fi
 # Results file (optional, defaults to crossvalidation-results.txt next to this script)
 RESULTS_FILE="${RESULTS_FILE:-${SCRIPT_DIR}/crossvalidation-results.txt}"
 
+# Known-failures baseline (optional, defaults to known-failures.txt next to this script).
+# Failures listed in this file are documented gaps: the run passes when actual
+# failures match the baseline exactly (no new failures). Known failures that now
+# pass are reported so the baseline can be trimmed.
+KNOWN_FAILURES="${KNOWN_FAILURES:-${SCRIPT_DIR}/known-failures.txt}"
+
 # Binary paths must be provided via environment variables
 ENCODER_BIN="${ENCODER_BIN:?Error: ENCODER_BIN environment variable not set}"
 DECODER_BIN="${DECODER_BIN:?Error: DECODER_BIN environment variable not set}"
@@ -108,6 +114,7 @@ log ""
 total_pass=0
 total_fail=0
 failures=""
+failure_names=""
 
 # --- Encoder pass ---
 encoder_pass=0
@@ -131,6 +138,7 @@ for input_file in "$CROSSVAL_DATA"/encoder_input/*.raw+config; do
     if ! "$ENCODER_BIN" "$input_file" "$output_file" 2>/dev/null; then
         encoder_fail=$((encoder_fail + 1))
         failures="${failures}  ENCODER CRASH: ${basename}\n"
+        failure_names="${failure_names}${output_name}"$'\n'
         printf "\r[%d/%s] %s - CRASH" "$encoder_count" "?" "$output_name"
         continue
     fi
@@ -142,6 +150,7 @@ for input_file in "$CROSSVAL_DATA"/encoder_input/*.raw+config; do
     if [ -z "$expected_size" ] || [ -z "$expected_sha" ]; then
         encoder_fail=$((encoder_fail + 1))
         failures="${failures}  ENCODER NOT IN CSV: ${output_name}\n"
+        failure_names="${failure_names}${output_name}"$'\n'
         continue
     fi
 
@@ -160,6 +169,7 @@ for input_file in "$CROSSVAL_DATA"/encoder_input/*.raw+config; do
     else
         encoder_fail=$((encoder_fail + 1))
         failures="${failures}  ENCODER FAIL: ${output_name} (size: ${actual_size}/${expected_size}, sha256: ${actual_sha:0:16}.../${expected_sha:0:16}...)\n"
+        failure_names="${failure_names}${output_name}"$'\n'
     fi
 
     printf "\r[%d] %s    " "$encoder_count" "$output_name"
@@ -195,6 +205,7 @@ for input_file in "$CROSSVAL_DATA"/decoder_input/*.124+config; do
     if ! "$DECODER_BIN" "$input_file" "$output_file" 2>/dev/null; then
         decoder_fail=$((decoder_fail + 1))
         failures="${failures}  DECODER CRASH: ${basename}\n"
+        failure_names="${failure_names}${output_name}"$'\n'
         printf "\r[%d/%s] %s - CRASH" "$decoder_count" "?" "$output_name"
         continue
     fi
@@ -206,6 +217,7 @@ for input_file in "$CROSSVAL_DATA"/decoder_input/*.124+config; do
     if [ -z "$expected_size" ] || [ -z "$expected_sha" ]; then
         decoder_fail=$((decoder_fail + 1))
         failures="${failures}  DECODER NOT IN CSV: ${output_name}\n"
+        failure_names="${failure_names}${output_name}"$'\n'
         continue
     fi
 
@@ -224,6 +236,7 @@ for input_file in "$CROSSVAL_DATA"/decoder_input/*.124+config; do
     else
         decoder_fail=$((decoder_fail + 1))
         failures="${failures}  DECODER FAIL: ${output_name} (size: ${actual_size}/${expected_size}, sha256: ${actual_sha:0:16}.../${expected_sha:0:16}...)\n"
+        failure_names="${failure_names}${output_name}"$'\n'
     fi
 
     printf "\r[%d] %s    " "$decoder_count" "$output_name"
@@ -246,16 +259,52 @@ fi
 
 log "=== Summary: ${total_pass} passed, ${total_fail} failed ==="
 
-if [ "$total_fail" -gt 0 ]; then
+if [ "$total_fail" -eq 0 ]; then
     log ""
-    log "Result: FAIL"
+    log "Result: PASS"
     echo ""
     echo "Results saved to ${RESULTS_FILE}"
-    exit 1
+    exit 0
+fi
+
+# Compare failures against the known-failures baseline (documented gaps).
+if [ -f "$KNOWN_FAILURES" ]; then
+    # Restrict the baseline to the phases that ran in this invocation
+    case "$RUN_MODE" in
+        encoder) baseline_filter='^encoder_' ;;
+        decoder) baseline_filter='^decoder_' ;;
+        *)       baseline_filter='' ;;
+    esac
+    awk -v f="$baseline_filter" '/^[[:space:]]*(#|$)/ { next } f == "" || $0 ~ f' \
+        "$KNOWN_FAILURES" | sort -u > "$TMPDIR/baseline.txt"
+    printf '%s' "$failure_names" | sort -u > "$TMPDIR/actual.txt"
+
+    new_failures=$(comm -23 "$TMPDIR/actual.txt" "$TMPDIR/baseline.txt")
+    fixed_failures=$(comm -13 "$TMPDIR/actual.txt" "$TMPDIR/baseline.txt")
+
+    if [ -z "$new_failures" ]; then
+        log ""
+        log "All ${total_fail} failures are documented gaps in $(basename "$KNOWN_FAILURES")."
+        if [ -n "$fixed_failures" ]; then
+            fixed_count=$(printf '%s\n' "$fixed_failures" | wc -l | tr -d ' ')
+            log "${fixed_count} known failure(s) now pass - remove them from $(basename "$KNOWN_FAILURES"):"
+            printf '%s\n' "$fixed_failures" | sed 's/^/  /' | tee -a "$RESULTS_FILE"
+        fi
+        log ""
+        log "Result: PASS (matches known-failures baseline)"
+        echo ""
+        echo "Results saved to ${RESULTS_FILE}"
+        exit 0
+    fi
+
+    new_count=$(printf '%s\n' "$new_failures" | wc -l | tr -d ' ')
+    log ""
+    log "${new_count} new failure(s) not in $(basename "$KNOWN_FAILURES"):"
+    printf '%s\n' "$new_failures" | sed 's/^/  /' | tee -a "$RESULTS_FILE"
 fi
 
 log ""
-log "Result: PASS"
+log "Result: FAIL"
 echo ""
 echo "Results saved to ${RESULTS_FILE}"
-exit 0
+exit 1

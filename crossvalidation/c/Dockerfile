@@ -15,6 +15,7 @@ COPY crossvalidation/c/ ./crossvalidation/
 # Shared validation infrastructure
 COPY crossvalidation/run_crossvalidation.sh ./crossvalidation/run_crossvalidation.sh
 COPY crossvalidation/file_list.csv ./crossvalidation/file_list.csv
+COPY crossvalidation/known-failures.txt ./crossvalidation/known-failures.txt
 
 # Build the crossvalidation binaries (but don't run - data mounted at runtime)
 RUN make build/crossvalidation_encoder build/crossvalidation_decoder

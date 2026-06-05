@@ -30,10 +30,11 @@ jobs:
 
       - name: Build test binary
         working-directory: implementations/c
-        run: make
+        run: make build/test_malformed
 
       - name: Run malformed input tests
         working-directory: implementations/c
+        shell: bash
         run: |
           echo "## Malformed Input Tests" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -86,10 +87,11 @@ jobs:
 
       - name: Build test binary
         working-directory: implementations/c
-        run: make
+        run: make build/test_robustness
 
       - name: Run robustness tests
         working-directory: implementations/c
+        shell: bash
         run: |
           echo "## Robustness Tests (All R Values)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

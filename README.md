@@ -34,17 +34,17 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 
 ## Implementations
 
-| Language | Version | Status | Target | Location |
-|----------|---------|--------|--------|----------|
-| C | 1.0.0 | Cross-validated¹ | Embedded / Desktop / Server | [`implementations/c/`](implementations/c/) |
-| C++ | 1.0.0 | Validated² | Embedded / Desktop / Server | [`implementations/cpp/`](implementations/cpp/) |
-| Python | 1.0.0 | Validated² | Embedded Linux / Desktop / Server | [`implementations/python/`](implementations/python/) |
-| Go | 1.0.0 | Validated² | Embedded Linux / Desktop / Server | [`implementations/go/`](implementations/go/) |
-| Rust | 1.0.0 | Validated² | Embedded Linux / Desktop / Server | [`implementations/rust/`](implementations/rust/) |
-| Java | 1.0.0 | Validated² | Embedded Linux / Desktop / Server | [`implementations/java/`](implementations/java/) |
+| Language | Version | Validated¹ | Cross-Validated² | Target | Location |
+|----------|---------|------------|------------------|--------|----------|
+| C | 1.0.0 | Yes | Yes | Embedded / Desktop / Server | [`implementations/c/`](implementations/c/) |
+| C++ | 1.0.0 | Yes | No | Embedded / Desktop / Server | [`implementations/cpp/`](implementations/cpp/) |
+| Python | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/python/`](implementations/python/) |
+| Go | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/go/`](implementations/go/) |
+| Rust | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/rust/`](implementations/rust/) |
+| Java | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/java/`](implementations/java/) |
 
-¹ Validated against the UAB CCSDS 124.0-B-1 cross-validation suite (24,900 vectors): encoder 100%, decoder 89% with [documented gaps](docs/TESTING.md#known-gaps-1863-decoder-vectors) in the accuracy guarantee logic for fuzzed packets.
-² Byte-for-byte validated against the ESA reference via the shared [test vectors](test-vectors/); UAB cross-validation harness not yet implemented.
+¹ Byte-for-byte validated against the ESA reference implementation via the shared [test vectors](test-vectors/).
+² Validated against the UAB CCSDS 124.0-B-1 cross-validation suite (24,900 vectors): encoder 100%, decoder 89% with [documented gaps](docs/TESTING.md#known-gaps-1863-decoder-vectors) in the accuracy guarantee logic for fuzzed packets. Harnesses for the other implementations are tracked in [#93](https://github.com/tanagraspace/pocket-plus/issues/93).
 
 ### Which implementation should I use?
 

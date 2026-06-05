@@ -303,10 +303,11 @@ Pattern: `rt=1, ft=1, mask_inconsistent=1, mask_synced=0`. Our logic guarantees 
 
 **16 vectors — unknown excess-rejection rule**: the reference rejects certain `rt=1` packets with small excess bit counts (48–344) after F is established, while accepting large excesses (4K–64K) on the stream's first valid reference packet. The exact discriminator is unidentified; these 16 are accepted as a trade-off for the 118 vectors the excess-tolerance rule fixes.
 
-**Path to 100%:** requires access to the UAB reference decoder source (or its accept/reject decision rules) — the categories interact, and rule combinations beyond the three implemented above produced net regressions. Tracked in the repository issue tracker; see also GOTCHAS.md #22.
+**Path to 100%:** requires access to the UAB reference decoder source (or its accept/reject decision rules) — the categories interact, and rule combinations beyond the three implemented above produced net regressions. Tracked in [#89](https://github.com/tanagraspace/pocket-plus/issues/89); see also GOTCHAS.md #22.
 
 Other known gaps:
-- Cross-validation harnesses for C++, Go, Rust, and Java are not yet implemented (`crossvalidation/<lang>/` are placeholders). Those implementations are validated via the shared `test-vectors/` only.
+- Cross-validation harnesses for C++, Python, Go, Rust, and Java are not yet implemented (`crossvalidation/<lang>/` are placeholders) — tracked in [#93](https://github.com/tanagraspace/pocket-plus/issues/93), deferred until #89 resolves. Those implementations are validated via the shared `test-vectors/` only.
+- The C++/Python/Go/Rust/Java decoders do not yet validate bitstream integrity (GOTCHAS.md #21) — corrupt input can produce silent wrong output instead of an error. Tracked in [#92](https://github.com/tanagraspace/pocket-plus/issues/92).
 
 ## Run All Tests
 

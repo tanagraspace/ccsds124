@@ -36,8 +36,8 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 
 | Language | Version | Validated¹ | Cross-Validated² | Target | Location |
 |----------|---------|------------|------------------|--------|----------|
-| C | 1.0.0 | Yes | Yes | Embedded / Desktop / Server | [`implementations/c/`](implementations/c/) |
-| C++ | 1.0.0 | Yes | No | Embedded / Desktop / Server | [`implementations/cpp/`](implementations/cpp/) |
+| C | 1.0.0 | Yes | Yes | Bare-metal Embedded / Embedded Linux / Desktop / Server | [`implementations/c/`](implementations/c/) |
+| C++ | 1.0.0 | Yes | No | Bare-metal Embedded / Embedded Linux / Desktop / Server | [`implementations/cpp/`](implementations/cpp/) |
 | Python | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/python/`](implementations/python/) |
 | Go | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/go/`](implementations/go/) |
 | Rust | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/rust/`](implementations/rust/) |
@@ -50,7 +50,7 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 
 **For bare-metal embedded systems**: Use the **C** or **C++** implementation. Both are suitable for resource-constrained systems. The C++ implementation is header-only with template-based size optimization and works with `-fno-exceptions -fno-rtti`. The C implementation is optimized for 32-bit microcontrollers (e.g., GomSpace Nanomind 3200 / AVR32 MCU).
 
-**For payload computers**: Python, Go, Rust, and Java can run on embedded Linux systems such as payload processors (e.g., SEPP on OPS-SAT-1). Choose based on your runtime environment and preference.
+**For payload computers**: All implementations run on embedded Linux systems such as payload processors (e.g., SEPP on OPS-SAT-1). Choose based on your runtime environment and preference — C/C++ for the smallest footprint, Python/Go/Rust/Java for ecosystem convenience.
 
 **For ground systems and prototyping**: All implementations produce identical compression output. Use whichever language fits your toolchain.
 

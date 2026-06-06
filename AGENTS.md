@@ -42,9 +42,9 @@ pocket-plus/
 - Use **prefixed git tags**: `c/vX.Y.Z`, `cpp/vX.Y.Z`, `python/vX.Y.Z`, `go/vX.Y.Z`, `rust/vX.Y.Z`, `java/vX.Y.Z`
 - Follow [Semantic Versioning](https://semver.org/)
 - Update version in language-specific files:
-  - C: `implementations/c/VERSION` and `implementations/c/include/pocket_plus.h`
-  - C++: `implementations/cpp/VERSION` and `implementations/cpp/include/pocketplus/pocketplus.hpp`
-  - Python: `implementations/python/pyproject.toml` and `implementations/python/pocket_plus/__init__.py`
+  - C: `implementations/c/VERSION` and `implementations/c/include/pocketplus.h`
+  - C++: `implementations/cpp/VERSION` and `implementations/cpp/include/pocketplus/config.hpp`
+  - Python: `implementations/python/pyproject.toml` and `implementations/python/pocketplus/__init__.py`
   - Go: Git tag (Go uses tags directly)
   - Rust: `implementations/rust/Cargo.toml`
   - Java: `implementations/java/pom.xml` and `implementations/java/VERSION`
@@ -77,7 +77,7 @@ python: fix decompression bug
 - Use fixed-size integer types (`uint8_t`, etc.)
 - Provide clear error codes
 - Test with Makefile: `cd implementations/c && make test`
-- Cross-validate: `docker-compose run --rm c-crossvalidation` (results saved to `implementations/c/build/crossvalidation-results.txt`)
+- Cross-validate: `docker-compose run --rm c-crossvalidation` (results saved to `implementations/c/build/crossvalidation-results/crossvalidation-results.txt`)
 
 ### C++ Implementation
 - Target embedded systems with C++17 support
@@ -92,7 +92,7 @@ python: fix decompression bug
 - Include type hints for all public APIs
 - Follow PEP 8 style guidelines
 - Use pytest for testing
-- Maintain compatibility with Python 3.8+
+- Maintain compatibility with Python 3.9+ (per `pyproject.toml` `requires-python`)
 - Install dev dependencies: `pip install -e ".[dev]"`
 
 ### Go Implementation

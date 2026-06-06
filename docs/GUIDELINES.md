@@ -100,7 +100,7 @@ make coverage         # Run tests with coverage
 **Compatibility:**
 - Zero external runtime dependencies (standard library only)
 - MicroPython compatible (ESP32, RP2040, etc.)
-- Python 3.7+ and MicroPython 1.17+
+- Python 3.9+ and MicroPython 1.17+
 
 **Code Style:**
 - Ruff for formatting and linting (`ruff format`, `ruff check`)
@@ -121,7 +121,7 @@ make coverage         # Run tests with coverage
 - Use simple `sys.argv` parsing (no `argparse` - not in MicroPython)
 
 **Structure:**
-- Core library: `pocketplus.py` - compression/decompression
+- Core library: `pocketplus/` package - compression/decompression modules
 - CLI: `cli.py` - command-line interface
 - Avoid large intermediate allocations (memory-constrained devices)
 

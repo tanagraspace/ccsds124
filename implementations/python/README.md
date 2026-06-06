@@ -47,19 +47,6 @@ Reports generated in `build/docs/`: `api/`, `coverage/`, `tests/`.
 
 ## Usage
 
-### Python API
-
-```python
-from pocketplus import compress, decompress
-
-# Compress: packet_size in bits, robustness 0-7
-compressed = compress(data, packet_size=720, robustness=1,
-                      pt_limit=10, ft_limit=20, rt_limit=50)
-
-# Decompress
-decompressed = decompress(compressed, packet_size=720, robustness=1)
-```
-
 ### CLI
 
 ```bash
@@ -71,6 +58,19 @@ python cli.py -d data.bin.pkt 90 1
 
 # Help
 python cli.py --help
+```
+
+### Python API
+
+```python
+from pocketplus import compress, decompress
+
+# Compress: packet_size in bits, robustness 0-7
+compressed = compress(data, packet_size=720, robustness=1,
+                      pt_limit=10, ft_limit=20, rt_limit=50)
+
+# Decompress
+decompressed = decompress(compressed, packet_size=720, robustness=1)
 ```
 
 ## Testing

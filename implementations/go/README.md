@@ -109,13 +109,16 @@ func main() {
 ```
 implementations/go/
 ├── pocketplus/
+│   ├── doc.go            # Package documentation
 │   ├── bitvector.go      # Fixed-length bit vectors
 │   ├── bitbuffer.go      # Variable-length output buffer
 │   ├── bitreader.go      # Sequential bit reading
 │   ├── encode.go         # COUNT, RLE, BE encoding
 │   ├── decode.go         # COUNT, RLE decoding
 │   ├── mask.go           # Mask update logic
+│   ├── compress.go       # High-level Compress API
 │   ├── compressor.go     # Compression algorithm
+│   ├── decompress.go     # High-level Decompress API
 │   ├── decompressor.go   # Decompression algorithm
 │   └── *_test.go         # Unit tests
 ├── cmd/pocketplus/       # CLI tool

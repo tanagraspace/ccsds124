@@ -2,16 +2,29 @@
 
 [![C++ Build](https://github.com/tanagraspace/pocket-plus/actions/workflows/cpp-build.yml/badge.svg)](https://github.com/tanagraspace/pocket-plus/actions/workflows/cpp-build.yml) [![Lines](https://raw.githubusercontent.com/tanagraspace/pocket-plus/main/implementations/cpp/assets/coverage-lines.svg)](https://tanagraspace.com/pocket-plus/cpp/coverage/) [![Functions](https://raw.githubusercontent.com/tanagraspace/pocket-plus/main/implementations/cpp/assets/coverage-functions.svg)](https://tanagraspace.com/pocket-plus/cpp/coverage/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Header-only C++17 implementation of CCSDS 124.0-B-1 POCKET+ lossless compression algorithm.
+Header-only C++17 implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) POCKET+ lossless compression algorithm of fixed-length housekeeping data.
 
-## Features
+## Citation
 
-- **Zero runtime dependencies** - Standard library only
-- **Header-only templates** - Easy integration, compile-time size optimization
-- **Static allocation** - No dynamic memory allocation (embedded-friendly)
-- **32-bit optimized** - Uses `uint32_t` word storage for bit operations
-- **Embedded compatible** - Works with `-fno-exceptions -fno-rtti`
-- **Byte-identical output** - Matches C reference implementation exactly
+If POCKET+ contributes to your research, please cite:
+
+> D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," *Proceedings of the Small Satellite Conference*, Communications, SSC22-XII-03. https://digitalcommons.usu.edu/smallsat/2022/all2022/133/
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@inproceedings{evans2022pocketplus,
+  author    = {Evans, David and Labrèche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
+  title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
+  booktitle = {Proceedings of the Small Satellite Conference},
+  year      = {2022},
+  note      = {SSC22-XII-03},
+  url       = {https://digitalcommons.usu.edu/smallsat/2022/all2022/133/}
+}
+```
+
+</details>
 
 ## Requirements
 
@@ -36,7 +49,25 @@ docker-compose run --rm cpp                    # Build, test
 docker-compose run --rm --build cpp            # Rebuild after changes
 ```
 
-## Usage
+## CLI
+
+```bash
+# Compress
+./build/pocketplus input.bin 90 20 50 100 2
+# Output: input.bin.pkt
+
+# Decompress
+./build/pocketplus -d input.bin.pkt 90 2
+# Output: input.bin.depkt
+
+# Help
+./build/pocketplus --help
+
+# Version
+./build/pocketplus --version
+```
+
+## Library Usage
 
 This is a **header-only library**. Simply include the headers in your project - no linking required (except for the CLI tool). All template implementations are in the `include/pocketplus/` headers.
 
@@ -103,23 +134,14 @@ BitVector<720> output_packet;
 decomp.decompress_packet(reader, output_packet);
 ```
 
-## CLI Tool
+## Design
 
-```bash
-# Compress
-./build/pocketplus input.bin 90 20 50 100 2
-# Output: input.bin.pkt
-
-# Decompress
-./build/pocketplus -d input.bin.pkt 90 2
-# Output: input.bin.depkt
-
-# Help
-./build/pocketplus --help
-
-# Version
-./build/pocketplus --version
-```
+- **Zero runtime dependencies** - Standard library only
+- **Header-only templates** - Easy integration, compile-time size optimization
+- **Static allocation** - No dynamic memory allocation (embedded-friendly)
+- **32-bit optimized** - Uses `uint32_t` word storage for bit operations
+- **Embedded compatible** - Works with `-fno-exceptions -fno-rtti`
+- **Byte-identical output** - Matches C reference implementation exactly
 
 ## File Structure
 
@@ -185,3 +207,8 @@ clang-tidy -p build ../include/pocketplus/*.hpp
 # Run cppcheck
 cppcheck --enable=all --std=c++17 -Iinclude include/pocketplus/*.hpp
 ```
+
+## References
+
+- [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf)
+- [ESA POCKET+](https://opssat.esa.int/pocket-plus/)

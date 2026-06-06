@@ -51,7 +51,7 @@ Each gotcha includes:
 
 ### ✅ What the Spec Says
 
-The CCSDS spec states that the **first Rₜ+1 packets** must be sent uncompressed with ḟₜ=1, ṙₜ=1, ṗₜ=0.
+The CCSDS spec (Section 3.3.2 c–d) mandates ḟₜ=1 and ṙₜ=1 for the **first Rₜ+1 packets** (t ≤ Rₜ). ṗₜ is user-specified per the spec; the reference implementation uses ṗₜ=0 during initialization, and matching it is required for byte-identical output.
 
 ### ❌ Common Mistake
 
@@ -134,7 +134,7 @@ if (packet_num >= pt_first_trigger &&
 
 ### ✅ What the Spec Says
 
-Per CCSDS Section 5.3.2.2, Cₜ is defined as the largest value where **D_{t-i} = ∅ for all 1 < i ≤ Cₜ + Rₜ**.
+Per CCSDS Section 5.3.2.2 (Equation 14), Cₜ is the maximum integer with Cₜ ≤ min(t, 15) − Rₜ for which all **D_{t′} = 0** for **t′ ∈ {t−Rₜ−1, t−Rₜ−2, …, t−Rₜ−Cₜ}** — i.e., D_{t-i} = 0 for all **Rₜ < i ≤ Rₜ + Cₜ**.
 
 ### ❌ Common Mistake
 
@@ -148,9 +148,9 @@ for (int i = 2; i <= 15; i++) {
 }
 ```
 
-**Why this seems reasonable:** The spec says "1 < i", which suggests starting from i=2.
+**Why this seems reasonable:** For Rₜ=1 (the first test vectors most implementations validate against), the window starts at i=2, and it is easy to hard-code that.
 
-**Why it's wrong:** The reference implementation starts from position **Rₜ+1** in the history buffer, not from position 2. For Rₜ=1, this happens to be 2. For Rₜ=2, it's 3. The general formula is:
+**Why it's wrong:** The window starts at position **Rₜ+1**, not position 2. For Rₜ=1, this happens to be 2. For Rₜ=2, it's 3. The general formula is:
 
 ```
 start_position = Rt + 1
@@ -250,9 +250,9 @@ for (int i = 0; i < num_packets; i++) {
 
 The kₜ component encodes mask values at changed positions, but **outputs the INVERSE** of the mask bits.
 
-**CCSDS spec says:** "kₜ: mask values for changed positions"
+**CCSDS spec defines (Equations 19–20):** kₜ = yₜ = BE(<~Mₜ>, Xₜ) — the inversion (`~Mₜ`) is explicit in the formula (the Section 5.1 overview prose calls it "information on the mask values for each change").
 
-**What this actually means:** Output '1' for positive updates (mask changed to 0), '0' for negative updates (mask changed to 1)
+**In practice:** Output '1' for positive updates (mask changed to 0), '0' for negative updates (mask changed to 1)
 
 ### ❌ Common Mistake
 
@@ -300,22 +300,20 @@ kt = BE(inverted_mask, Xt);  // Extract inverted values at changed positions
 
 **⭐ Latest Discovery - December 2025**
 
-### ✅ What the Spec Says (or Doesn't Say!)
+### ✅ What the Spec Says (Subtly!)
 
-**The CCSDS spec is SILENT on kₜ extraction order.**
+CCSDS 124.0-B-1 Equations 19–20 define:
+```
+kₜ = yₜ = BE(<~Mₜ>, Xₜ)
+```
 
-CCSDS 124.0-B-1 Section 5.3.2.2 states:
-> **kₜ:** mask values for changed positions
-
-That's all. No extraction order, no reference to BE, no algorithm specified.
-
-**However, the BE function IS explicitly defined with reverse order:**
+and the BE function is explicitly defined with reverse order:
 ```
 BE(a, b) = a_{g_{H(b)-1}} ∥ ... ∥ a_{g₁} ∥ a_{g₀}
 ```
 (gᵢ ordered from highest to lowest position)
 
-**The reference implementation uses FORWARD ORDER for kₜ** (lowest position index to highest), which is DIFFERENT from BE.
+**The subtlety:** both BE operands here are *reversed* vectors — Xₜ is defined reversed (Eq. 16) and the mask is reversed as <~Mₜ>. BE's highest-position-first order over reversed vectors maps back to **FORWARD ORDER over the original packet positions** (lowest position index to highest) — which is DIFFERENT from the order used for uₜ = BE(Iₜ, Mₜ), where the operands are not reversed.
 
 ### ❌ Common Mistake
 
@@ -406,13 +404,13 @@ pocket_bit_extract(output, input, mask);  // ✅ Reverse order
 
 ### 🔍 Why This Was Hard to Find
 
-1. **Spec is completely silent** - CCSDS 124.0-B-1 doesn't specify kₜ extraction order at all
-2. **Spec DOES specify BE as reverse** - Natural to assume kₜ uses same order as the explicitly-defined BE function
-3. **Reasonable assumption fails** - Using your bit extraction function for kₜ seems logical but is wrong
+1. **Double reversal is subtle** - kₜ = BE(<~Mₜ>, Xₜ) applies BE to *reversed* vectors (Xₜ is reversed by Eq. 16, the mask by <~Mₜ>), flipping BE's reverse order into forward packet order
+2. **Spec DOES specify BE as reverse** - Natural to assume kₜ uses same order as the explicitly-defined BE function over unreversed operands (as uₜ does)
+3. **Reasonable assumption fails** - Reusing your uₜ bit-extraction routine for kₜ seems logical but is wrong
 4. **Late divergence** - Error only appears when kₜ is encoded (packets with H(Xₜ) > 0 and eₜ=1)
 5. **Subtle symptom** - Produces valid output, just with bits in wrong order
 6. **Reference code complexity** - Reference builds kₜ in a temporary buffer with backwards indexing, then reverses when concatenating
-7. **Not derivable from spec** - You MUST examine reference implementation or test against reference output to discover this
+7. **Easy to misderive from spec** - The double reversal is invisible unless you expand Eq. 19 carefully; testing against reference output is what exposed it
 
 ### 🎯 Key Lesson
 
@@ -1235,7 +1233,7 @@ bitvector_xor(change, mask, prev_mask);  // D₀ = M₀ XOR M₀ = 0
 
 1. **M₀ = 0 hides the bug** — When M₀ is all zeros (the typical case for reference test vectors), D₀ = M₀ = 0 = M₀ XOR M₀, so both approaches give the same result
 2. **Only triggers with non-zero M₀** — The CCSDS cross-validation suite exercises non-zero initial masks, which exposed this
-3. **Spec doesn't define M₋₁** — The spec says D₀ = M₀ XOR M₋₁ but doesn't explicitly define M₋₁; the correct interpretation is M₋₁ = M₀ (no change at init)
+3. **Easy to miss the spec's t=0 case** — Equation 8 defines Dₜ by cases: Mₜ XOR Mₜ₋₁ for t > 0, and **0 otherwise**; implementations that only code the XOR branch need M₋₁ = M₀ to reproduce the t=0 case
 4. **Small output difference** — For small M₀ hamming weights, the size difference is only a few bits
 
 ---

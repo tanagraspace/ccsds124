@@ -24,8 +24,8 @@ To release a new version of an implementation:
 ```bash
 # Example: releasing Python v1.0.0
 cd implementations/python
-# Update version in pyproject.toml
-git add pyproject.toml
+# Update version in pyproject.toml and pocketplus/__init__.py, then update CHANGELOG.md
+git add pyproject.toml pocketplus/__init__.py CHANGELOG.md
 git commit -m "python: release v1.0.0"
 git tag python/v1.0.0
 git push origin python/v1.0.0

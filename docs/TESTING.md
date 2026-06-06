@@ -26,18 +26,16 @@ docker-compose run c make test
 
 **Result**: Pass
 
-| Module | Tests | Description |
-|--------|-------|-------------|
-| Bit Vector | 34 | Init, get/set, XOR/OR/AND/NOT, shift, reverse, hamming weight, MSB-aligned NOT |
-| Bit Buffer | 14 | Init, append bits, append bitvector, to_bytes, overflow |
-| Compression | 25 | Compressor init, packet compression, CCSDS helpers, eₜ/kₜ/cₜ, D₀ zero initialization, manual mode |
-| Decompression | 57 | Bit reader (including byte alignment), COUNT/RLE decode, packet decompression, error paths |
-| Checked Decompression | 69 | Accuracy guarantee decision tree, mask sync, status ring (including 0x02 skip), state save/restore |
-| Packet Length Discovery | 26 | Reference packet discovery, various F values, non-discoverable packets, et=1/kt path, edge cases |
-| Encoding | 16 | COUNT encode, RLE encode, bit extraction |
-| Mask | 12 | Update build/mask vectors, compute change vector |
-
-**Total**: 253 unit tests passed
+| Module | Description |
+|--------|-------------|
+| Bit Vector | Init, get/set, XOR/OR/AND/NOT, shift, reverse, hamming weight, MSB-aligned NOT |
+| Bit Buffer | Init, append bits, append bitvector, to_bytes, overflow |
+| Compression | Compressor init, packet compression, CCSDS helpers, eₜ/kₜ/cₜ, D₀ zero initialization, manual mode |
+| Decompression | Bit reader (including byte alignment), COUNT/RLE decode, packet decompression, error paths |
+| Checked Decompression | Accuracy guarantee decision tree, mask sync, status ring (including 0x02 skip), state save/restore, rt=1 excess-bits tolerance |
+| Packet Length Discovery | Reference packet discovery, various F values, non-discoverable packets, et=1/kt path, truncated reference, excess bits, edge cases |
+| Encoding | COUNT encode, RLE encode, bit extraction |
+| Mask | Update build/mask vectors, compute change vector |
 
 ## Malformed Input Tests
 
@@ -54,18 +52,16 @@ docker-compose run c ./build/test_malformed
 
 **Result**: Pass
 
-| Category | Tests | Expected Behavior |
-|----------|-------|-------------------|
-| Invalid Parameters (Compress) | 9 | F=0, F>max, R>7, NULL pointers rejected |
-| Invalid Parameters (Decompress) | 4 | F=0, F>max, R>7 rejected |
-| Truncated Data | 6 | Empty input, insufficient bytes, COUNT/RLE truncation handled |
-| Corrupted Data | 2 | Corrupted streams detected or produce wrong output |
-| Boundary Conditions | 12 | All-zeros, all-ones, alternating patterns, F=1, F=8192 |
-| Output Buffer Overflow | 1 | Small buffer returns overflow error |
-| API Input Validation | 5 | NULL arguments rejected at API level |
-| Stress Tests | 7 | 100 identical packets, alternating packets |
-
-**Total**: 46 malformed input tests passed
+| Category | Expected Behavior |
+|----------|-------------------|
+| Invalid Parameters (Compress) | F=0, F>max, R>7, NULL pointers rejected |
+| Invalid Parameters (Decompress) | F=0, F>max, R>7 rejected |
+| Truncated Data | Empty input, insufficient bytes, COUNT/RLE truncation handled |
+| Corrupted Data | Corrupted streams detected or produce wrong output |
+| Boundary Conditions | All-zeros, all-ones, alternating patterns, F=1, F=8192 |
+| Output Buffer Overflow | Small buffer returns overflow error |
+| API Input Validation | NULL arguments rejected at API level |
+| Stress Tests | 100 identical packets, alternating packets |
 
 ## Robustness Parameter (R=0-7) Tests
 
@@ -99,8 +95,6 @@ docker-compose run c make test-reference
 
 **Test input**: 100 packets × 90 bytes = 9,000 bytes (housekeeping-like pattern)
 
-**Total**: 30 robustness tests passed
-
 ## Packet Loss Recovery Tests
 
 **Goal**: Validate recovery from simulated transmission losses.
@@ -133,8 +127,6 @@ docker-compose run c ./build/test_packet_loss
 
 **Key insight**: The effective robustness Vₜ = Rₜ + Cₜ can exceed R when consecutive packets have no changes (Cₜ > 0), allowing recovery from more losses than R alone would suggest.
 
-**Total**: 9 packet loss recovery tests passed
-
 ## Reference Test Vectors
 
 **Goal**: Byte-for-byte validation against ESA C reference implementation.
@@ -157,8 +149,6 @@ docker-compose run c ./build/test_vectors
 | edge-cases | 45 KB | 10.1 KB | 4.44x | Mixed stable/changing sections |
 | hiro | 9 KB | 1,533 bytes | 5.87x | High robustness (R=7) |
 | venus-express | 13.6 MB | 5.9 MB | 2.31x | Real Venus Express ADCS telemetry |
-
-**Total**: 5 test vectors validated with roundtrip hash verification
 
 ## Fuzzing
 

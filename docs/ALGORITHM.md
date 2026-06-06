@@ -17,7 +17,7 @@ POCKET+ (CCSDS 124.0-B-1) is a lossless compression algorithm designed for fixed
 
 ### 1. Initialization Phase: First Rₜ+1 Packets (Not Rₜ+2!)
 
-The CCSDS spec states that the **first Rₜ+1 packets** must be sent uncompressed with ḟₜ=1, ṙₜ=1, ṗₜ=0.
+The CCSDS spec (Section 3.3.2 c–d) mandates ḟₜ=1 and ṙₜ=1 for the **first Rₜ+1 packets** (t ≤ Rₜ). The spec leaves ṗₜ user-specified at every t; the reference implementation additionally uses ṗₜ=0 during initialization, and matching it is required for byte-identical output.
 
 **Example for Rₜ=1:**
 - Packet 0 (first packet): init phase → ḟₜ=1, ṙₜ=1, ṗₜ=0
@@ -48,13 +48,13 @@ The reference implementation uses **countdown counters** that start at the perio
 
 ### 3. Vₜ Calculation: Start from Rₜ+1
 
-Per CCSDS Section 5.3.2.2, Cₜ counts consecutive packets with no mask changes, starting from position Rₜ+1 in the history buffer.
+Per CCSDS Section 5.3.2.2 (NOTE to Equation 14), Cₜ counts consecutive occurrences of no mask changes, starting from the first cycle not covered by Rₜ — i.e., Rₜ+1 cycles back — and working backwards in time.
 
 **Correct algorithm:**
 1. For t ≤ Rₜ: Vₜ = Rₜ (initialization phase)
 2. For t > Rₜ: Count backward starting from position Rₜ+1
    - Check D_{t-(Rₜ+1)}, D_{t-(Rₜ+2)}, ...
-   - Stop when finding a change or reaching maximum Cₜ = 15 - Rₜ
+   - Stop when finding a change or reaching the maximum Cₜ = min(t, 15) - Rₜ (Eq. 14)
    - Vₜ = Rₜ + Cₜ
 
 **Example for Rₜ=2, t=5:**
@@ -98,8 +98,8 @@ The CCSDS reference implementation uses **1-based packet numbering** (packets 1,
 
 The kₜ component encodes mask values at changed positions, but **outputs the INVERSE** of the mask bits.
 
-**CCSDS spec says:** "kₜ: mask values for changed positions"
-**What this actually means:** Output '1' for positive updates (mask changed to 0), '0' for negative updates (mask changed to 1)
+**CCSDS spec defines (Equations 19–20):** kₜ = yₜ = BE(<~Mₜ>, Xₜ) — the inversion (`~Mₜ`) is explicit in the formula, even though the Section 5.1 overview prose just calls it "information on the mask values for each change".
+**In practice:** Output '1' for positive updates (mask changed to 0), '0' for negative updates (mask changed to 1)
 
 **Correct encoding:**
 - When Xₜ has '1' at position i (bit changed):
@@ -110,7 +110,7 @@ The kₜ component encodes mask values at changed positions, but **outputs the I
 **Example:**
 - Xₜ = '1' at positions [43, 142]
 - Mask values at those positions: [0, 0] (both predictable)
-- kₜ output (extracted in reverse order): **11** (not 00!)
+- kₜ output (extracted in forward order, low to high position): **11** (not 00!)
 
 **Why this matters:**
 - The eₜ flag indicates if there are "positive updates" (mask bits changed from 1→0, becoming predictable)
@@ -222,9 +222,9 @@ Initial condition: M₀ is user-specified (typically all zeros)
 Dₜ = Mₜ XOR Mₜ₋₁
 ```
 
-Initial condition: Set M₋₁ = M₀ so that D₀ = M₀ XOR M₀ = 0 (no change at initialization).
+Initial condition: the spec (Equation 8) defines **D₀ = 0** directly (the XOR case applies only for t > 0). A convenient implementation strategy is to set M₋₁ = M₀ before the first packet so the XOR yields 0 without a special case.
 
-⚠️ **See [GOTCHAS.md #19](GOTCHAS.md#19-d₀-must-be-zero-at-initialization-not-m₀)** — A common mistake is special-casing t=0 with D₀ = M₀, which is wrong. The correct approach is to always use XOR, with the caller setting M₋₁ = M₀ before the first packet.
+⚠️ **See [GOTCHAS.md #19](GOTCHAS.md#19-d₀-must-be-zero-at-initialization-not-m₀)** — A common mistake is treating the initial mask as a "change" (D₀ = M₀), which is wrong.
 
 **Flow Diagram:**
 ```
@@ -265,10 +265,12 @@ Where:
   (Note: `<a>` means reverse the bit order of vector a)
 
 - **Vₜ**: Effective robustness level (4 bits, value 0-15)
-- **eₜ**: Flag indicating if any mask changes resulted in predictable (0) vs unpredictable (1)
-- **kₜ**: Mask values for changed positions
-- **cₜ**: Flag indicating multiple new_mask_flag sets in robustness window
+- **eₜ**: '1' if any changed position became predictable (a "positive update": mask bit now 0), '0' if all changes became unpredictable
+- **kₜ**: Inverted mask values at changed positions, kₜ = BE(<~Mₜ>, Xₜ) — see Critical Implementation Note #5
+- **cₜ**: '1' if the new_mask_flag (ṗ) was set more than once in {max(0, t−Vₜ), …, t} (the current packet plus the previous Vₜ cycles)
 - **ḋₜ**: Flag indicating if both ḟₜ and ṙₜ are zero
+
+**Omitted components (∅):** per spec Equations 17–20, eₜ and kₜ are **omitted entirely** when Vₜ = 0 or Xₜ = 0; kₜ is also omitted when the inverted-mask extraction yₜ is all zeros (eₜ = '0' signals this), and cₜ is omitted whenever kₜ is. A decoder must not read bits for omitted components.
 
 #### Component qₜ: Optional Full Mask
 
@@ -308,7 +310,7 @@ Encodes positive integers 1 ≤ A ≤ 2¹⁶-1:
 |-------------|---------------|---------|
 | A = 1 | `'0'` | COUNT(1) = `'0'` |
 | 2 ≤ A ≤ 33 | `'110'` ∥ BIT₅(A-2) | COUNT(2) = `'110'` ∥ `'00000'` |
-| A ≥ 34 | `'111'` ∥ BIT_E(A-2) | COUNT(34) = `'111'` ∥ `'000000'` |
+| A ≥ 34 | `'111'` ∥ BIT_E(A-2) | COUNT(34) = `'111'` ∥ `'100000'` |
 
 For A ≥ 34: E = 2⌊log₂(A-2) + 1⌋ - 6
 
@@ -327,17 +329,19 @@ Where:
 - **H(a)**: Hamming weight (number of '1' bits in a)
 - **'10'**: Terminator
 
-**Example:**
+**Example** (per CCSDS Figure 5-1, runs shown with separating spaces):
 ```
-a = '0001000001000010000010000100000010000000000000000'
-     ↑         ↑     ↑     ↑    ↑   ↑              ↑
-     C₀=4      C₁=6  C₂=1  C₃=6 C₄=5 C₅=7         C₆=3
+a = 0001 000001 1 000001 00001 0000001 001 0000000000000000
+    C₀=4 C₁=6   ↑ C₃=6   C₄=5  C₅=7    C₆=3   (trailing zeros)
+              C₂=1
 
 RLE(a) = COUNT(4) ∥ COUNT(6) ∥ COUNT(1) ∥ COUNT(6) ∥
          COUNT(5) ∥ COUNT(7) ∥ COUNT(3) ∥ '10'
 ```
 
-**Note:** Trailing zeros are not encoded (deducible from vector length and H(a))
+**Notes** (per spec 5.2.3):
+- Trailing zeros are not encoded (deducible from the vector length and H(a))
+- If `a` contains no '1' bits, RLE(a) is just the terminator: `'10'`
 
 ### 3. Bit Extraction: BE(a, b)
 
@@ -349,12 +353,12 @@ BE(a, b) = a_{g_{H(b)-1}} ∥ ... ∥ a_{g₁} ∥ a_{g₀}
 
 Where gᵢ is the position of the i-th '1' bit in `b` (MSB to LSB order)
 
-**Example:**
+**Example** (positions counted 0-based from the MSB):
 ```
 a = '10110011'
 b = '01001010'
-     ↑  ↑ ↑
-BE(a, b) = '001' (extracts bits at positions 6, 3, 1 from a)
+      ↑  ↑ ↑        b has '1' bits at positions 1, 4, 6
+BE(a, b) = a₆ ∥ a₄ ∥ a₁ = '100' (highest position extracted first)
 ```
 
 ## Parameters
@@ -371,70 +375,70 @@ BE(a, b) = '001' (extracts bits at positions 6, 3, 1 from a)
 | Uncompressed Flag | ṙₜ | bit | 0 or 1 | When 1, sends full input packet instead of just unpredictable bits |
 
 **Special Constraints:**
-- For the **first Rₜ+1 packets** (t ≤ Rₜ): ḟₜ = 1, ṙₜ = 1, ṗₜ = 0 (mandatory full mask and full input during initialization)
+- For the **first Rₜ+1 packets** (t ≤ Rₜ), the spec (3.3.2 c–d) mandates ḟₜ = 1 and ṙₜ = 1 (full mask and full input during initialization); the reference implementation additionally uses ṗₜ = 0
   - ⚠️ **See [Critical Implementation Note #1](#1-initialization-phase-first-rₜ1-packets-not-rₜ2)** - Common off-by-one error!
-- The timing of ṗₜ, ḟₜ, ṙₜ flags depends on period counters that start during initialization
+- In the reference implementation and shared test vectors, the timing of the ṗₜ, ḟₜ, ṙₜ flags is driven by period counters that start during initialization (the spec itself leaves the flags user-specified per packet)
   - ⚠️ **See [Critical Implementation Note #2](#2-flag-timing-countdown-counters-not-modulo-arithmetic)** - Flags don't trigger when you expect!
 - All parameters needed for decompression are encoded in the output bitstream
 
 ## Bit Numbering Convention
 
-⚠️ **CRITICAL**: CCSDS 124.0-B-1 uses **MSB-first** indexing, which is **opposite** to most programming conventions!
+⚠️ **CRITICAL**: the **MSB is transmitted first**. What matters for interoperability is the *transmission order*; be careful not to confuse the standard's bit *labels* with the index convention used in this documentation and the implementations.
 
-**Traditional Bit Numbering (WRONG for CCSDS):**
+**The standard's labeling (CCSDS 124.0-B-1 Section 1.6.3):** bits are numbered N−1 down to 0, with **bit N−1 = MSB = first transmitted**:
 ```
-┌───┬───┬───┬───┬───┬───┬───┬───┐
-│ 7 │ 6 │ 5 │ 4 │ 3 │ 2 │ 1 │ 0 │  ← Bit indices (typical systems)
-└───┴───┴───┴───┴───┴───┴───┴───┘
-  ↑                               ↑
-  MSB                            LSB
-  (highest bit)                  (lowest bit)
-```
-
-**CCSDS Bit Numbering (CORRECT):**
-```
-┌───┬───┬───┬───┬───┬───┬───┬───┐
-│ 0 │ 1 │ 2 │ 3 │ 4 │ 5 │ 6 │ 7 │  ← Bit indices (CCSDS convention)
-└───┴───┴───┴───┴───┴───┴───┴───┘
-  ↑                               ↑
-  MSB (bit 0)                    LSB (bit N-1)
-  Transmitted first              Transmitted last
+┌─────┬─────┬─────┬───┬───┬───┐
+│ N-1 │ N-2 │ N-3 │ … │ 1 │ 0 │  ← Bit labels in the standard
+└─────┴─────┴─────┴───┴───┴───┘
+   ↑                         ↑
+   MSB = 2^(N-1)            LSB = 2^0
+   Transmitted first        Transmitted last
 ```
 
-**For an N-bit vector:**
-- **Bit 0** = MSB (Most Significant Bit) = 2^(N-1)
-- **Bit N-1** = LSB (Least Significant Bit) = 2^0
+**The convention in these docs and the implementations:** 0-based **positions in transmission order**, i.e., position 0 = MSB = first transmitted:
+```
+┌───┬───┬───┬───┬─────┐
+│ 0 │ 1 │ 2 │ … │ N-1 │  ← Positions used in this documentation
+└───┴───┴───┴───┴─────┘
+  ↑               ↑
+  MSB             LSB
+  Transmitted first
+```
+
+The two are mirror labelings of the **same** bit stream: the standard's "bit N−1" is this documentation's "position 0". All positions in this document (RLE counts, BE extraction positions, mask indices) are transmission-order positions counted from the MSB.
 
 **Why this matters:**
-- **Bitvector indexing**: `vector[0]` accesses the MSB, not the LSB
-- **RLE encoding**: Bit positions are encoded MSB-first
-- **Bit extraction**: Extract from position 0 (MSB) to position N-1 (LSB)
-- **Interoperability**: Reference implementations assume this convention
+- **Bitvector indexing**: in the implementations, `vector[0]` accesses the MSB, not the LSB
+- **RLE encoding**: runs are counted from the MSB (spec: "starting at the MSB and decreasing")
+- **Bit extraction**: BE emits the highest-position (closest-to-LSB) extracted bit first
+- **Interoperability**: getting the transmission order wrong produces bit-reversed, incompatible output
 
 **Example for 8-bit value 0xB3 (10110011 in binary):**
 ```
-Traditional:  bit[7]=1, bit[6]=0, bit[5]=1, bit[4]=1, ...
-CCSDS:        bit[0]=1, bit[1]=0, bit[2]=1, bit[3]=1, ...
-              └─MSB                                  └─LSB
+Spec labels:    bit 7=1, bit 6=0, bit 5=1, bit 4=1, ...  (bit 7 = MSB)
+Doc positions:  pos 0=1, pos 1=0, pos 2=1, pos 3=1, ...  (pos 0 = MSB)
 ```
 
-**Common mistake:** Implementing bit operations with LSB-first indexing will cause your output to be bit-reversed and completely incompatible with CCSDS-compliant decompressors!
+**Common mistake:** Implementing bit operations LSB-first in transmission order will cause your output to be bit-reversed and completely incompatible with CCSDS-compliant decompressors!
 
 ## Bitwise Operations
 
-| Operation | Symbol | Description | Example |
-|-----------|--------|-------------|---------|
+| Operation | Symbol | Description | Example (spec 1.6.1, a = '10111') |
+|-----------|--------|-------------|-----------------------------------|
 | XOR | `a XOR b` | Exclusive OR (1 if bits differ) | `'101' XOR '110' = '011'` |
 | OR | `a OR b` | Logical OR (1 if either bit is 1) | `'101' OR '110' = '111'` |
 | AND | `a AND b` | Logical AND (1 if both bits are 1) | `'101' AND '110' = '100'` |
-| NOT | `~a` | Bitwise inverse | `~'101' = '010'` |
-| Left Shift | `a≪` | Shift left, insert 0 at LSB | `'101'≪ = '010'` |
-| Reverse | `<a>` | Reverse bit order | `<'101'> = '101'` |
+| NOT | `~a` | Bitwise inverse | `~'10111' = '01000'` |
+| Left Shift | `a≪` | Shift left, insert 0 at LSB (Eq. 1) | `'10111'≪ = '01110'` |
+| Reverse | `<a>` | Reverse bit order | `<'10111'> = '11101'` |
 | Concatenate | `a ∥ b` | Concatenate vectors | `'101' ∥ '11' = '10111'` |
+| Binary representation | `BIT_K(X)` | K-bit unsigned binary representation of X ≤ 2ᴷ−1 | `BIT₅(3) = '00011'` |
+| Hamming weight | `H(a)` | Number of '1' bits in a | `H('10111') = 4` |
+| Empty vector | `∅` | Binary vector of length zero | — |
 
 ## Robustness and Packet Loss
 
-The algorithm guarantees decompression even if **up to Vₜ consecutive packets** are lost before the current packet, where:
+Per CCSDS 124.0-B-1 Section 2: the mask **can be synchronized even if the number of consecutive output vectors lost immediately before the current one is equal to, or less than, the effective robustness level** — in practice, the current packet remains decodable after up to Vₜ consecutive lost packets, where:
 
 ```
 Vₜ = Rₜ + Cₜ
@@ -445,17 +449,19 @@ Vₜ = Rₜ + Cₜ
 
 **Important:** ⚠️ **See [Critical Implementation Note #3](#3-vₜ-calculation-start-from-rₜ1)** for common pitfalls!
 
-Per CCSDS 124.0-B-1 Section 5.3.2.2, Cₜ is defined as:
+Per CCSDS 124.0-B-1 Section 5.3.2.2 (Equation 14), Cₜ is defined as:
 
-> The largest value for which **D_{t-i} = ∅** for all **1 < i ≤ Cₜ + Rₜ**
+> the maximum integer where Cₜ ≤ min(t, 15) − Rₜ, for which all **D_{t′} = 0** for **t′ ∈ {t−Rₜ−1, t−Rₜ−2, …, t−Rₜ−Cₜ}**
+
+Equivalently: D_{t−i} = 0 for all **Rₜ < i ≤ Rₜ + Cₜ**.
 
 This means:
-- For **t ≤ Rₜ**: Vₜ = Rₜ (initialization phase)
-- For **t > Rₜ**: Count backward starting from **D_{t-2}** (skip D_{t-1}!)
-- Stop when finding a change or reaching maximum Cₜ = 15 - Rₜ
+- For **t ≤ Rₜ**: Vₜ = Rₜ (initialization phase; the spec case is (t − Rₜ) ≤ 0)
+- For **t > Rₜ**: Count backward starting from **D_{t−(Rₜ+1)}** (skip the most recent Rₜ change vectors)
+- Stop when finding a change or reaching the maximum Cₜ = min(t, 15) − Rₜ
 
 Example for t=2, Rₜ=1:
-- Check D₀ (skip D₁ per spec) → if D₀ = ∅, then Cₜ=1
+- Check D₀ (skip D₁, the most recent Rₜ=1 change vector) → if D₀ = 0, then Cₜ=1
 - Result: Vₜ = Rₜ + Cₜ = 1 + 1 = 2
 
 The mask change information in `hₜ` includes ORed changes from the previous Vₜ cycles, allowing the decompressor to resynchronize its mask even after packet loss.
@@ -483,17 +489,19 @@ Time t=0:
   Since t=0, must send full packet (ṙ₀ = 1, ḟ₀ = 1)
 
 Time t=1:
-  I₁ = '10110001' (last two bits changed)
-         ↑↑
+  I₁ = '10110001' (one bit changed, position 6 counted from the MSB)
+              ↑
 
-  Mask Update:
-    D₁ = I₁ XOR I₀ = '00000010'
-    M₁ = D₁ OR M₀ = '00000010' (bit 1 is now unpredictable)
+  Mask Update (Eq. 7, then Eq. 8, with ṗ₁ = 0):
+    M₁ = (I₁ XOR I₀) OR M₀ = '00000010' OR '00000000' = '00000010'
+         (position 6 is now unpredictable)
+    D₁ = M₁ XOR M₀ = '00000010' (the mask changed at position 6)
 
   Encoding:
-    hₜ = RLE(<'00000010'>) ∥ ... (mask change at position 1)
+    X₁ = <D₁> = '01000000' (Rₜ = 0 case of Eq. 16)
+    hₜ = RLE(X₁) ∥ ... = COUNT(2) ∥ '10' ∥ ... (one mask change)
     qₜ = '0' (don't send full mask)
-    uₜ = '0' ∥ BE(I₁, M₁) = '0' ∥ '0' (extract bit 1 from I₁)
+    uₜ = '0' ∥ BE(I₁, M₁) = '0' ∥ '0' (extract position 6 from I₁)
 
   Output is much smaller than input!
 
@@ -501,11 +509,13 @@ Time t=2:
   I₂ = '10110001' (same as I₁)
 
   Mask Update:
-    D₂ = I₂ XOR I₁ = '00000000' (no changes)
-    M₂ = D₂ OR M₁ = '00000010' (mask unchanged)
+    M₂ = (I₂ XOR I₁) OR M₁ = '00000000' OR '00000010' = '00000010'
+         (mask unchanged)
+    D₂ = M₂ XOR M₁ = '00000000' (no mask changes)
 
   Encoding:
-    hₜ = RLE(<'00000000'>) ∥ ... (no mask changes → very short)
+    X₂ = <D₂> = '00000000'
+    hₜ = RLE(X₂) ∥ ... = '10' ∥ ... (no mask changes → just the terminator)
     qₜ = '0'
     uₜ = '0' ∥ BE(I₂, M₂) = '0' ∥ '0'
 
@@ -525,7 +535,8 @@ Time t=2:
 - **Fixed-Length**: All input packets have the same length F
 - **Hamming Weight**: Number of '1' bits in a binary vector
 - **Lossless**: Perfect reconstruction - decompressed data exactly matches original
-- **LSB**: Least Significant Bit (rightmost, bit 0)
-- **MSB**: Most Significant Bit (leftmost, bit N-1 for N-bit vector)
+- **LSB**: Least Significant Bit — transmitted last; the spec labels it "bit 0", this document calls it position N−1
+- **MSB**: Most Significant Bit — transmitted first; the spec labels it "bit N−1", this document calls it position 0
+- **∅**: Binary vector of length zero (an omitted component contributes no bits)
 - **Robustness Level**: Number of consecutive packet losses tolerated without losing sync
 - **Run-Length Encoding**: Encoding consecutive repeated values as count + value

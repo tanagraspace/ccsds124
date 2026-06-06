@@ -28,14 +28,6 @@ If POCKET+ contributes to your research, please cite:
 
 </details>
 
-## Features
-
-- **Zero runtime dependencies** - Only requires Java 11+
-- **Clean OOP design** - Proper interfaces, classes, and encapsulation
-- **Comprehensive Javadoc** - All public APIs documented
-- **High test coverage** - Unit tests and reference vector validation
-- **CLI tool** - Command-line interface for compress/decompress operations
-
 ## Requirements
 
 - Java 11 or later
@@ -60,7 +52,31 @@ make coverage
 make docs
 ```
 
+### Docker
+
+```bash
+# Build and run tests in container
+docker build -t pocketplus-java .
+docker run --rm pocketplus-java
+
+# Or use docker-compose from repository root
+docker-compose run --rm java
+```
+
 ## Usage
+
+### Command Line
+
+```bash
+# Compress
+java -jar target/pocketplus-1.0.0.jar input.bin 90 20 50 100 2
+
+# Decompress
+java -jar target/pocketplus-1.0.0.jar -d input.bin.pkt 90 2
+
+# Show version
+java -jar target/pocketplus-1.0.0.jar --version
+```
 
 ### Library API
 
@@ -88,19 +104,6 @@ byte[] decompressed = PocketPlus.decompress(
 String version = PocketPlus.version();
 ```
 
-### Command Line
-
-```bash
-# Compress
-java -jar target/pocketplus-1.0.0.jar input.bin 90 20 50 100 2
-
-# Decompress
-java -jar target/pocketplus-1.0.0.jar -d input.bin.pkt 90 2
-
-# Show version
-java -jar target/pocketplus-1.0.0.jar --version
-```
-
 ### Parameters
 
 | Parameter | Description | Range |
@@ -110,6 +113,14 @@ java -jar target/pocketplus-1.0.0.jar --version
 | `pt` | New mask period limit | > 0 |
 | `ft` | Full transmit period limit | > 0 |
 | `rt` | Reset period limit | > 0 |
+
+## Design
+
+- **Zero runtime dependencies** - Only requires Java 11+
+- **Clean OOP design** - Proper interfaces, classes, and encapsulation
+- **Comprehensive Javadoc** - All public APIs documented
+- **High test coverage** - Unit tests and reference vector validation
+- **CLI tool** - Command-line interface for compress/decompress operations
 
 ## Project Structure
 
@@ -134,6 +145,20 @@ implementations/java/
 └── Dockerfile               # Container build
 ```
 
+## API
+
+### High-Level
+
+- `PocketPlus.compress()` / `PocketPlus.decompress()` - Compress/decompress entire buffer
+- `PocketPlus.version()` - Library version
+
+### Low-Level
+
+- `Compressor.compressPacket()` / `Decompressor.decompressPacket()` - Single packet
+- `Encoder` / `Decoder` - COUNT, RLE, BE encoding/decoding (Eq. 9-11)
+- `BitVector` / `BitBuffer` / `BitReader` - Bit-level primitives
+- `MaskOperations` - Mask/build vector updates
+
 ## Test Vectors
 
 The implementation is validated against reference test vectors:
@@ -145,17 +170,6 @@ The implementation is validated against reference test vectors:
 | edge-cases | 500 | R=1 | 4.44x |
 | venus-express | 151,200 | R=2 | 2.31x |
 | hiro | 100 | R=7 | 5.87x |
-
-## Docker
-
-```bash
-# Build and run tests in container
-docker build -t pocketplus-java .
-docker run --rm pocketplus-java
-
-# Or use docker-compose from repository root
-docker-compose run java
-```
 
 ## References
 

@@ -443,7 +443,7 @@ Vₜ = Rₜ + Cₜ
 - **Rₜ**: User-specified minimum required robustness level (0-7)
 - **Cₜ**: Additional robustness from consecutive unchanged masks
 
-**Important:** ⚠️ **See [Critical Implementation Note #3](#3-vₜ-calculation-skip-d_t-1)** for common pitfalls!
+**Important:** ⚠️ **See [Critical Implementation Note #3](#3-vₜ-calculation-start-from-rₜ1)** for common pitfalls!
 
 Per CCSDS 124.0-B-1 Section 5.3.2.2, Cₜ is defined as:
 

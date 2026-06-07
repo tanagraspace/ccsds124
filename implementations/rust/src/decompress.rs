@@ -240,6 +240,11 @@ impl Decompressor {
 /// - `packet_size` is 0 or not divisible by 8
 /// - `robustness` is greater than 7
 /// - Compressed data is invalid or corrupted
+///
+/// This byte-buffer convenience API requires `packet_size` (in bits) to be a
+/// multiple of 8. The CCSDS 124.0-B-1 standard itself allows any F in
+/// 1..=65535 bits — use the low-level [`Decompressor`] for non-byte-aligned
+/// packet lengths.
 pub fn decompress(
     data: &[u8],
     packet_size: usize,

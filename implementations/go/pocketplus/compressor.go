@@ -7,9 +7,10 @@ import (
 
 // Constants
 const (
-	MaxHistory    = 16 // History depth for change vectors
-	MaxVtHistory  = 16 // History size for Vt calculation
-	MaxRobustness = 7  // Maximum robustness level
+	MaxHistory      = 16    // History depth for change vectors
+	MaxVtHistory    = 16    // History size for Vt calculation
+	MaxRobustness   = 7     // Maximum robustness level
+	MaxPacketLength = 65535 // CCSDS 124.0-B-1 section 3.2: 1 <= F <= 2^16 - 1
 )
 
 // CompressParams holds compression parameters for a single packet.
@@ -68,8 +69,8 @@ type Compressor struct {
 
 // NewCompressor creates a new compressor.
 func NewCompressor(F int, initialMask *BitVector, robustness, ptLimit, ftLimit, rtLimit int) (*Compressor, error) {
-	if F <= 0 {
-		return nil, errors.New("F must be positive")
+	if F <= 0 || F > MaxPacketLength {
+		return nil, fmt.Errorf("F must be between 1 and %d bits", MaxPacketLength)
 	}
 	if robustness < 0 || robustness > MaxRobustness {
 		return nil, fmt.Errorf("robustness must be between 0 and %d", MaxRobustness)

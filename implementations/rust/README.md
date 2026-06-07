@@ -84,6 +84,8 @@ let compressed = compress(
 let decompressed = decompress(&compressed, 720, 1).unwrap();
 ```
 
+**Note:** the high-level `compress()`/`decompress()` byte-buffer APIs require `packet_size` to be a multiple of 8 bits. The CCSDS 124.0-B-1 standard allows any F in 1..=65535 bits — use the low-level `Compressor`/`Decompressor` for non-byte-aligned packet lengths.
+
 ## Design
 
 - **Zero dependencies** - Rust standard library only

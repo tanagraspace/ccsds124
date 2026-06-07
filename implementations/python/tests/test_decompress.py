@@ -1,5 +1,7 @@
 """Tests for POCKET+ decompression."""
 
+import pytest
+
 from pocketplus.bitvector import BitVector
 from pocketplus.compress import compress
 from pocketplus.decompress import Decompressor, decompress
@@ -314,3 +316,15 @@ class TestVtZeroMaskToggle:
         )
 
         assert decompressed == original
+
+
+class TestDecompressorPacketLengthValidation:
+    """CCSDS 124.0-B-1 section 3.2: 1 <= F <= 65535 (issue #99)."""
+
+    def test_rejects_zero_packet_length(self) -> None:
+        with pytest.raises(ValueError):
+            Decompressor(packet_length=0)
+
+    def test_rejects_oversized_packet_length(self) -> None:
+        with pytest.raises(ValueError):
+            Decompressor(packet_length=65536)

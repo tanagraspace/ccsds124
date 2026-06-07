@@ -17,6 +17,7 @@ if False:  # noqa: SIM108
 MAX_HISTORY = 16
 MAX_VT_HISTORY = 16
 MAX_ROBUSTNESS = 7
+MAX_PACKET_LENGTH = 65535  # CCSDS 124.0-B-1 section 3.2: 1 <= F <= 2^16 - 1
 
 
 class CompressParams:
@@ -68,6 +69,12 @@ class Compressor:
             rt_limit: Uncompressed period (0 = manual control)
         """
         from pocketplus.bitvector import BitVector
+
+        # CCSDS 124.0-B-1 section 3.2: 1 <= F <= 2^16 - 1
+        if packet_length < 1 or packet_length > MAX_PACKET_LENGTH:
+            raise ValueError(
+                "packet_length must be in 1.." + str(MAX_PACKET_LENGTH) + " bits"
+            )
 
         self.F = packet_length
         self.robustness = min(robustness, MAX_ROBUSTNESS)

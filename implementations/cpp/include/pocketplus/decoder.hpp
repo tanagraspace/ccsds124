@@ -141,12 +141,16 @@ template <std::size_t N> Error rle_decode(BitReader& reader, BitVector<N>& resul
     auto status = count_decode(reader, delta);
 
     while (status == Error::Ok && delta != 0) {
-        // Delta represents (count of zeros + 1)
-        if (delta <= bit_position) {
-            bit_position -= delta;
-            // Set the bit at this position
-            result.set_bit(bit_position, 1);
+        // Delta represents (count of zeros + 1). A delta beyond the
+        // remaining bit position means the encoding is invalid for this
+        // vector length (GOTCHAS #21): reject it instead of silently
+        // skipping.
+        if (delta > bit_position) {
+            return Error::Overflow;
         }
+        bit_position -= delta;
+        // Set the bit at this position
+        result.set_bit(bit_position, 1);
 
         // Read next delta
         status = count_decode(reader, delta);
@@ -176,6 +180,11 @@ Error bit_insert(BitReader& reader, BitVector<N>& data, const BitVector<N>& mask
         return Error::Ok;
     }
 
+    // GOTCHAS #21: fail on underflow instead of silently skipping positions
+    if (reader.remaining() < hamming) {
+        return Error::Underflow;
+    }
+
     // Insert bits in reverse order (LSB to MSB, matching BE extraction)
     // Iterate by set bits using __builtin_ctz for efficiency
     for (int word = static_cast<int>(BitVector<N>::NUM_WORDS) - 1; word >= 0; --word) {
@@ -191,9 +200,10 @@ Error bit_insert(BitReader& reader, BitVector<N>& data, const BitVector<N>& mask
 
             if (global_pos < N) {
                 int bit = reader.read_bit();
-                if (bit >= 0) {
-                    data.set_bit(global_pos, bit);
+                if (bit < 0) {
+                    return Error::Underflow;
                 }
+                data.set_bit(global_pos, bit);
             }
         }
     }
@@ -215,6 +225,11 @@ Error bit_insert(BitReader& reader, BitVector<N>& data, const BitVector<N>& mask
  */
 template <std::size_t N>
 Error bit_insert_forward(BitReader& reader, BitVector<N>& data, const BitVector<N>& mask) noexcept {
+    // GOTCHAS #21: fail on underflow instead of silently skipping positions
+    if (reader.remaining() < mask.hamming_weight()) {
+        return Error::Underflow;
+    }
+
     // Insert bits in forward order (MSB to LSB)
     // Iterate by set bits using __builtin_clz for efficiency
     for (std::size_t word = 0; word < BitVector<N>::NUM_WORDS; ++word) {
@@ -229,9 +244,10 @@ Error bit_insert_forward(BitReader& reader, BitVector<N>& data, const BitVector<
 
             if (global_pos < N) {
                 int bit = reader.read_bit();
-                if (bit >= 0) {
-                    data.set_bit(global_pos, bit);
+                if (bit < 0) {
+                    return Error::Underflow;
                 }
+                data.set_bit(global_pos, bit);
             }
         }
     }

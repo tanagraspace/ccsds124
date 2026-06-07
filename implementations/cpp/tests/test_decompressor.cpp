@@ -385,3 +385,15 @@ TEST_CASE("Compress/decompress round trip - alternating patterns", "[decompresso
         REQUIRE(output == input);
     }
 }
+
+TEST_CASE("Decompress rejects truncated packet", "[decompressor][hardening]") {
+    // GOTCHAS #21 / issue #92: a packet that ends mid-header must produce an
+    // error, not silently decode garbage. Two bits: RLE terminator '10',
+    // then the stream ends before BIT4(Vt).
+    std::uint8_t data[] = {0x80};
+    BitReader reader(data, 2);
+
+    Decompressor<8> decomp(0);
+    BitVector<8> output;
+    REQUIRE(decomp.decompress_packet(reader, output) != Error::Ok);
+}

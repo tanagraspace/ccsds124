@@ -1,5 +1,7 @@
 """Tests for decoding functions (COUNT, RLE, bit insert)."""
 
+import pytest
+
 from pocketplus.bitbuffer import BitBuffer
 from pocketplus.bitreader import BitReader
 from pocketplus.bitvector import BitVector
@@ -308,3 +310,14 @@ class TestBitInsertForward:
         for i in range(16):
             if mask.get_bit(i):
                 assert result.get_bit(i) == data.get_bit(i)
+
+
+class TestRLEDeltaValidation:
+    """GOTCHAS #21 / issue #92: invalid RLE deltas must be rejected."""
+
+    def test_rle_decode_rejects_delta_beyond_position(self) -> None:
+        # COUNT(9) = '110'+BIT5(7), then terminator '10' -> 0xC7 0x80.
+        # Delta 9 exceeds an 8-bit vector: must raise, not silently skip.
+        reader = BitReader(bytes([0xC7, 0x80]))
+        with pytest.raises(ValueError):
+            rle_decode(reader, 8)

@@ -260,12 +260,12 @@ TEST_CASE("Update mask no change", "[mask][mask_update]") {
 // ============================================================================
 
 TEST_CASE("Compute change at t=0", "[mask][change]") {
-    // At t=0, D_t should be M_t
+    // CCSDS Eq. 8: D_0 = 0 regardless of M_0 (no change at initialization)
     BitVector<8> change;
     BitVector<8> mask;
     BitVector<8> prev_mask;
 
-    // Set mask = 0xFF (all ones)
+    // Set mask = 0xFF (all ones) — must NOT leak into D_0
     for (std::size_t i = 0; i < 8; ++i) {
         mask.set_bit(i, 1);
     }
@@ -279,8 +279,8 @@ TEST_CASE("Compute change at t=0", "[mask][change]") {
 
     compute_change(change, mask, prev_mask, 0);
 
-    // At t=0, D_0 = M_0
-    REQUIRE(change.hamming_weight() == 8);
+    // CCSDS Eq. 8: D_0 = 0
+    REQUIRE(change.hamming_weight() == 0);
 }
 
 TEST_CASE("Compute change normal case", "[mask][change]") {

@@ -104,17 +104,20 @@ func TestUpdateMaskWithNewMaskFlag(t *testing.T) {
 
 func TestComputeChangeInitial(t *testing.T) {
 	change, _ := NewBitVector(8)
+	change.FromBytes([]byte{0xFF}) // Should be overwritten
 	mask, _ := NewBitVector(8)
 	prevMask, _ := NewBitVector(8)
 
 	mask.FromBytes([]byte{0xAB})
 	prevMask.FromBytes([]byte{0xFF}) // Should be ignored at t=0
 
-	// At t=0, change = mask
+	// CCSDS Eq. 8: D0 = 0 regardless of M0 (no change at initialization)
 	ComputeChange(change, mask, prevMask, 0)
 
-	if !change.Equals(mask) {
-		t.Errorf("t=0: change should equal mask, got %v", change.ToBytes())
+	expected, _ := NewBitVector(8)
+	expected.Zero()
+	if !change.Equals(expected) {
+		t.Errorf("t=0: change should be zero per CCSDS Eq. 8, got %v", change.ToBytes())
 	}
 }
 

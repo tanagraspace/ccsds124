@@ -115,8 +115,9 @@ template <std::size_t N>
 void compute_change(BitVector<N>& change, const BitVector<N>& mask, const BitVector<N>& prev_mask,
                     std::size_t t) noexcept {
     if (t == 0) {
-        // At t=0, D_0 = M_0 (all initially predictable bits)
-        change = mask;
+        // CCSDS Eq. 8: D_0 = 0 — no change at initialization; both encoder
+        // and decoder start from the same user-specified M_0
+        change.zero();
     } else {
         // D_t = M_t XOR M_{t-1}
         change.xor_with(mask, prev_mask);

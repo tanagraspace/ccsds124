@@ -478,8 +478,9 @@ func updateMaskInternal(mask, inputVec, prevInput, buildPrev, workChanges *BitVe
 
 func computeChangeInternal(change, mask, prevMask *BitVector, t int) {
 	if t == 0 {
-		// At t=0, D0 = M0 (assuming M-1 = 0)
-		change.CopyFrom(mask)
+		// CCSDS Eq. 8: D0 = 0 — both encoder and decoder start from the
+		// same user-specified M0, so there is no change to communicate
+		change.Zero()
 	} else {
 		// Dt = Mt XOR Mt-1
 		change.XORInto(mask, prevMask)

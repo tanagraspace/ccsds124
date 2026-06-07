@@ -129,7 +129,9 @@ public final class MaskOperations {
    */
   public static BitVector computeChange(BitVector mask, BitVector prevMask, int t) {
     if (t == 0) {
-      return new BitVector(mask);
+      // CCSDS Eq. 8: D0 = 0 — both encoder and decoder start from the
+      // same user-specified M0, so there is no change to communicate
+      return new BitVector(mask.length());
     } else {
       return mask.xor(prevMask);
     }
@@ -146,7 +148,8 @@ public final class MaskOperations {
   public static void computeChangeInto(
       BitVector result, BitVector mask, BitVector prevMask, int t) {
     if (t == 0) {
-      result.copyFrom(mask);
+      // CCSDS Eq. 8: D0 = 0 — no change at initialization
+      result.zero();
     } else {
       // Dₜ = Mₜ XOR Mₜ₋₁ computed directly into result
       int numWords = result.numWords();

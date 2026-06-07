@@ -136,8 +136,9 @@ class TestComputeChange:
     """Test change vector computation (CCSDS Equation 8)."""
 
     def test_compute_change_t0(self) -> None:
-        """Test change at t=0 equals mask."""
+        """Test change at t=0 is zero (CCSDS Eq. 8: D0 = 0)."""
         change = BitVector(8)
+        change.from_bytes(bytes([0xFF]))  # Should be overwritten
         mask = BitVector(8)
         mask.from_bytes(bytes([0b11110000]))
         prev_mask = BitVector(8)
@@ -145,8 +146,8 @@ class TestComputeChange:
 
         compute_change(change, mask, prev_mask, t=0)
 
-        # At t=0, change = mask
-        assert change.to_bytes() == bytes([0b11110000])
+        # CCSDS Eq. 8: D0 = 0 regardless of M0 (no change at initialization)
+        assert change.to_bytes() == bytes([0x00])
 
     def test_compute_change_t_positive(self) -> None:
         """Test change at t>0 is XOR of masks."""

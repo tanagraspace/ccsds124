@@ -349,3 +349,34 @@ class TestEffectiveRobustnessCap:
         # Rt=7, Ct can be up to (15-Rt)=8
         # So Vt = Rt + Ct = 7 + 8 = 15 (max)
         assert Vt == 15
+
+
+class TestNonZeroInitialMask:
+    """Regression tests for GOTCHAS #19: D0 = 0 per CCSDS Eq. 8 (issue #98)."""
+
+    def test_first_packet_starts_with_rle_terminator(self) -> None:
+        """With a non-zero M0, the first packet must still encode X0 = 0.
+
+        CCSDS Eq. 8 defines D0 = 0, so RLE(X0) is just the terminator '10'.
+        The pre-fix behavior (D0 = M0) wrongly encoded the initial mask as a
+        change, producing '11...' as the first bits.
+        """
+        initial_mask = BitVector(16)
+        initial_mask.from_bytes(bytes([0xFF, 0x00]))
+        comp = Compressor(
+            packet_length=16,
+            robustness=1,
+            initial_mask=initial_mask,
+            pt_limit=10,
+            ft_limit=20,
+            rt_limit=50,
+        )
+
+        input_data = BitVector(16)
+        input_data.from_bytes(bytes([0xAB, 0xCD]))
+        output = comp.compress_packet(input_data)
+
+        # First two bits of h0 are RLE(X0) = '10' (terminator only)
+        first_byte = output[0]
+        assert (first_byte >> 7) & 1 == 1
+        assert (first_byte >> 6) & 1 == 0

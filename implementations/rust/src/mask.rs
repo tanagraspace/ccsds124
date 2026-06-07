@@ -86,7 +86,7 @@ pub fn update_mask(
 ///
 /// CCSDS Equation 8:
 /// - Dₜ = Mₜ XOR Mₜ₋₁ (if t > 0)
-/// - Dₜ = Mₜ (if t = 0, assuming M₋₁ = 0)
+/// - Dₜ = 0 (if t = 0: no change at initialization)
 ///
 /// The change vector tracks which mask bits changed between time steps.
 /// This is used in encoding to communicate mask updates.
@@ -100,8 +100,11 @@ pub fn update_mask(
 /// The change vector Dₜ
 pub fn compute_change(mask: &BitVector, prev_mask: &BitVector, t: usize) -> BitVector {
     if t == 0 {
-        // At t=0, D₀ = M₀ (all initially predictable bits)
-        mask.clone()
+        // CCSDS Eq. 8: D₀ = 0 — both encoder and decoder start from the
+        // same user-specified M₀, so there is no change to communicate
+        let mut zero = mask.clone();
+        zero.zero();
+        zero
     } else {
         // Dₜ = Mₜ XOR Mₜ₋₁
         mask.xor(prev_mask)
@@ -187,8 +190,8 @@ mod tests {
 
         let change = compute_change(&mask, &prev_mask, 0);
 
-        // At t=0, change = mask
-        assert_eq!(change, mask);
+        // CCSDS Eq. 8: D0 = 0 regardless of M0 (no change at initialization)
+        assert_eq!(change, BitVector::new(8));
     }
 
     #[test]

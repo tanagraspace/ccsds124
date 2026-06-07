@@ -52,11 +52,12 @@ func UpdateMask(mask, inputVec, prevInput, buildPrev *BitVector, newMaskFlag boo
 //
 // Equation:
 //   - Dt = Mt XOR Mt-1  (if t > 0)
-//   - Dt = Mt           (if t = 0, assuming M-1 = 0)
+//   - Dt = 0            (if t = 0, CCSDS Eq. 8: no change at initialization)
 func ComputeChange(change, mask, prevMask *BitVector, t int) {
 	if t == 0 {
-		// At t=0, D0 = M0 (assuming M-1 = 0)
-		change.CopyFrom(mask)
+		// CCSDS Eq. 8: D0 = 0 — both encoder and decoder start from the
+		// same user-specified M0, so there is no change to communicate
+		change.Zero()
 	} else {
 		// Dt = Mt XOR Mt-1
 		change.XORInto(mask, prevMask)

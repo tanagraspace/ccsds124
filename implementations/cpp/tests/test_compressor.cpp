@@ -259,8 +259,8 @@ TEST_CASE("Mask update functions", "[compressor][mask]") {
 
         compute_change(change, mask, prev_mask, 0);
 
-        // At t=0, change = mask
-        REQUIRE(change == mask);
+        // CCSDS Eq. 8: D_0 = 0 regardless of M_0 (no change at initialization)
+        REQUIRE(change.hamming_weight() == 0);
     }
 
     SECTION("compute_change at t>0") {

@@ -102,7 +102,7 @@ def compute_change(
 
     Equation:
     - Dt = Mt XOR Mt-1  (if t > 0)
-    - Dt = Mt           (if t = 0, assuming M-1 = 0)
+    - Dt = 0            (if t = 0, CCSDS Eq. 8: no change at initialization)
 
     Args:
         change: Change vector to compute (modified in place)
@@ -111,8 +111,9 @@ def compute_change(
         t: Current time step
     """
     if t == 0:
-        # At t=0, D0 = M0 (assuming M-1 = 0)
-        change.copy_from(mask)
+        # CCSDS Eq. 8: D0 = 0 — both encoder and decoder start from the
+        # same user-specified M0, so there is no change to communicate
+        change.zero()
     else:
         # Dt = Mt XOR Mt-1
         change.xor(mask, prev_mask)

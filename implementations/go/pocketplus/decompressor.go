@@ -23,8 +23,8 @@ type Decompressor struct {
 
 // NewDecompressor creates a new decompressor.
 func NewDecompressor(F int, initialMask *BitVector, robustness int) (*Decompressor, error) {
-	if F <= 0 {
-		return nil, errors.New("F must be positive")
+	if F <= 0 || F > MaxPacketLength {
+		return nil, fmt.Errorf("F must be between 1 and %d bits", MaxPacketLength)
 	}
 	if robustness < 0 || robustness > MaxRobustness {
 		return nil, fmt.Errorf("robustness must be between 0 and %d", MaxRobustness)

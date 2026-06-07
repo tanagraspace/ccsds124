@@ -320,6 +320,11 @@ impl Compressor {
 }
 
 /// Compress multiple packets of housekeeping data.
+///
+/// This byte-buffer convenience API requires `packet_size` (in bits) to be a
+/// multiple of 8 so packets map cleanly onto the input byte slice. The CCSDS
+/// 124.0-B-1 standard itself allows any F in 1..=65535 bits — use the
+/// low-level [`Compressor`] for non-byte-aligned packet lengths.
 pub fn compress(
     data: &[u8],
     packet_size: usize,

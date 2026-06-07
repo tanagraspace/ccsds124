@@ -15,6 +15,7 @@ if False:  # noqa: SIM108
 
 # Constants
 MAX_ROBUSTNESS = 7
+MAX_PACKET_LENGTH = 65535  # CCSDS 124.0-B-1 section 3.2: 1 <= F <= 2^16 - 1
 
 
 class Decompressor:
@@ -35,6 +36,12 @@ class Decompressor:
             initial_mask: M0 - Initial mask vector (None = all zeros)
         """
         from pocketplus.bitvector import BitVector
+
+        # CCSDS 124.0-B-1 section 3.2: 1 <= F <= 2^16 - 1
+        if packet_length < 1 or packet_length > MAX_PACKET_LENGTH:
+            raise ValueError(
+                "packet_length must be in 1.." + str(MAX_PACKET_LENGTH) + " bits"
+            )
 
         self.F = packet_length
         self.robustness = min(robustness, MAX_ROBUSTNESS)

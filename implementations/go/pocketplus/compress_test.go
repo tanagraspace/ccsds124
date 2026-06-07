@@ -521,3 +521,23 @@ func TestCompressPacketNilInput(t *testing.T) {
 		t.Error("Expected error for nil input")
 	}
 }
+
+// TestPacketLengthBounds verifies CCSDS 124.0-B-1 section 3.2:
+// 1 <= F <= 65535 (issue #99).
+func TestPacketLengthBounds(t *testing.T) {
+	if _, err := NewCompressor(0, nil, 1, 0, 0, 0); err == nil {
+		t.Error("NewCompressor should reject F=0")
+	}
+	if _, err := NewCompressor(MaxPacketLength+1, nil, 1, 0, 0, 0); err == nil {
+		t.Error("NewCompressor should reject F>65535")
+	}
+	if _, err := NewCompressor(MaxPacketLength, nil, 1, 0, 0, 0); err != nil {
+		t.Errorf("NewCompressor should accept F=65535: %v", err)
+	}
+	if _, err := NewDecompressor(0, nil, 1); err == nil {
+		t.Error("NewDecompressor should reject F=0")
+	}
+	if _, err := NewDecompressor(MaxPacketLength+1, nil, 1); err == nil {
+		t.Error("NewDecompressor should reject F>65535")
+	}
+}

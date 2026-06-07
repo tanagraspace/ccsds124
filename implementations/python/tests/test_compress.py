@@ -380,3 +380,19 @@ class TestNonZeroInitialMask:
         first_byte = output[0]
         assert (first_byte >> 7) & 1 == 1
         assert (first_byte >> 6) & 1 == 0
+
+
+class TestPacketLengthValidation:
+    """CCSDS 124.0-B-1 section 3.2: 1 <= F <= 65535 (issue #99)."""
+
+    def test_rejects_zero_packet_length(self) -> None:
+        with pytest.raises(ValueError):
+            Compressor(packet_length=0)
+
+    def test_rejects_oversized_packet_length(self) -> None:
+        with pytest.raises(ValueError):
+            Compressor(packet_length=65536)
+
+    def test_accepts_boundary_packet_lengths(self) -> None:
+        assert Compressor(packet_length=1).F == 1
+        assert Compressor(packet_length=65535).F == 65535

@@ -102,6 +102,9 @@ public:
         }
 
         // Read BIT_4(V_t) - effective robustness
+        if (reader.remaining() < 4) {
+            return Error::Underflow;
+        }
         std::uint32_t vt_raw = reader.read_bits(4);
         std::uint8_t Vt = static_cast<std::uint8_t>(vt_raw & 0x0FU);
 
@@ -112,6 +115,9 @@ public:
         if (Vt > 0 && change_count > 0) {
             // Read e_t
             int et = reader.read_bit();
+            if (et < 0) {
+                return Error::Underflow;
+            }
 
             if (et == 1) {
                 // Read k_t bits and apply mask updates in single pass
@@ -127,6 +133,9 @@ public:
 
                         if (global_pos < N) {
                             int kt_bit = reader.read_bit();
+                            if (kt_bit < 0) {
+                                return Error::Underflow;
+                            }
                             // kt=1 means positive update (mask becomes 0)
                             // kt=0 means negative update (mask becomes 1)
                             if (kt_bit > 0) {
@@ -141,6 +150,9 @@ public:
 
                 // Read c_t
                 ct = reader.read_bit();
+                if (ct < 0) {
+                    return Error::Underflow;
+                }
             } else {
                 // et = 0: all updates are negative (mask bits become 1)
                 // Iterate by set bits in Xt
@@ -178,6 +190,9 @@ public:
 
         // Read d_t
         int dt = reader.read_bit();
+        if (dt < 0) {
+            return Error::Underflow;
+        }
 
         // ====================================================================
         // Parse q_t: Optional full mask
@@ -190,6 +205,9 @@ public:
         if (dt == 0) {
             // Read ft flag
             int ft = reader.read_bit();
+            if (ft < 0) {
+                return Error::Underflow;
+            }
 
             if (ft == 1) {
                 // Full mask follows: decode RLE(M XOR (M<<))
@@ -221,6 +239,9 @@ public:
 
             // Read rt flag
             rt = reader.read_bit();
+            if (rt < 0) {
+                return Error::Underflow;
+            }
         }
 
         if (rt == 1) {
@@ -234,6 +255,9 @@ public:
             // Read full packet
             for (std::size_t i = 0; i < N; ++i) {
                 int bit = reader.read_bit();
+                if (bit < 0) {
+                    return Error::Underflow;
+                }
                 output.set_bit(i, bit > 0 ? 1 : 0);
             }
         } else {

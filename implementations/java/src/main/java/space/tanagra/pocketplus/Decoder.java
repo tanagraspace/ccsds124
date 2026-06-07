@@ -107,10 +107,14 @@ public final class Decoder {
     int delta = countDecode(reader);
 
     while (delta != 0) {
-      if (delta <= bitPosition) {
-        bitPosition -= delta;
-        target.setBit(bitPosition, 1);
+      // A delta beyond the remaining bit position means the encoding is
+      // invalid for this vector length (GOTCHAS #21): reject it instead of
+      // silently skipping.
+      if (delta > bitPosition) {
+        throw new PocketException("Invalid RLE delta: exceeds remaining bit position");
       }
+      bitPosition -= delta;
+      target.setBit(bitPosition, 1);
       delta = countDecode(reader);
     }
   }

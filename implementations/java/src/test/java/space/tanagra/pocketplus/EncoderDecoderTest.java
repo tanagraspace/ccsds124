@@ -6,6 +6,7 @@
 package space.tanagra.pocketplus;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -196,5 +197,16 @@ class EncoderDecoderTest {
     // Verify extracted bits match
     assertEquals(data.getBit(2), result.getBit(2));
     assertEquals(data.getBit(5), result.getBit(5));
+  }
+
+  /**
+   * GOTCHAS #21 / issue #92: an RLE delta exceeding the remaining bit position must be rejected,
+   * not silently skipped.
+   */
+  @Test
+  void rleDecodeRejectsInvalidDelta() {
+    // COUNT(9) = '110'+BIT5(7), then terminator '10' -> 0xC7 0x80. Delta 9 exceeds 8 bits.
+    BitReader reader = new BitReader(new byte[] {(byte) 0xC7, (byte) 0x80}, 16);
+    assertThrows(PocketException.class, () -> Decoder.rleDecode(reader, 8));
   }
 }

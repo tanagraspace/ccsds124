@@ -93,12 +93,18 @@ pub fn rle_decode(reader: &mut BitReader, length: usize) -> Result<BitVector, Po
     let mut delta = count_decode(reader)?;
 
     while delta != 0 {
-        // Delta represents (count of zeros + 1)
-        if (delta as usize) <= bit_position {
-            bit_position -= delta as usize;
-            // Set the bit at this position
-            result.set_bit(bit_position, 1);
+        // Delta represents (count of zeros + 1). A delta beyond the
+        // remaining bit position means the encoding is invalid for this
+        // vector length (GOTCHAS #21): reject it instead of silently
+        // skipping.
+        if (delta as usize) > bit_position {
+            return Err(PocketError::InvalidFormat(
+                "invalid RLE delta: exceeds remaining bit position".to_string(),
+            ));
         }
+        bit_position -= delta as usize;
+        // Set the bit at this position
+        result.set_bit(bit_position, 1);
 
         // Read next delta
         delta = count_decode(reader)?;
@@ -148,6 +154,17 @@ pub fn bit_insert(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// GOTCHAS #21 / issue #92: an RLE delta exceeding the remaining bit
+    /// position must be rejected, not silently skipped.
+    #[test]
+    fn test_rle_decode_rejects_invalid_delta() {
+        // COUNT(9) = '110'+BIT5(7), then terminator '10' -> 0xC7 0x80.
+        // Delta 9 exceeds an 8-bit vector.
+        let data = vec![0xC7, 0x80];
+        let mut reader = BitReader::new(&data, 16);
+        assert!(rle_decode(&mut reader, 8).is_err());
+    }
 
     #[test]
     fn test_count_decode_one() {

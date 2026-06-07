@@ -320,3 +320,29 @@ TEST_CASE("Bit insert with empty mask", "[decoder]") {
     REQUIRE(data.hamming_weight() == 0); // No bits inserted
     REQUIRE(reader.position() == 0);     // No bits consumed
 }
+
+TEST_CASE("RLE decode rejects invalid delta", "[decoder][hardening]") {
+    // GOTCHAS #21 / issue #92: an RLE delta exceeding the remaining bit
+    // position must be rejected, not silently skipped.
+    // COUNT(9) = '110'+BIT5(7), then terminator '10' -> 0xC7 0x80.
+    std::uint8_t data[] = {0xC7, 0x80};
+    BitReader reader(data, 16);
+
+    BitVector<8> result;
+    auto status = rle_decode(reader, result);
+    REQUIRE(status != Error::Ok);
+}
+
+TEST_CASE("Bit insert rejects truncated input", "[decoder][hardening]") {
+    // GOTCHAS #21 / issue #92: bit_insert must fail on underflow instead of
+    // silently skipping positions. Mask needs 8 bits but only 3 available.
+    std::uint8_t data[] = {0xE0};
+    BitReader reader(data, 3);
+
+    BitVector<8> mask;
+    for (std::size_t i = 0; i < 8; ++i) {
+        mask.set_bit(i, 1);
+    }
+    BitVector<8> out;
+    REQUIRE(bit_insert(reader, out, mask) != Error::Ok);
+}

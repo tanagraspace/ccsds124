@@ -432,3 +432,15 @@ func TestBitInsertInsufficientBits(t *testing.T) {
 		t.Error("Expected error for insufficient bits")
 	}
 }
+
+// TestRLEDecodeRejectsInvalidDelta verifies GOTCHAS #21 / issue #92:
+// an RLE delta exceeding the remaining bit position must be rejected,
+// not silently skipped.
+func TestRLEDecodeRejectsInvalidDelta(t *testing.T) {
+	// COUNT(9) = '110'+BIT5(7), then terminator '10' -> 0xC7 0x80.
+	// Delta 9 exceeds an 8-bit vector.
+	br := NewBitReader([]byte{0xC7, 0x80})
+	if _, err := RLEDecode(br, 8); err == nil {
+		t.Error("RLEDecode should reject delta beyond bit position")
+	}
+}

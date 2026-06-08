@@ -275,11 +275,13 @@ class BitVector:
             bytes_in_last_word = ((num_bytes - 1) % 4) + 1
             bits_in_last_byte = self.length - ((num_bytes - 1) * 8)
 
-            # Create mask for valid bits in big-endian word
+            # Create mask for valid bits in big-endian word.
+            # MSB-first: valid bits in a partial last byte are at the HIGH
+            # end of the byte, so mask 0xFF << (8 - bits) (GOTCHAS #20).
             mask = 0
             for byte in range(bytes_in_last_word):
                 if byte == bytes_in_last_word - 1:
-                    byte_mask = (1 << bits_in_last_byte) - 1
+                    byte_mask = (0xFF << (8 - bits_in_last_byte)) & 0xFF
                 else:
                     byte_mask = 0xFF
                 shift_amt = (3 - byte) * 8

@@ -177,6 +177,19 @@ class TestBitVectorBitwiseOps:
         for i in range(4):
             assert result.get_bit(i) == 0
 
+    def test_not_msb_aligned_non_byte_aligned(self) -> None:
+        """GOTCHAS #20 (issue #103): NOT of a non-byte-aligned vector must set
+        the valid (high) bits and leave padding zero.
+
+        NOT of an all-zero length-12 vector: positions 0..11 must all be 1.
+        The pre-fix bug used a low-bits mask, leaving positions 8..11 at 0 and
+        wrongly setting padding bits 12..15.
+        """
+        a = BitVector(12)  # all zeros
+        result = a.not_()
+        assert [result.get_bit(i) for i in range(12)] == [1] * 12
+        assert result.hamming_weight() == 12
+
     def test_not_multi_byte_partial(self) -> None:
         """Test NOT with multiple bytes where last byte is partial.
 

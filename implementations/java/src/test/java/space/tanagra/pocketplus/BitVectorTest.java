@@ -110,6 +110,19 @@ class BitVectorTest {
     assertEquals(0, result.getBit(7));
   }
 
+  // GOTCHAS #20 (issue #103): NOT of a non-byte-aligned vector must set the
+  // valid (high) bits and leave padding zero. NOT of an all-zero length-12
+  // vector: positions 0..12 must all be 1.
+  @Test
+  void testNotMsbAlignedNonByteAligned() {
+    BitVector bv = new BitVector(12);
+    BitVector result = bv.not();
+    for (int i = 0; i < 12; i++) {
+      assertEquals(1, result.getBit(i), "position " + i + " should be set");
+    }
+    assertEquals(12, result.hammingWeight());
+  }
+
   @Test
   void testLeftShift() {
     // MSB-first: leftShift moves bits towards bit 0, bit 0 is lost

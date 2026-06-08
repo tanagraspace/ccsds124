@@ -281,7 +281,9 @@ impl BitVector {
             let bytes_in_last_word = ((num_bytes - 1) % 4) + 1;
             let bits_in_last_byte = self.length - ((num_bytes - 1) * 8);
 
-            // Create mask for valid bits in big-endian word
+            // Create mask for valid bits in big-endian word.
+            // MSB-first: valid bits in a partial last byte are at the HIGH
+            // end of the byte, so mask 0xFF << (8 - bits) (GOTCHAS #20).
             let mut mask = 0u32;
             for byte in 0..bytes_in_last_word {
                 let byte_mask: u8 = if byte == bytes_in_last_word - 1 {
@@ -289,7 +291,7 @@ impl BitVector {
                     if bits_in_last_byte >= 8 {
                         0xFF
                     } else {
-                        ((1u32 << bits_in_last_byte) - 1) as u8
+                        (0xFFu32 << (8 - bits_in_last_byte)) as u8
                     }
                 } else {
                     0xFF
@@ -479,6 +481,19 @@ mod tests {
         assert_eq!(result.get_bit(1), 1);
         assert_eq!(result.get_bit(2), 0);
         assert_eq!(result.get_bit(3), 1);
+    }
+
+    // GOTCHAS #20 (issue #103): NOT of a non-byte-aligned vector must set the
+    // valid (high) bits and leave padding zero. NOT of an all-zero length-12
+    // vector: positions 0..12 must all be 1.
+    #[test]
+    fn test_not_msb_aligned_non_byte_aligned() {
+        let bv = BitVector::new(12);
+        let result = bv.not();
+        for i in 0..12 {
+            assert_eq!(result.get_bit(i), 1, "position {i} should be set");
+        }
+        assert_eq!(result.hamming_weight(), 12);
     }
 
     #[test]

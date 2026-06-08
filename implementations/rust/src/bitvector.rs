@@ -5,8 +5,8 @@
 //! match ESA/ESOC reference implementation.
 //!
 //! ## Bit Numbering Convention (CCSDS 124.0-B-1 Section 1.6.1)
-//! - Bit 0 = LSB (Least Significant Bit)
-//! - Bit N-1 = MSB (Most Significant Bit, transmitted first)
+//! - Bit 0 = MSB (Most Significant Bit, transmitted first)
+//! - Bit N-1 = LSB (Least Significant Bit)
 //!
 //! ## Word Packing (Big-Endian)
 //! Within each 32-bit word:
@@ -23,7 +23,7 @@ pub const MAX_PACKET_LENGTH: usize = 65535;
 /// Fixed-length bit vector structure.
 ///
 /// Stores a binary vector of length F bits using 32-bit words.
-/// Bit 0 is the LSB, bit F-1 is the MSB.
+/// Bit 0 is the MSB (transmitted first), bit F-1 is the LSB.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct BitVector {
     /// 32-bit word storage (big-endian packing).
@@ -155,7 +155,7 @@ impl BitVector {
     /// Get bit value at position.
     ///
     /// # Arguments
-    /// * `pos` - Bit position (0 = LSB, length-1 = MSB)
+    /// * `pos` - Bit position (0 = MSB, length-1 = LSB)
     ///
     /// # Returns
     /// Bit value (0 or 1), or 0 if position is out of bounds.
@@ -177,7 +177,7 @@ impl BitVector {
     /// Set bit value at position.
     ///
     /// # Arguments
-    /// * `pos` - Bit position (0 = LSB, length-1 = MSB)
+    /// * `pos` - Bit position (0 = MSB, length-1 = LSB)
     /// * `value` - Bit value (0 or non-zero for 1)
     #[inline]
     pub fn set_bit(&mut self, pos: usize, value: u8) {

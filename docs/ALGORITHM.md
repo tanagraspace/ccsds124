@@ -526,7 +526,7 @@ Time t=2:
 
 - **CCSDS 124.0-B-1**: Robust Compression of Fixed-Length Housekeeping Data, February 2023
 - **Standard PDF**: https://ccsds.org/Pubs/124x0b1.pdf
-- **ESA Reference Implementation**: https://opssat.esa.int/pocket-plus/
+- **ESA Reference Implementation**: provided by ESA (the former opssat.esa.int/pocket-plus page is now defunct)
 - **Implementation Paper**: Evans, D., et al. (2022). "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1."
 
 ## Glossary

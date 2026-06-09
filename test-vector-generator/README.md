@@ -358,7 +358,7 @@ cat output/vectors/simple/metadata.json | jq .results
 
 ## References
 
-- **ESA Source**: https://opssat.esa.int/pocket-plus/
+- **ESA Source**: https://opssat.esa.int/pocket-plus/ (now defunct as of June 2026); see CCSDS 124.0-B-1 below
 - **CCSDS 124.0-B-1**: Robust Compression of Fixed-Length Housekeeping Data. https://ccsds.org/Pubs/124x0b1.pdf
 - **Implementation Paper**: Evans, D., et al. (2022). "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1." 36th Annual Small Satellite Conference. https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=5292&context=smallsat
 - **Venus Express**: ESA mission to Venus (2005-2015, atmospheric entry January 2015)

@@ -204,4 +204,4 @@ The `test-vector-generator/c-reference/` directory contains the ESA reference C 
 Refer to:
 - `docs/GOTCHAS.md` and `docs/ALGORITHM.md`
 - CCSDS 124.0-B-1 specification
-- ESA POCKET+ documentation: https://opssat.esa.int/pocket-plus/
+- POCKET+ on OPS-SAT-1 (SmallSat 2022): https://digitalcommons.usu.edu/smallsat/2022/all2022/133/

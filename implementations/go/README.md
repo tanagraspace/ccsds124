@@ -158,4 +158,4 @@ for packet := range decomp.StreamPackets(data, numBits) {
 ## References
 
 - [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf)
-- [ESA POCKET+](https://opssat.esa.int/pocket-plus/)
+- [POCKET+ on OPS-SAT-1 (SmallSat 2022)](https://digitalcommons.usu.edu/smallsat/2022/all2022/133/)

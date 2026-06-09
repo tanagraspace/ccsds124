@@ -75,6 +75,6 @@ See [LICENSE](LICENSE) for details.
 
 ## References
 
-- [ESA POCKET+ Information](https://opssat.esa.int/pocket-plus/)
+- [POCKET+ on OPS-SAT-1 (SmallSat 2022)](https://digitalcommons.usu.edu/smallsat/2022/all2022/133/)
 - [CCSDS 124.0-B-1 - Lossless Data Compression](https://ccsds.org/Pubs/124x0b1.pdf)
 - [CCSDS Standards](https://ccsds.org/)

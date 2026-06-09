@@ -2,7 +2,7 @@
 
 ## Source
 
-- **URL**: https://opssat.esa.int/pocket-plus/
+- **URL**: https://opssat.esa.int/pocket-plus/ (now defunct as of June 2026)
 - **Obtained**: December 2, 2024
 - **Description**: Barebone C reference implementation provided by ESA
 

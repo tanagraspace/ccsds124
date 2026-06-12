@@ -8,7 +8,7 @@
  *                        |___/                  |_|
  * ============================================================================
  *
- * POCKET+ C Implementation - Reference Test Vectors
+ * CCSDS 124.0-B-1 C Implementation - Reference Test Vectors
  *
  * Tests compression against reference test vectors to ensure correctness
  * and interoperability with other implementations.
@@ -19,7 +19,7 @@
  * ============================================================================
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,19 +99,19 @@ static int decompress_and_verify(
     static uint8_t decompressed_data[15 * 1024 * 1024];  /* 15 MB */
 
     /* Initialize decompressor */
-    pocket_decompressor_t decomp;
-    int result = pocket_decompressor_init(&decomp, packet_length_bits, NULL, robustness);
-    if (result != POCKET_OK) {
+    ccsds124_decompressor_t decomp;
+    int result = ccsds124_decompressor_init(&decomp, packet_length_bits, NULL, robustness);
+    if (result != CCSDS124_OK) {
         fprintf(stderr, "\n  FAIL: Decompressor init failed for %s\n", test_name);
         return 0;
     }
 
     /* Decompress */
     size_t decompressed_size = 0U;
-    result = pocket_decompress(&decomp, compressed_data, compressed_size,
+    result = ccsds124_decompress(&decomp, compressed_data, compressed_size,
                                decompressed_data, sizeof(decompressed_data),
                                &decompressed_size);
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         fprintf(stderr, "\n  FAIL: Decompression failed with error %d for %s\n",
                 result, test_name);
         return 0;
@@ -224,10 +224,10 @@ static int compress_and_verify(
     }
 
     /* Initialize compressor with automatic parameter management */
-    pocket_compressor_t comp;
-    int result = pocket_compressor_init(&comp, packet_length_bits, NULL, robustness,
+    ccsds124_compressor_t comp;
+    int result = ccsds124_compressor_init(&comp, packet_length_bits, NULL, robustness,
                                         pt_limit, ft_limit, rt_limit);
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         fprintf(stderr, "\n  FAIL: Compressor init failed\n");
         return 0;
     }
@@ -235,9 +235,9 @@ static int compress_and_verify(
     /* Compress entire input using high-level API */
     size_t actual_size = 0;
 
-    result = pocket_compress(&comp, input_data, input_size,
+    result = ccsds124_compress(&comp, input_data, input_size,
                             actual_output, sizeof(actual_output), &actual_size);
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         fprintf(stderr, "\n  FAIL: Compression failed with error %d\n", result);
         return 0;
     }

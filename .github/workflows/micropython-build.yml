@@ -23,15 +23,15 @@ jobs:
       - name: Verify Python syntax (all .py files)
         run: |
           echo "Checking Python syntax..."
-          find pocketplus -name "*.py" -exec python3 -m py_compile {} \;
+          find ccsds124 -name "*.py" -exec python3 -m py_compile {} \;
           echo "All files have valid Python syntax"
 
       - name: Verify no forbidden imports in core modules
         run: |
           echo "Checking for forbidden imports (typing, argparse)..."
-          # Check pocketplus directory for forbidden imports
-          if grep -rn "^from typing import\|^import typing\|^import argparse\|^from argparse import" pocketplus/; then
-            echo "ERROR: Found forbidden imports in pocketplus/"
+          # Check ccsds124 directory for forbidden imports
+          if grep -rn "^from typing import\|^import typing\|^import argparse\|^from argparse import" ccsds124/; then
+            echo "ERROR: Found forbidden imports in ccsds124/"
             exit 1
           fi
           echo "No forbidden imports found"
@@ -39,7 +39,7 @@ jobs:
       - name: Test core module imports with MicroPython
         run: |
           echo "Testing imports with MicroPython..."
-          cd pocketplus
+          cd ccsds124
           for f in *.py; do
             if [ "$f" != "__init__.py" ]; then
               echo "  Importing ${f%.py}..."
@@ -55,7 +55,7 @@ jobs:
           import sys
           sys.path.insert(0, '.')
           try:
-              from pocketplus import __version__
+              from ccsds124 import __version__
               print('Version:', __version__)
               print('MicroPython compatibility: OK')
           except Exception as e:

@@ -3,13 +3,13 @@
  * @brief Unit tests for Compressor class.
  */
 
-#include <pocketplus/bitbuffer.hpp>
-#include <pocketplus/bitvector.hpp>
-#include <pocketplus/compressor.hpp>
+#include <ccsds124/bitbuffer.hpp>
+#include <ccsds124/bitvector.hpp>
+#include <ccsds124/compressor.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 TEST_CASE("Compressor construction", "[compressor]") {
     SECTION("default construction") {

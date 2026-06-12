@@ -1,4 +1,4 @@
-# Fuzzing Makefile for POCKET+ C Implementation
+# Fuzzing Makefile for CCSDS 124.0-B-1 C Implementation
 #
 # Supports both libFuzzer (Clang) and AFL++
 #
@@ -130,7 +130,7 @@ clean:
 	rm -rf crash-* leak-* timeout-*
 
 help:
-	@echo "POCKET+ Fuzzing Targets:"
+	@echo "CCSDS 124.0-B-1 Fuzzing Targets:"
 	@echo ""
 	@echo "  make              Build all fuzzers with libFuzzer"
 	@echo "  make AFL=1        Build all fuzzers with AFL++"

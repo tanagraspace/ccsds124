@@ -10,6 +10,6 @@ Releases are tagged `java/vX.Y.Z`.
 
 ### Added
 
-- Complete CCSDS 124.0-B-1 POCKET+ compression and decompression
+- Complete CCSDS 124.0-B-1 compression and decompression
 - Byte-for-byte validation against the ESA reference implementation (all shared test vectors)
 - CLI tool for compress/decompress operations

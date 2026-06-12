@@ -1,7 +1,7 @@
 //! Fixed-length bit vector implementation using 32-bit words.
 //!
 //! This module provides fixed-length bit vector operations optimized for
-//! POCKET+ compression. Uses 32-bit words with big-endian byte packing to
+//! CCSDS 124.0-B-1 compression. Uses 32-bit words with big-endian byte packing to
 //! match ESA/ESOC reference implementation.
 //!
 //! ## Bit Numbering Convention (CCSDS 124.0-B-1 Section 1.6.1)
@@ -544,7 +544,7 @@ mod tests {
 
     #[test]
     fn test_720_bits() {
-        // Test with POCKET+ standard packet size
+        // Test with CCSDS 124.0-B-1 standard packet size
         let mut bv = BitVector::new(720);
         assert_eq!(bv.len(), 720);
 

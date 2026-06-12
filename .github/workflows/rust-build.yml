@@ -36,10 +36,16 @@ jobs:
           toolchain: ${{ matrix.rust }}
           components: rustfmt, clippy
 
+      # Lint gates run only on stable/ubuntu: rustfmt and clippy behavior
+      # drifts between toolchains, so gating on beta/nightly would break CI
+      # on upstream tooling changes unrelated to our code. Build + test still
+      # cover the full stable/beta/nightly x OS matrix below.
       - name: Check formatting
+        if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
         run: cargo fmt --check
 
       - name: Run clippy (pedantic)
+        if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
         run: cargo clippy -- -D warnings -W clippy::pedantic
 
       - name: Build
@@ -56,7 +62,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Generate HTML test report
-        run: ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/index.html "POCKET+ Rust Test Report"
+        run: ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/index.html "CCSDS 124.0-B-1 Rust Test Report"
 
       - name: Run CLI round-trip tests
         run: |
@@ -213,7 +219,7 @@ jobs:
         run: |
           mkdir -p build/docs/tests
           cargo test --release 2>&1 | tee build/test-output.txt
-          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/index.html "POCKET+ Rust Test Report"
+          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/index.html "CCSDS 124.0-B-1 Rust Test Report"
 
       - name: Generate API documentation
         run: |
@@ -263,7 +269,7 @@ jobs:
           <html lang="en">
           <head>
             <meta charset="UTF-8">
-            <title>POCKET+ Rust Reports</title>
+            <title>CCSDS 124.0-B-1 Rust Reports</title>
             <style>
               body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 2rem auto; padding: 1rem; }
               h1 { color: #f46623; }
@@ -274,9 +280,9 @@ jobs:
             </style>
           </head>
           <body>
-            <h1>POCKET+ Rust Reports</h1>
+            <h1>CCSDS 124.0-B-1 Rust Reports</h1>
             <ul>
-              <li><a href="docs/api/pocketplus/index.html">API Documentation</a></li>
+              <li><a href="docs/api/ccsds124/index.html">API Documentation</a></li>
               <li><a href="docs/tests/">Unit Test Report</a></li>
               <li><a href="coverage/tarpaulin-report.html">Code Coverage Report</a></li>
             </ul>

@@ -1,11 +1,11 @@
-# Makefile for POCKET+ Test Vector Generation
+# Makefile for CCSDS 124.0-B-1 Test Vector Generation
 # Provides convenient commands for building and running the test vector generator
 
 .PHONY: help build generate clean verify copy-to-repo shell test
 
 # Default target
 help:
-	@echo "POCKET+ Test Vector Generator"
+	@echo "CCSDS 124.0-B-1 Test Vector Generator"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  build          - Build the Docker image"

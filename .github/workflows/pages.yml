@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir -p build/docs/tests/html
           make test 2>&1 | tee build/test-output.txt
-          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/html/index.html "POCKET+ C Test Report"
+          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/html/index.html "CCSDS 124.0-B-1 C Test Report"
 
       - name: Generate coverage HTML
         working-directory: implementations/c
@@ -74,7 +74,7 @@ jobs:
         run: |
           mkdir -p build/docs/tests/html
           make test 2>&1 | tee build/test-output.txt
-          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/html/index.html "POCKET+ C++ Test Report"
+          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/html/index.html "CCSDS 124.0-B-1 C++ Test Report"
 
       - name: Generate coverage HTML
         working-directory: implementations/cpp
@@ -117,13 +117,13 @@ jobs:
         working-directory: implementations/python
         run: |
           mkdir -p build/docs
-          pytest -v --fast --cov=pocketplus \
+          pytest -v --fast --cov=ccsds124 \
             --cov-report=html:build/docs/coverage \
             --html=build/docs/tests/index.html --self-contained-html
 
       - name: Generate API docs
         working-directory: implementations/python
-        run: pdoc -d google pocketplus -o build/docs/api
+        run: pdoc -d google ccsds124 -o build/docs/api
 
       - name: Prepare Python artifacts
         run: |
@@ -155,13 +155,13 @@ jobs:
         working-directory: implementations/go
         run: |
           mkdir -p build/docs/tests
-          go test -json ./pocketplus/... | go-test-report -o build/docs/tests/index.html -t "POCKET+ Go Test Report"
+          go test -json ./ccsds124/... | go-test-report -o build/docs/tests/index.html -t "CCSDS 124.0-B-1 Go Test Report"
 
       - name: Generate coverage HTML
         working-directory: implementations/go
         run: |
           mkdir -p build/docs/coverage
-          go test -coverprofile=build/coverage.out ./pocketplus/...
+          go test -coverprofile=build/coverage.out ./ccsds124/...
           go tool cover -html=build/coverage.out -o build/docs/coverage/index.html
 
       - name: Generate API docs
@@ -199,7 +199,7 @@ jobs:
         run: |
           mkdir -p build/docs/tests
           cargo test 2>&1 | tee build/test-output.txt
-          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/index.html "POCKET+ Rust Test Report"
+          ../../scripts/generate-test-report.sh build/test-output.txt build/docs/tests/index.html "CCSDS 124.0-B-1 Rust Test Report"
 
       - name: Generate coverage HTML
         working-directory: implementations/rust

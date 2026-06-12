@@ -1,6 +1,6 @@
 """Test vectors validation against reference implementation.
 
-Validates Python POCKET+ output matches byte-for-byte with
+Validates Python CCSDS 124.0-B-1 output matches byte-for-byte with
 expected output from ESA reference implementation.
 
 Run all tests:
@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from pocketplus import compress, decompress
+from ccsds124 import compress, decompress
 
 # Path to test vectors (relative to repo root)
 REPO_ROOT = Path(__file__).parent.parent.parent.parent

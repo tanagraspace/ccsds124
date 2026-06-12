@@ -45,12 +45,12 @@ jobs:
         run: ruff check .
 
       - name: Type check with mypy
-        run: mypy pocketplus
+        run: mypy ccsds124
 
       - name: Run tests with coverage
         run: |
           mkdir -p build/docs
-          pytest -v --fast --cov=pocketplus \
+          pytest -v --fast --cov=ccsds124 \
             --cov-report=html:build/docs/coverage \
             --cov-report=xml:build/docs/coverage.xml \
             --cov-report=term \
@@ -59,7 +59,7 @@ jobs:
 
       - name: Generate API docs
         if: matrix.python-version == '3.11'
-        run: pdoc -d google pocketplus -o build/docs/api
+        run: pdoc -d google ccsds124 -o build/docs/api
 
       - name: Upload docs artifacts
         if: matrix.python-version == '3.11'

@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "pocketplus"
+name = "ccsds124"
 version = "1.0.0"

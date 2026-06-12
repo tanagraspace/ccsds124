@@ -1,14 +1,14 @@
-# POCKET+ Rust Implementation
+# CCSDS 124.0-B-1 Rust Implementation
 
-[![Build](https://github.com/tanagraspace/pocket-plus/actions/workflows/rust-build.yml/badge.svg)](https://github.com/tanagraspace/pocket-plus/actions/workflows/rust-build.yml)
-[![Coverage](assets/coverage.svg)](https://tanagraspace.com/pocket-plus/rust/coverage/)
+[![Build](https://github.com/tanagraspace/ccsds124/actions/workflows/rust-build.yml/badge.svg)](https://github.com/tanagraspace/ccsds124/actions/workflows/rust-build.yml)
+[![Coverage](assets/coverage.svg)](https://tanagraspace.com/ccsds124/rust/coverage/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Rust implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) POCKET+ lossless compression algorithm of fixed-length housekeeping data.
+A Rust implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) lossless compression algorithm of fixed-length housekeeping data.
 
 ## Citation
 
-If POCKET+ contributes to your research, please cite:
+If CCSDS 124.0-B-1 contributes to your research, please cite:
 
 > D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," *Proceedings of the Small Satellite Conference*, Communications, SSC22-XII-03. https://digitalcommons.usu.edu/smallsat/2022/all2022/133/
 
@@ -16,7 +16,7 @@ If POCKET+ contributes to your research, please cite:
 <summary>BibTeX</summary>
 
 ```bibtex
-@inproceedings{evans2022pocketplus,
+@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labrèche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -51,24 +51,24 @@ docker-compose run --rm --build rust            # Rebuild after changes
 
 ```bash
 # Compress
-./target/release/pocketplus <input> <packet_size> <pt> <ft> <rt> <robustness>
+./target/release/ccsds124 <input> <packet_size> <pt> <ft> <rt> <robustness>
 
 # Decompress
-./target/release/pocketplus -d <input.pkt> <packet_size> <robustness>
+./target/release/ccsds124 -d <input.pkt> <packet_size> <robustness>
 ```
 
 **Example:**
 ```bash
-./target/release/pocketplus data.bin 90 10 20 50 1      # -> data.bin.pkt
-./target/release/pocketplus -d data.bin.pkt 90 1        # -> data.bin.depkt
+./target/release/ccsds124 data.bin 90 10 20 50 1      # -> data.bin.pkt
+./target/release/ccsds124 -d data.bin.pkt 90 1        # -> data.bin.depkt
 ```
 
-Run `./target/release/pocketplus --help` for full usage.
+Run `./target/release/ccsds124 --help` for full usage.
 
 ## Library Usage
 
 ```rust
-use pocketplus::{compress, decompress};
+use ccsds124::{compress, decompress};
 
 // Compress
 let compressed = compress(
@@ -109,7 +109,7 @@ implementations/rust/
 │   ├── decompress.rs    # Decompression algorithm
 │   ├── error.rs         # Error types
 │   └── bin/
-│       ├── pocketplus.rs # Command-line interface
+│       ├── ccsds124.rs # Command-line interface
 │       └── bench.rs      # Performance benchmarks
 └── tests/
     ├── vectors.rs       # Reference vector validation

@@ -1,12 +1,12 @@
 /**
  * @file test_decompress.c
- * @brief Unit tests for POCKET+ decompression functions.
+ * @brief Unit tests for CCSDS 124.0-B-1 decompression functions.
  *
  * Tests follow TDD methodology - tests are written before implementation.
  * Code follows MISRA C:2012 guidelines.
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -47,9 +47,9 @@ static void test_count_decode_1(void) {
     bitreader_init(&reader, data, 1U);
 
     uint32_t value = 0U;
-    int result = pocket_count_decode(&reader, &value);
+    int result = ccsds124_count_decode(&reader, &value);
 
-    TEST_ASSERT(result == POCKET_OK, "test_count_decode_1: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_count_decode_1: returns OK");
     TEST_ASSERT(value == 1U, "test_count_decode_1: value is 1");
     TEST_ASSERT(bitreader_position(&reader) == 1U, "test_count_decode_1: consumed 1 bit");
 }
@@ -64,9 +64,9 @@ static void test_count_decode_terminator(void) {
     bitreader_init(&reader, data, 2U);
 
     uint32_t value = 0U;
-    int result = pocket_count_decode(&reader, &value);
+    int result = ccsds124_count_decode(&reader, &value);
 
-    TEST_ASSERT(result == POCKET_OK, "test_count_decode_terminator: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_count_decode_terminator: returns OK");
     TEST_ASSERT(value == 0U, "test_count_decode_terminator: value is 0");
     TEST_ASSERT(bitreader_position(&reader) == 2U, "test_count_decode_terminator: consumed 2 bits");
 }
@@ -81,9 +81,9 @@ static void test_count_decode_2(void) {
     bitreader_init(&reader, data, 8U);
 
     uint32_t value = 0U;
-    int result = pocket_count_decode(&reader, &value);
+    int result = ccsds124_count_decode(&reader, &value);
 
-    TEST_ASSERT(result == POCKET_OK, "test_count_decode_2: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_count_decode_2: returns OK");
     TEST_ASSERT(value == 2U, "test_count_decode_2: value is 2");
     TEST_ASSERT(bitreader_position(&reader) == 8U, "test_count_decode_2: consumed 8 bits");
 }
@@ -98,9 +98,9 @@ static void test_count_decode_33(void) {
     bitreader_init(&reader, data, 8U);
 
     uint32_t value = 0U;
-    int result = pocket_count_decode(&reader, &value);
+    int result = ccsds124_count_decode(&reader, &value);
 
-    TEST_ASSERT(result == POCKET_OK, "test_count_decode_33: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_count_decode_33: returns OK");
     TEST_ASSERT(value == 33U, "test_count_decode_33: value is 33");
 }
 
@@ -118,9 +118,9 @@ static void test_count_decode_34(void) {
     bitreader_init(&reader, data, 16U);
 
     uint32_t value = 0U;
-    int result = pocket_count_decode(&reader, &value);
+    int result = ccsds124_count_decode(&reader, &value);
 
-    TEST_ASSERT(result == POCKET_OK, "test_count_decode_34: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_count_decode_34: returns OK");
     TEST_ASSERT(value == 34U, "test_count_decode_34: value is 34");
 }
 
@@ -136,7 +136,7 @@ static void test_count_roundtrip(void) {
         /* Encode */
         bitbuffer_t encoded;
         bitbuffer_init(&encoded);
-        (void)pocket_count_encode(&encoded, test_values[i]);
+        (void)ccsds124_count_encode(&encoded, test_values[i]);
 
         /* Decode */
         uint8_t data[16];
@@ -146,7 +146,7 @@ static void test_count_roundtrip(void) {
         bitreader_init(&reader, data, encoded.num_bits);
 
         uint32_t decoded = 0U;
-        (void)pocket_count_decode(&reader, &decoded);
+        (void)ccsds124_count_decode(&reader, &decoded);
 
         if (decoded != test_values[i]) {
             all_passed = 0;
@@ -175,9 +175,9 @@ static void test_rle_decode_all_zeros(void) {
     bitvector_t result;
     bitvector_init(&result, 8U);
 
-    int status = pocket_rle_decode(&reader, &result, 8U);
+    int status = ccsds124_rle_decode(&reader, &result, 8U);
 
-    TEST_ASSERT(status == POCKET_OK, "test_rle_decode_all_zeros: returns OK");
+    TEST_ASSERT(status == CCSDS124_OK, "test_rle_decode_all_zeros: returns OK");
     TEST_ASSERT(bitvector_hamming_weight(&result) == 0U, "test_rle_decode_all_zeros: all bits zero");
 }
 
@@ -206,7 +206,7 @@ static void test_rle_roundtrip(void) {
         /* Encode */
         bitbuffer_t encoded;
         bitbuffer_init(&encoded);
-        (void)pocket_rle_encode(&encoded, &input);
+        (void)ccsds124_rle_encode(&encoded, &input);
 
         /* Get encoded bytes */
         uint8_t enc_data[16];
@@ -218,7 +218,7 @@ static void test_rle_roundtrip(void) {
 
         bitvector_t decoded;
         bitvector_init(&decoded, 16U);
-        (void)pocket_rle_decode(&reader, &decoded, 16U);
+        (void)ccsds124_rle_decode(&reader, &decoded, 16U);
 
         /* Compare */
         if (bitvector_equals(&input, &decoded) == 0) {
@@ -245,8 +245,8 @@ static void test_decompress_uncompressed_packet(void) {
     size_t packet_bits = 32U;
 
     /* Compress it */
-    pocket_compressor_t comp;
-    pocket_compressor_init(&comp, packet_bits, NULL, 1U, 10, 20, 50);
+    ccsds124_compressor_t comp;
+    ccsds124_compressor_init(&comp, packet_bits, NULL, 1U, 10, 20, 50);
 
     bitvector_t input;
     bitvector_init(&input, packet_bits);
@@ -255,15 +255,15 @@ static void test_decompress_uncompressed_packet(void) {
     bitbuffer_t compressed;
     bitbuffer_init(&compressed);
 
-    pocket_params_t params = {1U, 0, 1, 1};  /* First packet: ft=1, rt=1 */
-    (void)pocket_compress_packet(&comp, &input, &compressed, &params);
+    ccsds124_params_t params = {1U, 0, 1, 1};  /* First packet: ft=1, rt=1 */
+    (void)ccsds124_compress_packet(&comp, &input, &compressed, &params);
 
     /* Now decompress */
     uint8_t comp_bytes[64];
     (void)bitbuffer_to_bytes(&compressed, comp_bytes, sizeof(comp_bytes));
 
-    pocket_decompressor_t decomp;
-    pocket_decompressor_init(&decomp, packet_bits, NULL, 1U);
+    ccsds124_decompressor_t decomp;
+    ccsds124_decompressor_init(&decomp, packet_bits, NULL, 1U);
 
     bitvector_t output;
     bitvector_init(&output, packet_bits);
@@ -271,7 +271,7 @@ static void test_decompress_uncompressed_packet(void) {
     bitreader_t reader;
     bitreader_init(&reader, comp_bytes, compressed.num_bits);
 
-    int result = pocket_decompress_packet(&decomp, &reader, &output);
+    int result = ccsds124_decompress_packet(&decomp, &reader, &output);
 
     /* Verify */
     uint8_t output_data[4];
@@ -279,7 +279,7 @@ static void test_decompress_uncompressed_packet(void) {
 
     int data_matches = (memcmp(input_data, output_data, 4U) == 0) ? 1 : 0;
 
-    TEST_ASSERT(result == POCKET_OK, "test_decompress_uncompressed_packet: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_decompress_uncompressed_packet: returns OK");
     TEST_ASSERT(data_matches != 0, "test_decompress_uncompressed_packet: data matches");
 }
 
@@ -296,28 +296,28 @@ static void test_decompress_roundtrip_multiple(void) {
     size_t packet_bits = 64U;
 
     /* Compress all packets */
-    pocket_compressor_t comp;
-    pocket_compressor_init(&comp, packet_bits, NULL, 1U, 10, 20, 50);
+    ccsds124_compressor_t comp;
+    ccsds124_compressor_init(&comp, packet_bits, NULL, 1U, 10, 20, 50);
 
     uint8_t compressed_data[1024];
     size_t compressed_size = 0U;
 
-    (void)pocket_compress(&comp, input_data, 80U, compressed_data, sizeof(compressed_data), &compressed_size);
+    (void)ccsds124_compress(&comp, input_data, 80U, compressed_data, sizeof(compressed_data), &compressed_size);
 
     /* Decompress all packets */
     uint8_t output_data[80];
     size_t output_size = 0U;
 
-    pocket_decompressor_t decomp;
-    pocket_decompressor_init(&decomp, packet_bits, NULL, 1U);
+    ccsds124_decompressor_t decomp;
+    ccsds124_decompressor_init(&decomp, packet_bits, NULL, 1U);
 
-    int result = pocket_decompress(&decomp, compressed_data, compressed_size,
+    int result = ccsds124_decompress(&decomp, compressed_data, compressed_size,
                                     output_data, sizeof(output_data), &output_size);
 
     /* Verify */
     int data_matches = (memcmp(input_data, output_data, 80U) == 0) ? 1 : 0;
 
-    TEST_ASSERT(result == POCKET_OK, "test_decompress_roundtrip_multiple: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_decompress_roundtrip_multiple: returns OK");
     TEST_ASSERT(output_size == 80U, "test_decompress_roundtrip_multiple: correct size");
     TEST_ASSERT(data_matches != 0, "test_decompress_roundtrip_multiple: data matches");
 }
@@ -387,12 +387,12 @@ static void test_count_decode_null_args(void) {
     bitreader_init(&reader, data, 8U);
 
     /* NULL reader */
-    int result = pocket_count_decode(NULL, &value);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_count_decode_null_args: NULL reader fails");
+    int result = ccsds124_count_decode(NULL, &value);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_count_decode_null_args: NULL reader fails");
 
     /* NULL value */
-    result = pocket_count_decode(&reader, NULL);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_count_decode_null_args: NULL value fails");
+    result = ccsds124_count_decode(&reader, NULL);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_count_decode_null_args: NULL value fails");
 }
 
 static void test_count_decode_empty_reader(void) {
@@ -403,61 +403,61 @@ static void test_count_decode_empty_reader(void) {
     /* Initialize with 0 bits */
     bitreader_init(&reader, data, 0U);
 
-    int result = pocket_count_decode(&reader, &value);
-    TEST_ASSERT(result == POCKET_ERROR_UNDERFLOW, "test_count_decode_empty_reader: empty reader fails");
+    int result = ccsds124_count_decode(&reader, &value);
+    TEST_ASSERT(result == CCSDS124_ERROR_UNDERFLOW, "test_count_decode_empty_reader: empty reader fails");
 }
 
 static void test_decompressor_init_null(void) {
-    int result = pocket_decompressor_init(NULL, 8, NULL, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompressor_init_null: NULL decomp fails");
+    int result = ccsds124_decompressor_init(NULL, 8, NULL, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompressor_init_null: NULL decomp fails");
 }
 
 static void test_decompress_packet_null_args(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
     bitreader_t reader;
     bitvector_t output;
     uint8_t data[1] = {0xFF};
 
-    pocket_decompressor_init(&decomp, 8, NULL, 0);
+    ccsds124_decompressor_init(&decomp, 8, NULL, 0);
     bitreader_init(&reader, data, 8U);
     bitvector_init(&output, 8);
 
     /* NULL decomp */
-    int result = pocket_decompress_packet(NULL, &reader, &output);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompress_packet_null_args: NULL decomp fails");
+    int result = ccsds124_decompress_packet(NULL, &reader, &output);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompress_packet_null_args: NULL decomp fails");
 
     /* NULL reader */
-    result = pocket_decompress_packet(&decomp, NULL, &output);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompress_packet_null_args: NULL reader fails");
+    result = ccsds124_decompress_packet(&decomp, NULL, &output);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompress_packet_null_args: NULL reader fails");
 
     /* NULL output */
-    result = pocket_decompress_packet(&decomp, &reader, NULL);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompress_packet_null_args: NULL output fails");
+    result = ccsds124_decompress_packet(&decomp, &reader, NULL);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompress_packet_null_args: NULL output fails");
 }
 
 static void test_decompress_null_args(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
     uint8_t input[4] = {0};
     uint8_t output[4];
     size_t output_size;
 
-    pocket_decompressor_init(&decomp, 8, NULL, 0);
+    ccsds124_decompressor_init(&decomp, 8, NULL, 0);
 
     /* NULL decomp */
-    int result = pocket_decompress(NULL, input, 4, output, 4, &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompress_null_args: NULL decomp fails");
+    int result = ccsds124_decompress(NULL, input, 4, output, 4, &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompress_null_args: NULL decomp fails");
 
     /* NULL input */
-    result = pocket_decompress(&decomp, NULL, 4, output, 4, &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompress_null_args: NULL input fails");
+    result = ccsds124_decompress(&decomp, NULL, 4, output, 4, &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompress_null_args: NULL input fails");
 
     /* NULL output buffer */
-    result = pocket_decompress(&decomp, input, 4, NULL, 4, &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompress_null_args: NULL output fails");
+    result = ccsds124_decompress(&decomp, input, 4, NULL, 4, &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompress_null_args: NULL output fails");
 
     /* NULL output_size */
-    result = pocket_decompress(&decomp, input, 4, output, 4, NULL);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompress_null_args: NULL output_size fails");
+    result = ccsds124_decompress(&decomp, input, 4, output, 4, NULL);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompress_null_args: NULL output_size fails");
 }
 
 static void test_rle_decode_null_args(void) {
@@ -469,12 +469,12 @@ static void test_rle_decode_null_args(void) {
     bitvector_init(&result, 8);
 
     /* NULL reader */
-    int status = pocket_rle_decode(NULL, &result, 8U);
-    TEST_ASSERT(status == POCKET_ERROR_INVALID_ARG, "test_rle_decode_null_args: NULL reader fails");
+    int status = ccsds124_rle_decode(NULL, &result, 8U);
+    TEST_ASSERT(status == CCSDS124_ERROR_INVALID_ARG, "test_rle_decode_null_args: NULL reader fails");
 
     /* NULL result */
-    status = pocket_rle_decode(&reader, NULL, 8U);
-    TEST_ASSERT(status == POCKET_ERROR_INVALID_ARG, "test_rle_decode_null_args: NULL result fails");
+    status = ccsds124_rle_decode(&reader, NULL, 8U);
+    TEST_ASSERT(status == CCSDS124_ERROR_INVALID_ARG, "test_rle_decode_null_args: NULL result fails");
 }
 
 static void test_bit_insert_null_args(void) {
@@ -487,16 +487,16 @@ static void test_bit_insert_null_args(void) {
     bitvector_init(&mask, 8);
 
     /* NULL reader */
-    int status = pocket_bit_insert(NULL, &bv_data, &mask);
-    TEST_ASSERT(status == POCKET_ERROR_INVALID_ARG, "test_bit_insert_null_args: NULL reader fails");
+    int status = ccsds124_bit_insert(NULL, &bv_data, &mask);
+    TEST_ASSERT(status == CCSDS124_ERROR_INVALID_ARG, "test_bit_insert_null_args: NULL reader fails");
 
     /* NULL data */
-    status = pocket_bit_insert(&reader, NULL, &mask);
-    TEST_ASSERT(status == POCKET_ERROR_INVALID_ARG, "test_bit_insert_null_args: NULL data fails");
+    status = ccsds124_bit_insert(&reader, NULL, &mask);
+    TEST_ASSERT(status == CCSDS124_ERROR_INVALID_ARG, "test_bit_insert_null_args: NULL data fails");
 
     /* NULL mask */
-    status = pocket_bit_insert(&reader, &bv_data, NULL);
-    TEST_ASSERT(status == POCKET_ERROR_INVALID_ARG, "test_bit_insert_null_args: NULL mask fails");
+    status = ccsds124_bit_insert(&reader, &bv_data, NULL);
+    TEST_ASSERT(status == CCSDS124_ERROR_INVALID_ARG, "test_bit_insert_null_args: NULL mask fails");
 }
 
 static void test_bit_insert_length_mismatch(void) {
@@ -508,8 +508,8 @@ static void test_bit_insert_length_mismatch(void) {
     bitvector_init(&bv_data, 8);   /* 8 bits */
     bitvector_init(&mask, 16);     /* 16 bits - mismatch */
 
-    int status = pocket_bit_insert(&reader, &bv_data, &mask);
-    TEST_ASSERT(status == POCKET_ERROR_INVALID_ARG, "test_bit_insert_length_mismatch: mismatched lengths fails");
+    int status = ccsds124_bit_insert(&reader, &bv_data, &mask);
+    TEST_ASSERT(status == CCSDS124_ERROR_INVALID_ARG, "test_bit_insert_length_mismatch: mismatched lengths fails");
 }
 
 static void test_decompress_output_overflow(void) {
@@ -517,22 +517,22 @@ static void test_decompress_output_overflow(void) {
     uint8_t input_data[8] = {0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22, 0x33, 0x44};
     size_t packet_bits = 32U;
 
-    pocket_compressor_t comp;
-    pocket_compressor_init(&comp, packet_bits, NULL, 1U, 10, 20, 50);
+    ccsds124_compressor_t comp;
+    ccsds124_compressor_init(&comp, packet_bits, NULL, 1U, 10, 20, 50);
 
     uint8_t compressed[256];
     size_t compressed_size = 0U;
-    (void)pocket_compress(&comp, input_data, 8U, compressed, sizeof(compressed), &compressed_size);
+    (void)ccsds124_compress(&comp, input_data, 8U, compressed, sizeof(compressed), &compressed_size);
 
     /* Try to decompress into a buffer that's too small */
-    pocket_decompressor_t decomp;
-    pocket_decompressor_init(&decomp, packet_bits, NULL, 1U);
+    ccsds124_decompressor_t decomp;
+    ccsds124_decompressor_init(&decomp, packet_bits, NULL, 1U);
 
     uint8_t output[2];  /* Only 2 bytes, need 8 */
     size_t output_size = 0U;
 
-    int result = pocket_decompress(&decomp, compressed, compressed_size, output, sizeof(output), &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_OVERFLOW, "test_decompress_output_overflow: small buffer fails");
+    int result = ccsds124_decompress(&decomp, compressed, compressed_size, output, sizeof(output), &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_OVERFLOW, "test_decompress_output_overflow: small buffer fails");
 }
 
 /* ============================================================================
@@ -540,35 +540,35 @@ static void test_decompress_output_overflow(void) {
  * ============================================================================ */
 
 static void test_decompressor_init_invalid_length(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
 
     /* F = 0 should fail */
-    int result = pocket_decompressor_init(&decomp, 0, NULL, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompressor_init_invalid_length: F=0 fails");
+    int result = ccsds124_decompressor_init(&decomp, 0, NULL, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompressor_init_invalid_length: F=0 fails");
 
     /* F > max should fail */
-    result = pocket_decompressor_init(&decomp, POCKET_MAX_PACKET_LENGTH + 1, NULL, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompressor_init_invalid_length: F>max fails");
+    result = ccsds124_decompressor_init(&decomp, CCSDS124_MAX_PACKET_LENGTH + 1, NULL, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompressor_init_invalid_length: F>max fails");
 }
 
 static void test_decompressor_init_invalid_robustness(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
 
     /* Robustness > 7 should fail */
-    int result = pocket_decompressor_init(&decomp, 8, NULL, 8);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "test_decompressor_init_invalid_robustness: R=8 fails");
+    int result = ccsds124_decompressor_init(&decomp, 8, NULL, 8);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "test_decompressor_init_invalid_robustness: R=8 fails");
 }
 
 static void test_decompressor_init_with_mask(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
     bitvector_t initial_mask;
 
     bitvector_init(&initial_mask, 8);
     initial_mask.data[0] = 0xAB000000;
 
-    int result = pocket_decompressor_init(&decomp, 8, &initial_mask, 1);
+    int result = ccsds124_decompressor_init(&decomp, 8, &initial_mask, 1);
 
-    TEST_ASSERT(result == POCKET_OK, "test_decompressor_init_with_mask: returns OK");
+    TEST_ASSERT(result == CCSDS124_OK, "test_decompressor_init_with_mask: returns OK");
     TEST_ASSERT(decomp.mask.data[0] == 0xAB000000, "test_decompressor_init_with_mask: mask copied");
 }
 

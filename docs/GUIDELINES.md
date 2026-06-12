@@ -1,4 +1,4 @@
-# POCKET+ Implementation Guidelines
+# CCSDS 124.0-B-1 Implementation Guidelines
 
 ## Before You Start
 
@@ -91,7 +91,7 @@ make coverage         # Run tests with coverage
 ```
 
 **Structure:**
-- Core library: `include/pocketplus/` (header-only)
+- Core library: `include/ccsds124/` (header-only)
 - CLI: `src/cli.cpp`
 - Uses 32-bit word storage for bit vectors (same as C)
 
@@ -121,7 +121,7 @@ make coverage         # Run tests with coverage
 - Use simple `sys.argv` parsing (no `argparse` - not in MicroPython)
 
 **Structure:**
-- Core library: `pocketplus/` package - compression/decompression modules
+- Core library: `ccsds124/` package - compression/decompression modules
 - CLI: `cli.py` - command-line interface
 - Avoid large intermediate allocations (memory-constrained devices)
 
@@ -146,8 +146,8 @@ go test -cover ./...       # Coverage
 ```
 
 **Structure:**
-- Core library: `pocketplus/` package
-- CLI: `cmd/pocketplus/main.go`
+- Core library: `ccsds124/` package
+- CLI: `cmd/ccsds124/main.go`
 - Uses 32-bit word storage for bit vectors (optimized for performance)
 
 ### Rust
@@ -172,7 +172,7 @@ cargo clippy              # Lint
 
 **Structure:**
 - Core library: `src/lib.rs`
-- CLI: `src/bin/pocketplus.rs`
+- CLI: `src/bin/ccsds124.rs`
 - Uses 32-bit word storage for bit vectors
 
 ### Java
@@ -197,8 +197,8 @@ mvn checkstyle:check      # Check style
 ```
 
 **Structure:**
-- Core library: `src/main/java/space/tanagra/pocketplus/`
-- CLI: `src/main/java/space/tanagra/pocketplus/cli/Main.java`
+- Core library: `src/main/java/space/tanagra/ccsds124/`
+- CLI: `src/main/java/space/tanagra/ccsds124/cli/Main.java`
 - Uses 32-bit word storage for bit vectors (same as C)
 
 ### Other Languages

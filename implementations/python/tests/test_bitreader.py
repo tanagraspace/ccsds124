@@ -2,7 +2,7 @@
 
 import pytest
 
-from pocketplus.bitreader import BitReader
+from ccsds124.bitreader import BitReader
 
 
 class TestBitReaderInit:

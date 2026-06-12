@@ -1,4 +1,4 @@
-//! POCKET+ decompression algorithm implementation.
+//! CCSDS 124.0-B-1 decompression algorithm implementation.
 //!
 //! Implements CCSDS 124.0-B-1 decompression (inverse of Section 5.3):
 //! - Decompressor initialization and state management
@@ -12,9 +12,9 @@
 use crate::bitreader::BitReader;
 use crate::bitvector::BitVector;
 use crate::decode::{bit_insert, count_decode, rle_decode};
-use crate::error::PocketError;
+use crate::error::Ccsds124Error;
 
-/// POCKET+ decompressor state.
+/// CCSDS 124.0-B-1 decompressor state.
 #[derive(Clone)]
 pub struct Decompressor {
     /// Packet length in bits (F).
@@ -41,12 +41,12 @@ impl Decompressor {
         f: usize,
         initial_mask: Option<&BitVector>,
         robustness: u8,
-    ) -> Result<Self, PocketError> {
+    ) -> Result<Self, Ccsds124Error> {
         if f == 0 || f > 65535 {
-            return Err(PocketError::InvalidPacketSize(f));
+            return Err(Ccsds124Error::InvalidPacketSize(f));
         }
         if robustness > 7 {
-            return Err(PocketError::InvalidRobustness(robustness as usize));
+            return Err(Ccsds124Error::InvalidRobustness(robustness as usize));
         }
 
         let mask = initial_mask.cloned().unwrap_or_else(|| BitVector::new(f));
@@ -76,7 +76,10 @@ impl Decompressor {
     }
 
     /// Decompress a single packet.
-    pub fn decompress_packet(&mut self, reader: &mut BitReader) -> Result<BitVector, PocketError> {
+    pub fn decompress_packet(
+        &mut self,
+        reader: &mut BitReader,
+    ) -> Result<BitVector, Ccsds124Error> {
         let mut output = BitVector::new(self.f);
 
         // Copy previous output as prediction base
@@ -222,7 +225,7 @@ impl Decompressor {
     }
 }
 
-/// Decompress data using POCKET+ algorithm.
+/// Decompress data using CCSDS 124.0-B-1 algorithm.
 ///
 /// # Arguments
 ///
@@ -236,7 +239,7 @@ impl Decompressor {
 ///
 /// # Errors
 ///
-/// Returns `PocketError` if:
+/// Returns `Ccsds124Error` if:
 /// - `packet_size` is 0 or not divisible by 8
 /// - `robustness` is greater than 7
 /// - Compressed data is invalid or corrupted
@@ -249,18 +252,18 @@ pub fn decompress(
     data: &[u8],
     packet_size: usize,
     robustness: usize,
-) -> Result<Vec<u8>, PocketError> {
+) -> Result<Vec<u8>, Ccsds124Error> {
     // Validate parameters
     if packet_size == 0 || packet_size % 8 != 0 {
-        return Err(PocketError::InvalidPacketSize(packet_size));
+        return Err(Ccsds124Error::InvalidPacketSize(packet_size));
     }
 
     if robustness > 7 {
-        return Err(PocketError::InvalidRobustness(robustness));
+        return Err(Ccsds124Error::InvalidRobustness(robustness));
     }
 
     if data.is_empty() {
-        return Err(PocketError::UnexpectedEndOfInput);
+        return Err(Ccsds124Error::UnexpectedEndOfInput);
     }
 
     // Initialize decompressor
@@ -297,28 +300,28 @@ mod tests {
     fn test_decompress_invalid_packet_size_zero() {
         let data = vec![0u8; 10];
         let result = decompress(&data, 0, 1);
-        assert!(matches!(result, Err(PocketError::InvalidPacketSize(0))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidPacketSize(0))));
     }
 
     #[test]
     fn test_decompress_invalid_packet_size_not_byte_aligned() {
         let data = vec![0u8; 10];
         let result = decompress(&data, 721, 1);
-        assert!(matches!(result, Err(PocketError::InvalidPacketSize(721))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidPacketSize(721))));
     }
 
     #[test]
     fn test_decompress_invalid_robustness() {
         let data = vec![0u8; 10];
         let result = decompress(&data, 720, 8);
-        assert!(matches!(result, Err(PocketError::InvalidRobustness(8))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidRobustness(8))));
     }
 
     #[test]
     fn test_decompress_empty_input() {
         let data: Vec<u8> = vec![];
         let result = decompress(&data, 720, 1);
-        assert!(matches!(result, Err(PocketError::UnexpectedEndOfInput)));
+        assert!(matches!(result, Err(Ccsds124Error::UnexpectedEndOfInput)));
     }
 
     #[test]
@@ -333,16 +336,19 @@ mod tests {
     #[test]
     fn test_decompressor_new_invalid_f() {
         let result = Decompressor::new(0, None, 2);
-        assert!(matches!(result, Err(PocketError::InvalidPacketSize(0))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidPacketSize(0))));
 
         let result = Decompressor::new(65536, None, 2);
-        assert!(matches!(result, Err(PocketError::InvalidPacketSize(65536))));
+        assert!(matches!(
+            result,
+            Err(Ccsds124Error::InvalidPacketSize(65536))
+        ));
     }
 
     #[test]
     fn test_decompressor_new_invalid_robustness() {
         let result = Decompressor::new(720, None, 8);
-        assert!(matches!(result, Err(PocketError::InvalidRobustness(8))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidRobustness(8))));
     }
 
     #[test]

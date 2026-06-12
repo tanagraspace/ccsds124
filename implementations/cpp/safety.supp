@@ -1,4 +1,4 @@
-// POCKET+ C++ Implementation - Safety Check Documentation
+// CCSDS 124.0-B-1 C++ Implementation - Safety Check Documentation
 // ========================================================
 //
 // This file documents design decisions related to safety-critical coding

@@ -1,7 +1,7 @@
 """Tests for BitBuffer class."""
 
-from pocketplus.bitbuffer import BitBuffer
-from pocketplus.bitvector import BitVector
+from ccsds124.bitbuffer import BitBuffer
+from ccsds124.bitvector import BitVector
 
 
 class TestBitBufferInit:

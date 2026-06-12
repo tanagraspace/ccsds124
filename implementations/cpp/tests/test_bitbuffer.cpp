@@ -3,12 +3,12 @@
  * @brief Unit tests for BitBuffer class.
  */
 
-#include <pocketplus/bitbuffer.hpp>
-#include <pocketplus/bitvector.hpp>
+#include <ccsds124/bitbuffer.hpp>
+#include <ccsds124/bitvector.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 TEST_CASE("BitBuffer construction", "[bitbuffer]") {
     SECTION("default construction") {

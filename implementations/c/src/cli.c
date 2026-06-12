@@ -1,6 +1,6 @@
 /**
  * @file cli.c
- * @brief POCKET+ unified command line interface.
+ * @brief CCSDS 124.0-B-1 unified command line interface.
  *
  * @cond INTERNAL
  * ============================================================================
@@ -18,7 +18,7 @@
  *
  * @par Usage
  * @code
- * pocketplus [options] <input> <packet_size> [compress_params]
+ * ccsds124 [options] <input> <packet_size> [compress_params]
  * @endcode
  *
  * @authors Georges Labreche <georges@tanagraspace.com> - https://georges.fyi
@@ -27,21 +27,23 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 /** @brief ASCII art banner for help output. */
 static const char *BANNER =
-"                                              \n"
-"  ____   ___   ____ _  _______ _____     _    \n"
-" |  _ \\ / _ \\ / ___| |/ / ____|_   _|  _| |_  \n"
-" | |_) | | | | |   | ' /|  _|   | |   |_   _| \n"
-" |  __/| |_| | |___| . \\| |___  | |     |_|   \n"
-" |_|    \\___/ \\____|_|\\_\\_____| |_|           \n"
-"                                              \n"
-"         by  T A N A G R A  S P A C E         \n";
+"                                                 \n"
+"                                                 \n"
+"  ____ ____ ____  ____  ____    _ ____  _  _     \n"
+" / ___/ ___/ ___||  _ \\/ ___|  / |___ \\| || |    \n"
+"| |  | |   \\___ \\| | | \\___ \\  | | __) | || |_   \n"
+"| |__| |___ ___) | |_| |___) | | |/ __/|__   _|  \n"
+" \\____\\____|____/|____/|____/  |_|_____|  |_|    \n"
+"                                                 \n"
+"          by  T A N A G R A  S P A C E           \n"
+"                                                 \n";
 
 /**
  * @brief Print help message with usage information.
@@ -49,21 +51,20 @@ static const char *BANNER =
  * @param[in] prog_name Program name for usage example.
  */
 static void print_version(void) {
-    printf("pocketplus %d.%d.%d\n",
-           POCKET_VERSION_MAJOR,
-           POCKET_VERSION_MINOR,
-           POCKET_VERSION_PATCH);
+    printf("ccsds124 %d.%d.%d\n",
+           CCSDS124_VERSION_MAJOR,
+           CCSDS124_VERSION_MINOR,
+           CCSDS124_VERSION_PATCH);
 }
 
 static void print_help(const char *prog_name) {
     printf("\n%s\n", BANNER);
     printf("CCSDS 124.0-B-1 Lossless Compression (v%d.%d.%d)\n",
-           POCKET_VERSION_MAJOR, POCKET_VERSION_MINOR, POCKET_VERSION_PATCH);
+           CCSDS124_VERSION_MAJOR, CCSDS124_VERSION_MINOR, CCSDS124_VERSION_PATCH);
     printf("=================================================\n\n");
     printf("References:\n");
     printf("  CCSDS 124.0-B-1: https://ccsds.org/Pubs/124x0b1.pdf\n");
-    printf("  ESA POCKET+: https://opssat.esa.int/pocket-plus/\n");
-    printf("  Documentation: https://tanagraspace.com/pocket-plus\n\n");
+    printf("  Documentation: https://tanagraspace.com/ccsds124\n\n");
     printf("Citation:\n");
     printf("  D. Evans, G. Labreche, D. Marszk, S. Bammens, M. Hernandez-Cabronero,\n");
     printf("  V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022.\n");
@@ -187,8 +188,8 @@ static int do_compress(const char *input_path, int packet_size,
 
     /* Initialize compressor */
     size_t packet_length = (size_t)packet_size * 8U;
-    pocket_compressor_t comp;
-    (void)pocket_compressor_init(&comp, packet_length, NULL, (uint8_t)robustness,
+    ccsds124_compressor_t comp;
+    (void)ccsds124_compressor_init(&comp, packet_length, NULL, (uint8_t)robustness,
                                   pt_period, ft_period, rt_period);
 
     /* Allocate output buffer */
@@ -202,10 +203,10 @@ static int do_compress(const char *input_path, int packet_size,
 
     /* Compress */
     size_t output_size = 0U;
-    int result = pocket_compress(&comp, input_data, input_size,
+    int result = ccsds124_compress(&comp, input_data, input_size,
                                   output_data, max_output, &output_size);
 
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         fprintf(stderr, "Error: Compression failed with code %d\n", result);
         free(input_data);
         free(output_data);
@@ -293,10 +294,10 @@ static int do_decompress(const char *input_path, int packet_size, int robustness
 
     /* Initialize decompressor */
     size_t packet_length = (size_t)packet_size * 8U;
-    pocket_decompressor_t decomp;
-    int result = pocket_decompressor_init(&decomp, packet_length, NULL, (uint8_t)robustness);
+    ccsds124_decompressor_t decomp;
+    int result = ccsds124_decompressor_init(&decomp, packet_length, NULL, (uint8_t)robustness);
 
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         fprintf(stderr, "Error: Decompressor init failed with code %d\n", result);
         free(input_data);
         return 1;
@@ -313,10 +314,10 @@ static int do_decompress(const char *input_path, int packet_size, int robustness
 
     /* Decompress */
     size_t output_size = 0U;
-    result = pocket_decompress(&decomp, input_data, input_size,
+    result = ccsds124_decompress(&decomp, input_data, input_size,
                                output_data, max_output, &output_size);
 
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         fprintf(stderr, "Error: Decompression failed with code %d\n", result);
         free(input_data);
         free(output_data);

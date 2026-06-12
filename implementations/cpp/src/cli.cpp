@@ -1,6 +1,6 @@
 /**
  * @file cli.cpp
- * @brief POCKET+ C++ command line interface.
+ * @brief CCSDS 124.0-B-1 C++ command line interface.
  *
  * @cond INTERNAL
  * ============================================================================
@@ -22,7 +22,7 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include <pocketplus/pocketplus.hpp>
+#include <ccsds124/ccsds124.hpp>
 
 #include <cstdio>
 #include <cstdlib>
@@ -30,19 +30,21 @@
 #include <fstream>
 #include <vector>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
-static constexpr const char* BANNER = "                                              \n"
-                                      "  ____   ___   ____ _  _______ _____     _    \n"
-                                      " |  _ \\ / _ \\ / ___| |/ / ____|_   _|  _| |_  \n"
-                                      " | |_) | | | | |   | ' /|  _|   | |   |_   _| \n"
-                                      " |  __/| |_| | |___| . \\| |___  | |     |_|   \n"
-                                      " |_|    \\___/ \\____|_|\\_\\_____| |_|           \n"
-                                      "                                              \n"
-                                      "         by  T A N A G R A  S P A C E         \n";
+static constexpr const char* BANNER = "                                                 \n"
+                                      "                                                 \n"
+                                      "  ____ ____ ____  ____  ____    _ ____  _  _     \n"
+                                      " / ___/ ___/ ___||  _ \\/ ___|  / |___ \\| || |    \n"
+                                      "| |  | |   \\___ \\| | | \\___ \\  | | __) | || |_   \n"
+                                      "| |__| |___ ___) | |_| |___) | | |/ __/|__   _|  \n"
+                                      " \\____\\____|____/|____/|____/  |_|_____|  |_|    \n"
+                                      "                                                 \n"
+                                      "          by  T A N A G R A  S P A C E           \n"
+                                      "                                                 \n";
 
 static void print_version() {
-    std::printf("pocketplus %s (C++)\n", version());
+    std::printf("ccsds124 %s (C++)\n", version());
 }
 
 static void print_help(const char* prog_name) {
@@ -51,8 +53,7 @@ static void print_help(const char* prog_name) {
     std::printf("=================================================\n\n");
     std::printf("References:\n");
     std::printf("  CCSDS 124.0-B-1: https://ccsds.org/Pubs/124x0b1.pdf\n");
-    std::printf("  ESA POCKET+: https://opssat.esa.int/pocket-plus/\n");
-    std::printf("  Documentation: https://tanagraspace.com/pocket-plus\n\n");
+    std::printf("  Documentation: https://tanagraspace.com/ccsds124\n\n");
     std::printf("Usage:\n");
     std::printf("  %s <input> <packet_size> <pt> <ft> <rt> <robustness>\n", prog_name);
     std::printf("  %s -d <input.pkt> <packet_size> <robustness>\n\n", prog_name);

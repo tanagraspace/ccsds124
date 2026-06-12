@@ -1,15 +1,15 @@
 # Instructions for AI Agents
 
-This file provides guidance for AI agents (like Claude Code) working on the POCKET+ project.
+This file provides guidance for AI agents (like Claude Code) working on the CCSDS 124.0-B-1 project.
 
 ## Project Overview
 
-POCKET+ is a multi-language implementation of the CCSDS 124.0-B-1 lossless compression algorithm designed for spacecraft housekeeping data. This is a **monorepo** with independent implementations in C, C++, Python, Go, Rust, and Java.
+CCSDS 124.0-B-1 is a multi-language implementation of the CCSDS 124.0-B-1 lossless compression algorithm designed for spacecraft housekeeping data. This is a **monorepo** with independent implementations in C, C++, Python, Go, Rust, and Java.
 
 ## Repository Structure
 
 ```
-pocket-plus/
+ccsds124/
 ├── implementations/
 │   ├── c/          # C implementation (embedded/flight)
 │   ├── cpp/        # C++ implementation (embedded/flight)
@@ -42,9 +42,9 @@ pocket-plus/
 - Use **prefixed git tags**: `c/vX.Y.Z`, `cpp/vX.Y.Z`, `python/vX.Y.Z`, `go/vX.Y.Z`, `rust/vX.Y.Z`, `java/vX.Y.Z`
 - Follow [Semantic Versioning](https://semver.org/)
 - Update version in language-specific files:
-  - C: `implementations/c/VERSION` and `implementations/c/include/pocketplus.h`
-  - C++: `implementations/cpp/VERSION` and `implementations/cpp/include/pocketplus/config.hpp`
-  - Python: `implementations/python/pyproject.toml` and `implementations/python/pocketplus/__init__.py`
+  - C: `implementations/c/VERSION` and `implementations/c/include/ccsds124.h`
+  - C++: `implementations/cpp/VERSION` and `implementations/cpp/include/ccsds124/config.hpp`
+  - Python: `implementations/python/pyproject.toml` and `implementations/python/ccsds124/__init__.py`
   - Go: Git tag (Go uses tags directly)
   - Rust: `implementations/rust/Cargo.toml`
   - Java: `implementations/java/pom.xml` and `implementations/java/VERSION`

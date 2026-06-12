@@ -1,10 +1,10 @@
-# POCKET+ Test Vector Generator
+# CCSDS 124.0-B-1 Test Vector Generator
 
-Deterministic, containerized test vector generation for POCKET+ compression algorithm using the ESA C reference implementation.
+Deterministic, containerized test vector generation for CCSDS 124.0-B-1 compression algorithm using the ESA C reference implementation.
 
 ## Overview
 
-This directory contains a complete Docker-based system for generating test vectors that validate POCKET+ implementations across different programming languages (C, C++, Python, Go, Rust, Java). The generator ensures:
+This directory contains a complete Docker-based system for generating test vectors that validate CCSDS 124.0-B-1 implementations across different programming languages (C, C++, Python, Go, Rust, Java). The generator ensures:
 
 - **Deterministic builds** - Pinned dependencies (Alpine 3.18, GCC 12.2.1, Python 3.11)
 - **Reproducible results** - Fixed seeds for all random generation

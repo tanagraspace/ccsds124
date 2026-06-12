@@ -1,12 +1,12 @@
-# POCKET+
+# CCSDS 124.0-B-1
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The definitive implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) POCKET+ lossless compression algorithm of fixed-length housekeeping data.
+The definitive implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) lossless compression algorithm of fixed-length housekeeping data.
 
 ## Citation
 
-If POCKET+ contributes to your research, please cite:
+If CCSDS 124.0-B-1 contributes to your research, please cite:
 
 > D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," *Proceedings of the Small Satellite Conference*, Communications, SSC22-XII-03. https://digitalcommons.usu.edu/smallsat/2022/all2022/133/
 
@@ -14,7 +14,7 @@ If POCKET+ contributes to your research, please cite:
 <summary>BibTeX</summary>
 
 ```bibtex
-@inproceedings{evans2022pocketplus,
+@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labrèche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -44,7 +44,7 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 | Java | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/java/`](implementations/java/) |
 
 ¹ Byte-for-byte validated against the ESA reference implementation via the shared [test vectors](test-vectors/).
-² Validated against the UAB CCSDS 124.0-B-1 cross-validation suite (24,900 vectors): encoder 100%, decoder 89% with [documented gaps](docs/TESTING.md#known-gaps-1863-decoder-vectors) in the accuracy guarantee logic for fuzzed packets. Harnesses for the other implementations are tracked in [#93](https://github.com/tanagraspace/pocket-plus/issues/93).
+² Validated against the UAB CCSDS 124.0-B-1 cross-validation suite (24,900 vectors): encoder 100%, decoder 89% with [documented gaps](docs/TESTING.md#known-gaps-1863-decoder-vectors) in the accuracy guarantee logic for fuzzed packets. Harnesses for the other implementations are tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93).
 
 ### Which implementation should I use?
 
@@ -57,7 +57,7 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 ## Repository Structure
 
 ```
-pocket-plus/
+ccsds124/
 ├── implementations/
 │   ├── c/              # C implementation
 │   ├── cpp/            # C++ implementation

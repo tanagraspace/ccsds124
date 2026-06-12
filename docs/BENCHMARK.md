@@ -1,6 +1,6 @@
-# POCKET+ Benchmark Results
+# CCSDS 124.0-B-1 Benchmark Results
 
-Performance comparison across POCKET+ implementations.
+Performance comparison across CCSDS 124.0-B-1 implementations.
 
 ## Environment
 

@@ -12,7 +12,7 @@ GENERATORS_DIR="${WORKSPACE_DIR}/input-generators"
 OUTPUT_DIR="${WORKSPACE_DIR}/output"
 
 echo "=========================================="
-echo "POCKET+ Test Vector Generation"
+echo "CCSDS 124.0-B-1 Test Vector Generation"
 echo "=========================================="
 echo ""
 

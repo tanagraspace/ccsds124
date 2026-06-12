@@ -8,12 +8,12 @@
  *                        |___/                  |_|
  * ============================================================================
  *
- * POCKET+ C Implementation - Bit Buffer Tests
+ * CCSDS 124.0-B-1 C Implementation - Bit Buffer Tests
  * TDD: Write tests first, then implement
  * ============================================================================
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -110,7 +110,7 @@ TEST(test_bitbuffer_append_bits) {
 
     int result = bitbuffer_append_bits(&bb, data, 16);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 16);
     uint8_t output[2];
     bitbuffer_to_bytes(&bb, output, sizeof(output));
@@ -127,7 +127,7 @@ TEST(test_bitbuffer_append_bits_partial_byte) {
 
     int result = bitbuffer_append_bits(&bb, &data, 5);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 5);
     /* Top 5 bits (bits 7:3) of 0x17 = 0b00010, shifted to top of byte = 0b00010000 = 0x10 */
     uint8_t output[1];
@@ -148,7 +148,7 @@ TEST(test_bitbuffer_append_bitvector) {
 
     int result = bitbuffer_append_bitvector(&bb, &bv);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 8);
     uint8_t output[1];
     bitbuffer_to_bytes(&bb, output, sizeof(output));
@@ -215,14 +215,14 @@ TEST(test_bitbuffer_overflow_protection) {
     bitbuffer_init(&bb);
 
     /* Try to append more bits than buffer can hold */
-    for (size_t i = 0; i < POCKET_MAX_OUTPUT_BYTES * 8 + 100; i++) {
+    for (size_t i = 0; i < CCSDS124_MAX_OUTPUT_BYTES * 8 + 100; i++) {
         int result = bitbuffer_append_bit(&bb, 1);
 
-        if (i < POCKET_MAX_OUTPUT_BYTES * 8) {
-            assert(result == POCKET_OK);
+        if (i < CCSDS124_MAX_OUTPUT_BYTES * 8) {
+            assert(result == CCSDS124_OK);
         } else {
             /* Should return error when buffer is full */
-            assert(result == POCKET_ERROR_OVERFLOW);
+            assert(result == CCSDS124_ERROR_OVERFLOW);
         }
     }
 }
@@ -232,13 +232,13 @@ TEST(test_bitbuffer_append_bits_overflow) {
     bitbuffer_init(&bb);
 
     /* Fill buffer near capacity */
-    bb.num_bits = POCKET_MAX_OUTPUT_BYTES * 8 - 4;
+    bb.num_bits = CCSDS124_MAX_OUTPUT_BYTES * 8 - 4;
 
     /* Try to append more bits than remaining space */
     uint8_t data = 0xFF;
     int result = bitbuffer_append_bits(&bb, &data, 8);
 
-    assert(result == POCKET_ERROR_OVERFLOW);
+    assert(result == CCSDS124_ERROR_OVERFLOW);
 }
 
 TEST(test_bitbuffer_append_bitvector_partial) {
@@ -256,7 +256,7 @@ TEST(test_bitbuffer_append_bitvector_partial) {
 
     int result = bitbuffer_append_bitvector(&bb, &bv);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 12);
 }
 

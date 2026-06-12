@@ -1,4 +1,4 @@
-# POCKET+ C++ Implementation - clang-tidy Configuration
+# CCSDS 124.0-B-1 C++ Implementation - clang-tidy Configuration
 # =====================================================
 #
 # Safety-Critical Code Checks
@@ -28,7 +28,7 @@ Checks: >
 
 WarningsAsErrors: ''
 
-HeaderFilterRegex: 'include/pocketplus/.*\.hpp$'
+HeaderFilterRegex: 'include/ccsds124/.*\.hpp$'
 
 CheckOptions:
   # Naming conventions

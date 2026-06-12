@@ -8,7 +8,7 @@
  *                        |___/                  |_|
  * ============================================================================
  * 
- * POCKET+ C Implementation - Encoding Functions Tests
+ * CCSDS 124.0-B-1 C Implementation - Encoding Functions Tests
  * TDD: Write tests first, then implement
  *
  * Tests for CCSDS 124.0-B-1 Section 5.2:
@@ -18,7 +18,7 @@
  * ============================================================================
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -44,9 +44,9 @@ static int tests_passed = 0;
 } while(0)
 
 /* Forward declarations for encoding functions */
-int pocket_count_encode(bitbuffer_t *output, uint32_t value);
-int pocket_rle_encode(bitbuffer_t *output, const bitvector_t *input);
-int pocket_bit_extract(bitbuffer_t *output, const bitvector_t *data, const bitvector_t *mask);
+int ccsds124_count_encode(bitbuffer_t *output, uint32_t value);
+int ccsds124_rle_encode(bitbuffer_t *output, const bitvector_t *input);
+int ccsds124_bit_extract(bitbuffer_t *output, const bitvector_t *data, const bitvector_t *mask);
 
 /* ========================================================================
  * COUNT Encoding Tests (CCSDS Section 5.2.2, Table 5-1)
@@ -61,9 +61,9 @@ TEST(test_count_encode_1) {
     bitbuffer_t bb;
     bitbuffer_init(&bb);
 
-    int result = pocket_count_encode(&bb, 1);
+    int result = ccsds124_count_encode(&bb, 1);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 1);
     uint8_t output[1];
     bitbuffer_to_bytes(&bb, output, sizeof(output));
@@ -74,10 +74,10 @@ TEST(test_count_encode_2) {
     bitbuffer_t bb;
     bitbuffer_init(&bb);
 
-    int result = pocket_count_encode(&bb, 2);
+    int result = ccsds124_count_encode(&bb, 2);
 
     /* 2 → '110' ∥ BIT₅(0) = '110' ∥ '00000' = '11000000' = 0xC0 */
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 8);
     uint8_t output[1];
     bitbuffer_to_bytes(&bb, output, sizeof(output));
@@ -88,10 +88,10 @@ TEST(test_count_encode_3) {
     bitbuffer_t bb;
     bitbuffer_init(&bb);
 
-    int result = pocket_count_encode(&bb, 3);
+    int result = ccsds124_count_encode(&bb, 3);
 
     /* 3 → '110' ∥ BIT₅(1) = '110' ∥ '00001' = '11000001' = 0xC1 */
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 8);
     uint8_t output[1];
     bitbuffer_to_bytes(&bb, output, sizeof(output));
@@ -102,10 +102,10 @@ TEST(test_count_encode_33) {
     bitbuffer_t bb;
     bitbuffer_init(&bb);
 
-    int result = pocket_count_encode(&bb, 33);
+    int result = ccsds124_count_encode(&bb, 33);
 
     /* 33 → '110' ∥ BIT₅(31) = '110' ∥ '11111' = '11011111' = 0xDF */
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 8);
     uint8_t output[1];
     bitbuffer_to_bytes(&bb, output, sizeof(output));
@@ -116,11 +116,11 @@ TEST(test_count_encode_34) {
     bitbuffer_t bb;
     bitbuffer_init(&bb);
 
-    int result = pocket_count_encode(&bb, 34);
+    int result = ccsds124_count_encode(&bb, 34);
 
     /* 34 → '111' ∥ BIT_E(32) where E = 2⌊log₂(32)+1⌋ - 6 = 2*6 - 6 = 6 */
     /* '111' ∥ BIT₆(32) = '111' ∥ '100000' */
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 9);
 }
 
@@ -128,10 +128,10 @@ TEST(test_count_encode_4) {
     bitbuffer_t bb;
     bitbuffer_init(&bb);
 
-    int result = pocket_count_encode(&bb, 4);
+    int result = ccsds124_count_encode(&bb, 4);
 
     /* 4 → '110' ∥ BIT₅(2) = '110' ∥ '00010' = '11000010' = 0xC2 */
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 8);
     uint8_t output[1];
     bitbuffer_to_bytes(&bb, output, sizeof(output));
@@ -143,9 +143,9 @@ TEST(test_count_encode_example_from_spec) {
     bitbuffer_t bb;
     bitbuffer_init(&bb);
 
-    int result = pocket_count_encode(&bb, 4);
+    int result = ccsds124_count_encode(&bb, 4);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     /* 4 is in range 2-33, so '110' ∥ BIT₅(2) */
     assert(bb.num_bits == 8);
 }
@@ -168,9 +168,9 @@ TEST(test_rle_encode_simple) {
     bitvector_set_bit(&bv, 3, 1);
     bitvector_set_bit(&bv, 7, 1);
 
-    int result = pocket_rle_encode(&bb, &bv);
+    int result = ccsds124_rle_encode(&bb, &bv);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
 
     /* C₀ = 4 (3 zeros + 1 before first '1' at position 3)
        C₁ = 5 (4 zeros + 1 before second '1' at position 7)
@@ -188,9 +188,9 @@ TEST(test_rle_encode_all_zeros) {
     bitvector_init(&bv, 8);
     bitvector_zero(&bv);
 
-    int result = pocket_rle_encode(&bb, &bv);
+    int result = ccsds124_rle_encode(&bb, &bv);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
 
     /* No '1' bits, so just '10' terminator MSB-first */
     assert(bb.num_bits == 2);
@@ -220,9 +220,9 @@ TEST(test_rle_encode_example_from_algorithm) {
     bitvector_set_bit(&bv, 31, 1);  /* After 5 more zeros */
     bitvector_set_bit(&bv, 44, 1);  /* After 12 more zeros */
 
-    int result = pocket_rle_encode(&bb, &bv);
+    int result = ccsds124_rle_encode(&bb, &bv);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     /* Should produce COUNT(4) ∥ COUNT(6) ∥ ... ∥ COUNT(13) ∥ '10' */
     assert(bb.num_bits > 0);
 }
@@ -248,9 +248,9 @@ TEST(test_bit_extract_simple) {
     /* mask = 01001010 = 0x4A (extract bits at positions 1, 4, 6 with MSB-first) */
     mask.data[0] = 0x4A000000;
 
-    int result = pocket_bit_extract(&bb, &data, &mask);
+    int result = ccsds124_bit_extract(&bb, &data, &mask);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
 
     /* MSB-first indexing:
        Mask has '1' at positions 1, 4, 6
@@ -275,9 +275,9 @@ TEST(test_bit_extract_no_mask) {
     data.data[0] = 0xFF000000;
     bitvector_zero(&mask);  /* No bits set in mask */
 
-    int result = pocket_bit_extract(&bb, &data, &mask);
+    int result = ccsds124_bit_extract(&bb, &data, &mask);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 0);  /* No bits extracted */
 }
 
@@ -292,9 +292,9 @@ TEST(test_bit_extract_all_mask) {
     data.data[0] = 0xAB000000;  /* 10101011 */
     mask.data[0] = 0xFF000000;  /* All bits set */
 
-    int result = pocket_bit_extract(&bb, &data, &mask);
+    int result = ccsds124_bit_extract(&bb, &data, &mask);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 8);
 
     /* CCSDS BE extracts from highest to lowest position
@@ -314,9 +314,9 @@ TEST(test_bit_extract_length_mismatch) {
     bitvector_init(&data, 8);
     bitvector_init(&mask, 16);  /* Different length */
 
-    int result = pocket_bit_extract(&bb, &data, &mask);
+    int result = ccsds124_bit_extract(&bb, &data, &mask);
 
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
 TEST(test_bit_extract_forward_length_mismatch) {
@@ -327,9 +327,9 @@ TEST(test_bit_extract_forward_length_mismatch) {
     bitvector_init(&data, 8);
     bitvector_init(&mask, 16);  /* Different length */
 
-    int result = pocket_bit_extract_forward(&bb, &data, &mask);
+    int result = ccsds124_bit_extract_forward(&bb, &data, &mask);
 
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
 TEST(test_bit_extract_forward_no_mask) {
@@ -343,9 +343,9 @@ TEST(test_bit_extract_forward_no_mask) {
     data.data[0] = 0xFF000000;
     bitvector_zero(&mask);  /* No bits set in mask */
 
-    int result = pocket_bit_extract_forward(&bb, &data, &mask);
+    int result = ccsds124_bit_extract_forward(&bb, &data, &mask);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bb.num_bits == 0);  /* No bits extracted */
 }
 

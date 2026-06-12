@@ -1,12 +1,12 @@
 [package]
-name = "pocketplus"
+name = "ccsds124"
 version = "1.0.0"
 edition = "2021"
 authors = ["Tanagra Space"]
-description = "CCSDS 124.0-B-1 POCKET+ lossless compression algorithm"
+description = "CCSDS 124.0-B-1 lossless compression algorithm"
 license = "MIT"
-repository = "https://github.com/tanagraspace/pocket-plus"
-keywords = ["compression", "ccsds", "space", "housekeeping", "pocket-plus"]
+repository = "https://github.com/tanagraspace/ccsds124"
+keywords = ["compression", "ccsds", "space", "housekeeping", "telemetry"]
 categories = ["compression", "aerospace"]
 rust-version = "1.70"
 
@@ -14,8 +14,8 @@ rust-version = "1.70"
 # No dependencies - standard library only
 
 [[bin]]
-name = "pocketplus"
-path = "src/bin/pocketplus.rs"
+name = "ccsds124"
+path = "src/bin/ccsds124.rs"
 
 [[bin]]
 name = "bench"

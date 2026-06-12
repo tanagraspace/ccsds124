@@ -1,6 +1,6 @@
 /**
  * @file mask.c
- * @brief POCKET+ mask update logic.
+ * @brief CCSDS 124.0-B-1 mask update logic.
  *
  * @cond INTERNAL
  * ============================================================================
@@ -24,7 +24,7 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 
 /**
  * @name Build Vector Functions
@@ -40,7 +40,7 @@
  */
 
 
-void pocket_update_build(
+void ccsds124_update_build(
     bitvector_t *build,
     const bitvector_t *input,
     const bitvector_t *prev_input,
@@ -82,7 +82,7 @@ void pocket_update_build(
  */
 
 
-void pocket_update_mask(
+void ccsds124_update_mask(
     bitvector_t *mask,
     const bitvector_t *input,
     const bitvector_t *prev_input,
@@ -122,7 +122,7 @@ void pocket_update_mask(
  */
 
 
-void pocket_compute_change(
+void ccsds124_compute_change(
     bitvector_t *change,
     const bitvector_t *mask,
     const bitvector_t *prev_mask,

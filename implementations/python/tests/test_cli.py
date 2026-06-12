@@ -1,4 +1,4 @@
-"""Tests for POCKET+ CLI."""
+"""Tests for CCSDS 124.0-B-1 CLI."""
 
 import subprocess
 import sys
@@ -32,7 +32,7 @@ class TestCliHelp:
         """Test -h flag shows help."""
         result = run_cli("-h")
         assert result.returncode == 0
-        assert "POCKET+" in result.stdout
+        assert "CCSDS 124.0-B-1" in result.stdout
         assert "Usage:" in result.stdout
 
     def test_help_long(self) -> None:
@@ -45,7 +45,7 @@ class TestCliHelp:
         """Test -v flag shows version."""
         result = run_cli("-v")
         assert result.returncode == 0
-        assert "pocketplus" in result.stdout
+        assert "ccsds124" in result.stdout
         assert "1.0.0" in result.stdout
 
     def test_version_long(self) -> None:

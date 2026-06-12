@@ -1,6 +1,6 @@
 /**
  * @file decompress.c
- * @brief POCKET+ decompression algorithm implementation.
+ * @brief CCSDS 124.0-B-1 decompression algorithm implementation.
  *
  * @cond INTERNAL
  * ============================================================================
@@ -26,7 +26,7 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <string.h>
 
 /**
@@ -172,15 +172,15 @@ void bitreader_align_byte(bitreader_t *reader) {
  */
 
 
-int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
-    int result = POCKET_ERROR_INVALID_ARG;
+int ccsds124_count_decode(bitreader_t *reader, uint32_t *value) {
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((reader == NULL) || (value == NULL)) {
         return result;
     }
 
     if (bitreader_remaining(reader) == 0U) {
-        return POCKET_ERROR_UNDERFLOW;
+        return CCSDS124_ERROR_UNDERFLOW;
     }
 
     /* Read first bit */
@@ -189,7 +189,7 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
     if (bit0 == 0) {
         /* Case 1: '0' → value is 1 */
         *value = 1U;
-        result = POCKET_OK;
+        result = CCSDS124_OK;
     } else {
         /* First bit is 1, read second bit */
         int bit1 = bitreader_read_bit(reader);
@@ -197,7 +197,7 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
         if (bit1 == 0) {
             /* Case 2: '10' → terminator (value 0) */
             *value = 0U;
-            result = POCKET_OK;
+            result = CCSDS124_OK;
         } else {
             /* First two bits are 11, read third bit */
             int bit2 = bitreader_read_bit(reader);
@@ -205,11 +205,11 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
             if (bit2 == 0) {
                 /* Case 3: '110' + 5 bits → value + 2 */
                 if (bitreader_remaining(reader) < 5U) {
-                    return POCKET_ERROR_UNDERFLOW;
+                    return CCSDS124_ERROR_UNDERFLOW;
                 }
                 uint32_t raw = bitreader_read_bits(reader, 5U);
                 *value = raw + 2U;
-                result = POCKET_OK;
+                result = CCSDS124_OK;
             } else {
                 /* Case 4: '111' + variable bits
                  * Need to find the size by counting zeros until a 1 */
@@ -220,7 +220,7 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
                 do {
                     next_bit = bitreader_read_bit(reader);
                     if (next_bit < 0) {
-                        return POCKET_ERROR_UNDERFLOW;
+                        return CCSDS124_ERROR_UNDERFLOW;
                     }
                     size++;
                 } while (next_bit == 0);
@@ -233,13 +233,13 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
 
                 /* Check sufficient bits remain for value field */
                 if (bitreader_remaining(reader) < value_bits) {
-                    return POCKET_ERROR_UNDERFLOW;
+                    return CCSDS124_ERROR_UNDERFLOW;
                 }
 
                 /* Read the value field */
                 uint32_t raw = bitreader_read_bits(reader, value_bits);
                 *value = raw + 2U;
-                result = POCKET_OK;
+                result = CCSDS124_OK;
             }
         }
     }
@@ -248,8 +248,8 @@ int pocket_count_decode(bitreader_t *reader, uint32_t *value) {
 }
 
 
-int pocket_rle_decode(bitreader_t *reader, bitvector_t *result, size_t length) {
-    int status = POCKET_ERROR_INVALID_ARG;
+int ccsds124_rle_decode(bitreader_t *reader, bitvector_t *result, size_t length) {
+    int status = CCSDS124_ERROR_INVALID_ARG;
 
     if ((reader == NULL) || (result == NULL)) {
         return status;
@@ -264,28 +264,28 @@ int pocket_rle_decode(bitreader_t *reader, bitvector_t *result, size_t length) {
 
     /* Read COUNT values until terminator */
     uint32_t delta = 0U;
-    status = pocket_count_decode(reader, &delta);
+    status = ccsds124_count_decode(reader, &delta);
 
-    while ((status == POCKET_OK) && (delta != 0U)) {
+    while ((status == CCSDS124_OK) && (delta != 0U)) {
         /* Delta represents (count of zeros + 1) */
         if (delta > bit_position) {
             /* Invalid: delta exceeds remaining positions (v1.6/v1.7/v1.8) */
-            return POCKET_ERROR_OVERFLOW;
+            return CCSDS124_ERROR_OVERFLOW;
         }
         bit_position -= delta;
         /* Set the bit at this position */
         bitvector_set_bit(result, bit_position, 1);
 
         /* Read next delta */
-        status = pocket_count_decode(reader, &delta);
+        status = ccsds124_count_decode(reader, &delta);
     }
 
     return status;
 }
 
 
-int pocket_bit_insert(bitreader_t *reader, bitvector_t *data, const bitvector_t *mask) {
-    int status = POCKET_ERROR_INVALID_ARG;
+int ccsds124_bit_insert(bitreader_t *reader, bitvector_t *data, const bitvector_t *mask) {
+    int status = CCSDS124_ERROR_INVALID_ARG;
 
     if ((reader == NULL) || (data == NULL) || (mask == NULL)) {
         return status;
@@ -299,28 +299,28 @@ int pocket_bit_insert(bitreader_t *reader, bitvector_t *data, const bitvector_t 
 
     if (hamming == 0U) {
         /* No bits to insert */
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
 
     /* Check sufficient bits remain before reading */
     if (bitreader_remaining(reader) < hamming) {
-        return POCKET_ERROR_UNDERFLOW;
+        return CCSDS124_ERROR_UNDERFLOW;
     }
 
     /* Collect positions of '1' bits in mask using word-level processing */
-    size_t positions[POCKET_MAX_PACKET_LENGTH];
+    size_t positions[CCSDS124_MAX_PACKET_LENGTH];
     size_t pos_count = bitvector_get_set_positions(mask, positions, hamming);
 
     /* Insert bits in reverse order (matching BE extraction) */
     for (size_t i = pos_count; i > 0U; i--) {
         int bit = bitreader_read_bit(reader);
         if (bit < 0) {
-            return POCKET_ERROR_UNDERFLOW;
+            return CCSDS124_ERROR_UNDERFLOW;
         }
         bitvector_set_bit(data, positions[i - 1U], bit);
     }
 
-    status = POCKET_OK;
+    status = CCSDS124_OK;
     return status;
 }
 
@@ -332,22 +332,22 @@ int pocket_bit_insert(bitreader_t *reader, bitvector_t *data, const bitvector_t 
  */
 
 
-int pocket_decompressor_init(
-    pocket_decompressor_t *decomp,
+int ccsds124_decompressor_init(
+    ccsds124_decompressor_t *decomp,
     size_t F,
     const bitvector_t *initial_mask,
     uint8_t robustness
 ) {
     if (decomp == NULL) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
-    if ((F == 0U) || (F > (size_t)POCKET_MAX_PACKET_LENGTH)) {
-        return POCKET_ERROR_INVALID_ARG;
+    if ((F == 0U) || (F > (size_t)CCSDS124_MAX_PACKET_LENGTH)) {
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
-    if (robustness > (uint8_t)POCKET_MAX_ROBUSTNESS) {
-        return POCKET_ERROR_INVALID_ARG;
+    if (robustness > (uint8_t)CCSDS124_MAX_ROBUSTNESS) {
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     /* Store configuration */
@@ -380,13 +380,13 @@ int pocket_decompressor_init(
     (void)memset(decomp->received_status_ring, 0, sizeof(decomp->received_status_ring));
 
     /* Reset state */
-    pocket_decompressor_reset(decomp);
+    ccsds124_decompressor_reset(decomp);
 
-    return POCKET_OK;
+    return CCSDS124_OK;
 }
 
 
-void pocket_decompressor_reset(pocket_decompressor_t *decomp) {
+void ccsds124_decompressor_reset(ccsds124_decompressor_t *decomp) {
     if (decomp != NULL) {
         decomp->t = 0U;
         bitvector_copy(&decomp->mask, &decomp->initial_mask);
@@ -406,16 +406,16 @@ void pocket_decompressor_reset(pocket_decompressor_t *decomp) {
 }
 
 
-int pocket_decompressor_notify_packet_loss(
-    pocket_decompressor_t *decomp,
+int ccsds124_decompressor_notify_packet_loss(
+    ccsds124_decompressor_t *decomp,
     uint32_t lost_count
 ) {
     if (decomp == NULL) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     if (lost_count == 0U) {
-        return POCKET_OK;  /* No loss, nothing to do */
+        return CCSDS124_OK;  /* No loss, nothing to do */
     }
 
     /*
@@ -448,13 +448,13 @@ int pocket_decompressor_notify_packet_loss(
     /* Record 0x02 (lost) status entries in the ring buffer */
     for (uint32_t i = 0U; i < lost_count; i++) {
         decomp->received_status_ring[decomp->received_status_index] = 0x02U;
-        decomp->received_status_index = (decomp->received_status_index + 1U) % POCKET_MAX_VT_HISTORY;
-        if (decomp->received_status_count < POCKET_MAX_VT_HISTORY) {
+        decomp->received_status_index = (decomp->received_status_index + 1U) % CCSDS124_MAX_VT_HISTORY;
+        if (decomp->received_status_count < CCSDS124_MAX_VT_HISTORY) {
             decomp->received_status_count++;
         }
     }
 
-    return POCKET_OK;
+    return CCSDS124_OK;
 }
 
 /** @} */ /* End of Decompressor Initialization */
@@ -467,35 +467,35 @@ int pocket_decompressor_notify_packet_loss(
 /**
  * @brief Internal flags extracted during decompression.
  *
- * Used by pocket_decompress_packet_checked() to make accuracy
+ * Used by ccsds124_decompress_packet_checked() to make accuracy
  * guarantee decisions without re-parsing the bitstream.
  */
 typedef struct {
     uint8_t Vt;  /**< Effective robustness (0-15) */
     uint8_t ft;  /**< Send mask flag (0 or 1) */
     uint8_t rt;  /**< Reference/uncompressed flag (0 or 1) */
-} pocket_decompress_flags_t;
+} ccsds124_decompress_flags_t;
 
 /**
  * @brief Internal decompression with optional flag extraction.
  *
- * Core decompression logic shared by both pocket_decompress_packet()
- * and pocket_decompress_packet_checked().
+ * Core decompression logic shared by both ccsds124_decompress_packet()
+ * and ccsds124_decompress_packet_checked().
  *
  * @param[in,out] decomp Decompressor state
  * @param[in,out] reader Bit reader
  * @param[out]    output Decompressed output
  * @param[out]    flags  Optional extracted flags (NULL to skip)
- * @return POCKET_OK or negative error code
+ * @return CCSDS124_OK or negative error code
  */
-static int pocket_decompress_packet_internal(
-    pocket_decompressor_t *decomp,
+static int ccsds124_decompress_packet_internal(
+    ccsds124_decompressor_t *decomp,
     bitreader_t *reader,
     bitvector_t *output,
-    pocket_decompress_flags_t *flags
+    ccsds124_decompress_flags_t *flags
 ) {
     if ((decomp == NULL) || (reader == NULL) || (output == NULL)) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     (void)bitvector_init(output, decomp->F);
@@ -513,14 +513,14 @@ static int pocket_decompress_packet_internal(
 
     /* Decode RLE(Xₜ) - mask changes */
     bitvector_t Xt;
-    int status = pocket_rle_decode(reader, &Xt, decomp->F);
-    if (status != POCKET_OK) {
+    int status = ccsds124_rle_decode(reader, &Xt, decomp->F);
+    if (status != CCSDS124_OK) {
         return status;
     }
 
     /* Read BIT₄(Vₜ) - effective robustness */
     if (bitreader_remaining(reader) < 4U) {
-        return POCKET_ERROR_UNDERFLOW;
+        return CCSDS124_ERROR_UNDERFLOW;
     }
     uint32_t vt_raw = bitreader_read_bits(reader, 4U);
     uint8_t Vt = (uint8_t)(vt_raw & 0x0FU);
@@ -533,26 +533,26 @@ static int pocket_decompress_packet_internal(
         /* Read eₜ */
         int et = bitreader_read_bit(reader);
         if (et < 0) {
-            return POCKET_ERROR_UNDERFLOW;
+            return CCSDS124_ERROR_UNDERFLOW;
         }
 
         /* Pre-extract positions of set bits in Xt (word-level, much faster than bit-by-bit) */
-        size_t change_positions[POCKET_MAX_PACKET_LENGTH];
+        size_t change_positions[CCSDS124_MAX_PACKET_LENGTH];
         size_t num_changes = bitvector_get_set_positions(&Xt, change_positions, change_count);
 
         if (et == 1) {
             /* Read kₜ - determines positive/negative updates */
             /* kₜ has one bit per change in Xt */
-            uint8_t kt_bits[POCKET_MAX_PACKET_LENGTH];
+            uint8_t kt_bits[CCSDS124_MAX_PACKET_LENGTH];
 
             /* Read kt bits using pre-extracted positions */
             if (bitreader_remaining(reader) < num_changes) {
-                return POCKET_ERROR_UNDERFLOW;
+                return CCSDS124_ERROR_UNDERFLOW;
             }
             for (size_t idx = 0U; idx < num_changes; idx++) {
                 int bit_val = bitreader_read_bit(reader);
                 if (bit_val < 0) {
-                    return POCKET_ERROR_UNDERFLOW;
+                    return CCSDS124_ERROR_UNDERFLOW;
                 }
                 kt_bits[idx] = (bit_val > 0) ? 1U : 0U;
             }
@@ -573,7 +573,7 @@ static int pocket_decompress_packet_internal(
             /* Read cₜ */
             ct = bitreader_read_bit(reader);
             if (ct < 0) {
-                return POCKET_ERROR_UNDERFLOW;
+                return CCSDS124_ERROR_UNDERFLOW;
             }
         } else {
             /* et = 0: all updates are negative (mask bits become 1) */
@@ -584,7 +584,7 @@ static int pocket_decompress_packet_internal(
     } else if ((Vt == 0U) && (change_count > 0U)) {
         /* Vt = 0: toggle mask bits at change positions */
         /* Pre-extract positions of set bits in Xt */
-        size_t change_positions[POCKET_MAX_PACKET_LENGTH];
+        size_t change_positions[CCSDS124_MAX_PACKET_LENGTH];
         size_t num_changes = bitvector_get_set_positions(&Xt, change_positions, change_count);
 
         for (size_t idx = 0U; idx < num_changes; idx++) {
@@ -603,7 +603,7 @@ static int pocket_decompress_packet_internal(
     /* Read ḋₜ */
     int dt = bitreader_read_bit(reader);
     if (dt < 0) {
-        return POCKET_ERROR_UNDERFLOW;
+        return CCSDS124_ERROR_UNDERFLOW;
     }
 
     /* ====================================================================
@@ -624,7 +624,7 @@ static int pocket_decompress_packet_internal(
         /* Read ft flag */
         ft = bitreader_read_bit(reader);
         if (ft < 0) {
-            return POCKET_ERROR_UNDERFLOW;
+            return CCSDS124_ERROR_UNDERFLOW;
         }
 
         if (ft == 1) {
@@ -634,8 +634,8 @@ static int pocket_decompress_packet_internal(
 
             /* Full mask follows: decode RLE(M XOR (M<<)) */
             bitvector_t mask_diff;
-            status = pocket_rle_decode(reader, &mask_diff, decomp->F);
-            if (status != POCKET_OK) {
+            status = ccsds124_rle_decode(reader, &mask_diff, decomp->F);
+            if (status != CCSDS124_OK) {
                 return status;
             }
 
@@ -669,7 +669,7 @@ static int pocket_decompress_packet_internal(
         /* Read rt flag */
         rt = bitreader_read_bit(reader);
         if (rt < 0) {
-            return POCKET_ERROR_UNDERFLOW;
+            return CCSDS124_ERROR_UNDERFLOW;
         }
     }
 
@@ -683,8 +683,8 @@ static int pocket_decompress_packet_internal(
     if (rt == 1) {
         /* Full packet follows: COUNT(F) ∥ Iₜ */
         uint32_t packet_length = 0U;
-        status = pocket_count_decode(reader, &packet_length);
-        if (status != POCKET_OK) {
+        status = ccsds124_count_decode(reader, &packet_length);
+        if (status != CCSDS124_OK) {
             return status;
         }
 
@@ -697,12 +697,12 @@ static int pocket_decompress_packet_internal(
 
         /* Read full packet */
         if (bitreader_remaining(reader) < decomp->F) {
-            return POCKET_ERROR_UNDERFLOW;
+            return CCSDS124_ERROR_UNDERFLOW;
         }
         for (size_t i = 0U; i < decomp->F; i++) {
             int bit = bitreader_read_bit(reader);
             if (bit < 0) {
-                return POCKET_ERROR_UNDERFLOW;
+                return CCSDS124_ERROR_UNDERFLOW;
             }
             bitvector_set_bit(output, i, bit);
         }
@@ -720,8 +720,8 @@ static int pocket_decompress_packet_internal(
         }
 
         /* Insert unpredictable bits */
-        status = pocket_bit_insert(reader, output, &extraction_mask);
-        if (status != POCKET_OK) {
+        status = ccsds124_bit_insert(reader, output, &extraction_mask);
+        if (status != CCSDS124_OK) {
             return status;
         }
     }
@@ -733,66 +733,66 @@ static int pocket_decompress_packet_internal(
     bitvector_copy(&decomp->prev_output, output);
     decomp->t++;
 
-    return POCKET_OK;
+    return CCSDS124_OK;
 }
 
 
-int pocket_decompress_packet(
-    pocket_decompressor_t *decomp,
+int ccsds124_decompress_packet(
+    ccsds124_decompressor_t *decomp,
     bitreader_t *reader,
     bitvector_t *output
 ) {
-    return pocket_decompress_packet_internal(decomp, reader, output, NULL);
+    return ccsds124_decompress_packet_internal(decomp, reader, output, NULL);
 }
 
 
-int pocket_decompress_packet_checked(
-    pocket_decompressor_t *decomp,
+int ccsds124_decompress_packet_checked(
+    ccsds124_decompressor_t *decomp,
     const uint8_t *data,
     size_t num_bits,
     bitvector_t *output,
-    pocket_decompress_result_t *result
+    ccsds124_decompress_result_t *result
 ) {
     if ((decomp == NULL) || (data == NULL) || (output == NULL)) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     if (num_bits == 0U) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     /* Save decompressor state before attempting decompression.
      * Per cross-validation v1.9: restore state if packet is invalid
      * to avoid propagating errors to subsequent packets. */
-    pocket_decompressor_t saved_decomp;
+    ccsds124_decompressor_t saved_decomp;
     (void)memcpy(&saved_decomp, decomp, sizeof(*decomp));
 
     /* Create bit reader and decompress with flag extraction */
     bitreader_t reader;
     bitreader_init(&reader, data, num_bits);
 
-    pocket_decompress_flags_t flags;
-    int rc = pocket_decompress_packet_internal(decomp, &reader, output, &flags);
+    ccsds124_decompress_flags_t flags;
+    int rc = ccsds124_decompress_packet_internal(decomp, &reader, output, &flags);
 
     /* Validate: only padding bits should remain (at most 7) (v1.10).
      * Reference packets (rt=1) are exempt: they are self-delimiting via
      * COUNT(F), and per the cross-validation rules a Received Packet
      * Length larger than the bits actually needed means the remainder is
      * simply ignored. */
-    if ((rc == POCKET_OK) && (flags.rt == 0U) &&
+    if ((rc == CCSDS124_OK) && (flags.rt == 0U) &&
         (bitreader_remaining(&reader) >= 8U)) {
-        rc = POCKET_ERROR_OVERFLOW;
+        rc = CCSDS124_ERROR_OVERFLOW;
     }
 
-    if (rc != POCKET_OK) {
+    if (rc != CCSDS124_OK) {
         /* Decompression failed: restore state */
         (void)memcpy(decomp, &saved_decomp, sizeof(*decomp));
         decomp->mask_synced = 0U;
 
         /* Record 0x01 in status ring */
         decomp->received_status_ring[decomp->received_status_index] = 0x01U;
-        decomp->received_status_index = (decomp->received_status_index + 1U) % POCKET_MAX_VT_HISTORY;
-        if (decomp->received_status_count < POCKET_MAX_VT_HISTORY) {
+        decomp->received_status_index = (decomp->received_status_index + 1U) % CCSDS124_MAX_VT_HISTORY;
+        if (decomp->received_status_count < CCSDS124_MAX_VT_HISTORY) {
             decomp->received_status_count++;
         }
 
@@ -830,13 +830,13 @@ int pocket_decompress_packet_checked(
             size_t checked = 0U;
             /* Walk backwards through the ring buffer (before current entry) */
             size_t ring_walk = decomp->received_status_count;
-            size_t idx = (decomp->received_status_index + POCKET_MAX_VT_HISTORY - 1U) % POCKET_MAX_VT_HISTORY;
+            size_t idx = (decomp->received_status_index + CCSDS124_MAX_VT_HISTORY - 1U) % CCSDS124_MAX_VT_HISTORY;
 
             while ((checked < (size_t)flags.Vt) && (ring_walk > 0U)) {
                 uint8_t st = decomp->received_status_ring[idx];
                 if (st == 0x02U) {
                     /* Skip lost packets */
-                    idx = (idx + POCKET_MAX_VT_HISTORY - 1U) % POCKET_MAX_VT_HISTORY;
+                    idx = (idx + CCSDS124_MAX_VT_HISTORY - 1U) % CCSDS124_MAX_VT_HISTORY;
                     ring_walk--;
                     continue;
                 }
@@ -845,7 +845,7 @@ int pocket_decompress_packet_checked(
                     break;
                 }
                 checked++;
-                idx = (idx + POCKET_MAX_VT_HISTORY - 1U) % POCKET_MAX_VT_HISTORY;
+                idx = (idx + CCSDS124_MAX_VT_HISTORY - 1U) % CCSDS124_MAX_VT_HISTORY;
                 ring_walk--;
             }
             /* If we checked fewer than Vt received packets because history
@@ -859,7 +859,7 @@ int pocket_decompress_packet_checked(
 
     if (guaranteed != 0U) {
         out_status = 0x00U;
-        ret = POCKET_OK;
+        ret = CCSDS124_OK;
 
         /* ft=1 resynchronizes the mask */
         if (flags.ft == 1U) {
@@ -870,11 +870,11 @@ int pocket_decompress_packet_checked(
         (void)memcpy(decomp, &saved_decomp, sizeof(*decomp));
         decomp->mask_synced = 0U;
         out_status = 0x01U;
-        ret = POCKET_STATUS_UNGUARANTEED;
+        ret = CCSDS124_STATUS_UNGUARANTEED;
     } else if (count_f_mismatch_detected != 0U) {
         /* COUNT(F) mismatch: keep state (ft=1 still syncs mask) */
         out_status = 0x01U;
-        ret = POCKET_STATUS_UNGUARANTEED;
+        ret = CCSDS124_STATUS_UNGUARANTEED;
         if (flags.ft == 1U) {
             decomp->mask_synced = 1U;
         }
@@ -883,13 +883,13 @@ int pocket_decompress_packet_checked(
         (void)memcpy(decomp, &saved_decomp, sizeof(*decomp));
         decomp->mask_synced = 0U;
         out_status = 0x01U;
-        ret = POCKET_STATUS_UNGUARANTEED;
+        ret = CCSDS124_STATUS_UNGUARANTEED;
     }
 
     /* Record status in ring buffer */
     decomp->received_status_ring[decomp->received_status_index] = out_status;
-    decomp->received_status_index = (decomp->received_status_index + 1U) % POCKET_MAX_VT_HISTORY;
-    if (decomp->received_status_count < POCKET_MAX_VT_HISTORY) {
+    decomp->received_status_index = (decomp->received_status_index + 1U) % CCSDS124_MAX_VT_HISTORY;
+    if (decomp->received_status_count < CCSDS124_MAX_VT_HISTORY) {
         decomp->received_status_count++;
     }
 
@@ -914,7 +914,7 @@ int pocket_decompress_packet_checked(
  *
  * @param[in,out] reader         Bit reader
  * @param[out]    hamming_weight Number of non-terminator COUNTs decoded
- * @return POCKET_OK on success, error code on decode failure
+ * @return CCSDS124_OK on success, error code on decode failure
  */
 /**
  * @brief Skip an RLE-encoded sequence, tracking hamming weight and span.
@@ -927,22 +927,22 @@ int pocket_decompress_packet_checked(
  * @param[in,out] reader         Bit reader
  * @param[out]    hamming_weight Number of non-terminator COUNTs decoded
  * @param[out]    span           Sum of decoded deltas (1 + highest position)
- * @return POCKET_OK on success, error code on decode failure
+ * @return CCSDS124_OK on success, error code on decode failure
  */
 static int skip_rle_sequence_span(bitreader_t *reader, uint32_t *hamming_weight,
                                   uint64_t *span) {
     uint32_t hw = 0U;
     uint64_t total = 0U;
     uint32_t count_val = 0U;
-    int rc = pocket_count_decode(reader, &count_val);
+    int rc = ccsds124_count_decode(reader, &count_val);
 
-    while ((rc == POCKET_OK) && (count_val != 0U)) {
+    while ((rc == CCSDS124_OK) && (count_val != 0U)) {
         hw++;
         total += (uint64_t)count_val;
-        rc = pocket_count_decode(reader, &count_val);
+        rc = ccsds124_count_decode(reader, &count_val);
     }
 
-    if (rc == POCKET_OK) {
+    if (rc == CCSDS124_OK) {
         *hamming_weight = hw;
         *span = total;
     }
@@ -951,17 +951,17 @@ static int skip_rle_sequence_span(bitreader_t *reader, uint32_t *hamming_weight,
 }
 
 
-int pocket_discover_packet_length(
+int ccsds124_discover_packet_length(
     const uint8_t *data,
     size_t num_bits,
     uint32_t *packet_length
 ) {
     if ((data == NULL) || (packet_length == NULL)) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     if (num_bits == 0U) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     /* Default: not discoverable from this packet */
@@ -973,13 +973,13 @@ int pocket_discover_packet_length(
     /* 1. Skip RLE(Xt) — self-delimiting, doesn't need F */
     uint32_t H_Xt = 0U;
     uint64_t Xt_span = 0U;
-    if (skip_rle_sequence_span(&reader, &H_Xt, &Xt_span) != POCKET_OK) {
-        return POCKET_OK;  /* Parse error — not discoverable */
+    if (skip_rle_sequence_span(&reader, &H_Xt, &Xt_span) != CCSDS124_OK) {
+        return CCSDS124_OK;  /* Parse error — not discoverable */
     }
 
     /* 2. BIT4(Vt) — 4 bits */
     if (bitreader_remaining(&reader) < 4U) {
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
     uint32_t Vt = bitreader_read_bits(&reader, 4U);
 
@@ -987,19 +987,19 @@ int pocket_discover_packet_length(
     if ((H_Xt > 0U) && (Vt > 0U)) {
         int et = bitreader_read_bit(&reader);
         if (et < 0) {
-            return POCKET_OK;
+            return CCSDS124_OK;
         }
         if (et == 1) {
             /* kt: H(Xt) bits — skip them */
             if (bitreader_remaining(&reader) < (size_t)H_Xt) {
-                return POCKET_OK;
+                return CCSDS124_OK;
             }
             for (uint32_t i = 0U; i < H_Xt; i++) {
                 (void)bitreader_read_bit(&reader);
             }
             /* ct: 1 bit */
             if (bitreader_read_bit(&reader) < 0) {
-                return POCKET_OK;
+                return CCSDS124_OK;
             }
         }
         /* et==0: all changes are negative — no kt or ct in bitstream */
@@ -1009,45 +1009,45 @@ int pocket_discover_packet_length(
     /* 4. dt — 1 bit */
     int dt = bitreader_read_bit(&reader);
     if (dt < 0) {
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
 
     if (dt == 1) {
         /* dt=1 means ft=0 and rt=0 — can't discover F */
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
 
     /* 5. dt=0: read ft flag */
     int ft = bitreader_read_bit(&reader);
     if (ft < 0) {
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
 
     uint64_t mask_span = 0U;
     if (ft == 1) {
         /* Full mask follows as RLE — skip it */
         uint32_t mask_hw = 0U;
-        if (skip_rle_sequence_span(&reader, &mask_hw, &mask_span) != POCKET_OK) {
-            return POCKET_OK;
+        if (skip_rle_sequence_span(&reader, &mask_hw, &mask_span) != CCSDS124_OK) {
+            return CCSDS124_OK;
         }
     }
 
     /* Read rt flag */
     int rt = bitreader_read_bit(&reader);
     if (rt < 0) {
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
 
     if (rt != 1) {
         /* Not a reference packet — can't discover F */
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
 
     /* 6. rt=1: read COUNT(F) */
     uint32_t discovered_F = 0U;
-    int rc = pocket_count_decode(&reader, &discovered_F);
-    if ((rc != POCKET_OK) || (discovered_F == 0U)) {
-        return POCKET_OK;
+    int rc = ccsds124_count_decode(&reader, &discovered_F);
+    if ((rc != CCSDS124_OK) || (discovered_F == 0U)) {
+        return CCSDS124_OK;
     }
 
     /* Validity (cross-validation rule v1.6): the signaled length must be
@@ -1058,7 +1058,7 @@ int pocket_discover_packet_length(
     if ((discovered_F > 65535U) ||
         (Xt_span > (uint64_t)discovered_F) ||
         (mask_span > (uint64_t)discovered_F)) {
-        return POCKET_OK;
+        return CCSDS124_OK;
     }
 
     /* Truncated reference packet: the bitstream ran out after COUNT(F) but
@@ -1069,19 +1069,19 @@ int pocket_discover_packet_length(
      * callers can prefer a strict discovery elsewhere in the stream. */
     if (bitreader_remaining(&reader) < (size_t)discovered_F) {
         *packet_length = discovered_F;
-        return POCKET_STATUS_TRUNCATED_LENGTH;
+        return CCSDS124_STATUS_TRUNCATED_LENGTH;
     }
 
     /* Excess bits after I_t are ignored: reference packets are
      * self-delimiting via COUNT(F), and a Received Packet Length larger
      * than the bits actually needed means the remainder is ignored. */
     *packet_length = discovered_F;
-    return POCKET_OK;
+    return CCSDS124_OK;
 }
 
 
-int pocket_decompress(
-    pocket_decompressor_t *decomp,
+int ccsds124_decompress(
+    ccsds124_decompressor_t *decomp,
     const uint8_t *input_data,
     size_t input_size,
     uint8_t *output_buffer,
@@ -1090,11 +1090,11 @@ int pocket_decompress(
 ) {
     if ((decomp == NULL) || (input_data == NULL) ||
         (output_buffer == NULL) || (output_size == NULL)) {
-        return POCKET_ERROR_INVALID_ARG;
+        return CCSDS124_ERROR_INVALID_ARG;
     }
 
     /* Reset decompressor */
-    pocket_decompressor_reset(decomp);
+    ccsds124_decompressor_reset(decomp);
 
     /* Initialize bit reader */
     bitreader_t reader;
@@ -1107,14 +1107,14 @@ int pocket_decompress(
     /* Decompress packets until input exhausted */
     while (bitreader_remaining(&reader) > 0U) {
         bitvector_t output;
-        int status = pocket_decompress_packet(decomp, &reader, &output);
-        if (status != POCKET_OK) {
+        int status = ccsds124_decompress_packet(decomp, &reader, &output);
+        if (status != CCSDS124_OK) {
             return status;
         }
 
         /* Check output buffer space */
         if ((total_output + packet_bytes) > output_buffer_size) {
-            return POCKET_ERROR_OVERFLOW;
+            return CCSDS124_ERROR_OVERFLOW;
         }
 
         /* Copy to output buffer */
@@ -1126,7 +1126,7 @@ int pocket_decompress(
     }
 
     *output_size = total_output;
-    return POCKET_OK;
+    return CCSDS124_OK;
 }
 
 /** @} */ /* End of Packet Decompression */

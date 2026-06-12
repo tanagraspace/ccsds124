@@ -1,4 +1,4 @@
-//! POCKET+ decoding functions (COUNT, RLE, Bit Insert).
+//! CCSDS 124.0-B-1 decoding functions (COUNT, RLE, Bit Insert).
 //!
 //! Implements CCSDS 124.0-B-1 decoding (inverse of Section 5.2):
 //! - Counter Decoding - inverse of COUNT encoding
@@ -7,7 +7,7 @@
 
 use crate::bitreader::BitReader;
 use crate::bitvector::BitVector;
-use crate::error::PocketError;
+use crate::error::Ccsds124Error;
 
 /// Counter Decoding - inverse of COUNT encoding.
 ///
@@ -23,7 +23,7 @@ use crate::error::PocketError;
 /// # Returns
 /// Decoded value, or error if invalid encoding.
 #[inline]
-pub fn count_decode(reader: &mut BitReader) -> Result<u32, PocketError> {
+pub fn count_decode(reader: &mut BitReader) -> Result<u32, Ccsds124Error> {
     // Read first bit
     let bit0 = reader.read_bit()?;
 
@@ -82,7 +82,7 @@ pub fn count_decode(reader: &mut BitReader) -> Result<u32, PocketError> {
 /// # Returns
 /// Decoded bit vector, or error if invalid encoding.
 #[inline]
-pub fn rle_decode(reader: &mut BitReader, length: usize) -> Result<BitVector, PocketError> {
+pub fn rle_decode(reader: &mut BitReader, length: usize) -> Result<BitVector, Ccsds124Error> {
     // Initialize result to all zeros (BitVector::new already zeroes)
     let mut result = BitVector::new(length);
 
@@ -98,7 +98,7 @@ pub fn rle_decode(reader: &mut BitReader, length: usize) -> Result<BitVector, Po
         // vector length (GOTCHAS #21): reject it instead of silently
         // skipping.
         if (delta as usize) > bit_position {
-            return Err(PocketError::InvalidFormat(
+            return Err(Ccsds124Error::InvalidFormat(
                 "invalid RLE delta: exceeds remaining bit position".to_string(),
             ));
         }
@@ -130,9 +130,9 @@ pub fn bit_insert(
     reader: &mut BitReader,
     data: &mut BitVector,
     mask: &BitVector,
-) -> Result<(), PocketError> {
+) -> Result<(), Ccsds124Error> {
     if data.len() != mask.len() {
-        return Err(PocketError::InvalidInputLength {
+        return Err(Ccsds124Error::InvalidInputLength {
             expected: mask.len(),
             actual: data.len(),
         });

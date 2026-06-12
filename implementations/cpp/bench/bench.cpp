@@ -1,6 +1,6 @@
 /**
  * @file bench.cpp
- * @brief Performance benchmarks for POCKET+ C++ compression.
+ * @brief Performance benchmarks for CCSDS 124.0-B-1 C++ compression.
  *
  * Measures compression throughput for regression testing during development.
  * Note: Desktop performance differs from embedded targets - use for relative
@@ -11,7 +11,7 @@
  *   ./build/bench 1000      # Run with custom iteration count
  */
 
-#include <pocketplus/pocketplus.hpp>
+#include <ccsds124/ccsds124.hpp>
 
 #include <chrono>
 #include <cstdio>
@@ -19,7 +19,7 @@
 #include <fstream>
 #include <vector>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 static constexpr int DEFAULT_ITERATIONS = 100;
 static constexpr std::size_t PACKET_SIZE_BITS = 720;
@@ -132,7 +132,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::printf("POCKET+ Benchmarks (C++ Implementation)\n");
+    std::printf("CCSDS 124.0-B-1 Benchmarks (C++ Implementation)\n");
     std::printf("=======================================\n");
     std::printf("Iterations: %d\n", iterations);
     std::printf("Packet size: %zu bits (%zu bytes)\n\n", PACKET_SIZE_BITS, PACKET_SIZE_BYTES);

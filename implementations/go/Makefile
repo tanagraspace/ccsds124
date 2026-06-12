@@ -10,7 +10,7 @@ build:
 
 cli:
 	mkdir -p $(BUILD_DIR)
-	go build -o $(BUILD_DIR)/pocketplus ./cmd/pocketplus/
+	go build -o $(BUILD_DIR)/ccsds124 ./cmd/ccsds124/
 
 test:
 	go test -v ./...
@@ -21,16 +21,16 @@ test-race:
 test-report:
 	@mkdir -p $(DOCS_DIR)/tests
 	@echo "Running tests and generating report..."
-	@go test -json ./pocketplus/... | go-test-report -o $(DOCS_DIR)/tests/index.html -t "POCKET+ Go Test Report"
+	@go test -json ./ccsds124/... | go-test-report -o $(DOCS_DIR)/tests/index.html -t "CCSDS 124.0-B-1 Go Test Report"
 
 coverage:
 	mkdir -p $(BUILD_DIR)
-	go test -coverprofile=$(BUILD_DIR)/coverage.out ./pocketplus/...
+	go test -coverprofile=$(BUILD_DIR)/coverage.out ./ccsds124/...
 	go tool cover -func=$(BUILD_DIR)/coverage.out
 
 coverage-html:
 	mkdir -p $(DOCS_DIR)/coverage
-	go test -coverprofile=$(BUILD_DIR)/coverage.out ./pocketplus/...
+	go test -coverprofile=$(BUILD_DIR)/coverage.out ./ccsds124/...
 	go tool cover -html=$(BUILD_DIR)/coverage.out -o $(DOCS_DIR)/coverage/index.html
 
 docs: coverage-html test-report api-docs

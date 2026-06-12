@@ -1,12 +1,12 @@
 #!/bin/sh
-# CLI round-trip tests for POCKET+ compress/decompress
+# CLI round-trip tests for CCSDS 124.0-B-1 compress/decompress
 #
 # Tests the CLI executable by compressing test vectors,
 # decompressing them, and verifying the output matches the original.
 
 set -e
 
-CLI="./build/pocketplus"
+CLI="./build/ccsds124"
 TEST_VECTORS_DIR="../../test-vectors/input"
 TEMP_DIR="$(mktemp -d)"
 TESTS_RUN=0

@@ -1,4 +1,4 @@
-//! POCKET+ mask update logic.
+//! CCSDS 124.0-B-1 mask update logic.
 //!
 //! Implements CCSDS 124.0-B-1 Section 4 (Mask Update):
 //! - Build Vector Update (Equation 6)

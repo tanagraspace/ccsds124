@@ -1,4 +1,4 @@
-# POCKET+ Rust Implementation Makefile
+# CCSDS 124.0-B-1 Rust Implementation Makefile
 # Wrapper around cargo commands for consistency with other implementations
 
 BUILD_DIR = build
@@ -21,7 +21,7 @@ test-report:
 	@mkdir -p $(DOCS_DIR)/tests
 	@echo "Running tests and generating report..."
 	@cargo test 2>&1 | tee $(BUILD_DIR)/test-output.txt
-	@../../scripts/generate-test-report.sh $(BUILD_DIR)/test-output.txt $(DOCS_DIR)/tests/index.html "POCKET+ Rust Test Report"
+	@../../scripts/generate-test-report.sh $(BUILD_DIR)/test-output.txt $(DOCS_DIR)/tests/index.html "CCSDS 124.0-B-1 Rust Test Report"
 
 bench:
 	cargo build --release --bin bench

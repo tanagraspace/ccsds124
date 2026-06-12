@@ -9,8 +9,8 @@ build:
 	mvn package -DskipTests
 
 cli: build
-	@echo "JAR built at target/pocketplus-1.0.0.jar"
-	@echo "Run with: java -jar target/pocketplus-1.0.0.jar"
+	@echo "JAR built at target/ccsds124-1.0.0.jar"
+	@echo "Run with: java -jar target/ccsds124-1.0.0.jar"
 
 test:
 	mvn test
@@ -64,4 +64,4 @@ clean:
 	rm -rf $(BUILD_DIR)/* 2>/dev/null || true
 
 bench: build
-	@java -cp target/classes space.tanagra.pocketplus.cli.Bench $(ITERATIONS)
+	@java -cp target/classes space.tanagra.ccsds124.cli.Bench $(ITERATIONS)

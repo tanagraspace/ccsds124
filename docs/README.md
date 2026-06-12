@@ -1,6 +1,6 @@
-# POCKET+ Documentation
+# CCSDS 124.0-B-1 Documentation
 
-Shared documentation for all POCKET+ implementations.
+Shared documentation for all CCSDS 124.0-B-1 implementations.
 
 ## Contents
 
@@ -13,9 +13,9 @@ Shared documentation for all POCKET+ implementations.
 - [Test Vectors](../test-vectors/README.md) - Validation data
 - [Test Vector Generator](../test-vector-generator/README.md) - Deterministic test vector generation
 
-## About POCKET+
+## About CCSDS 124.0-B-1
 
-POCKET+ (CCSDS 124.0-B-1) is an ESA-patented lossless compression algorithm using low-level bitwise operations (OR, XOR, AND). Designed for spacecraft processors with limited CPU and real-time constraints.
+CCSDS 124.0-B-1 is a lossless compression algorithm, based on ESA's patented POCKET+, using low-level bitwise operations (OR, XOR, AND). Designed for spacecraft processors with limited CPU and real-time constraints.
 
 ## Key Features
 

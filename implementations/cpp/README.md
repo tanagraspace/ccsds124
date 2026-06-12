@@ -1,12 +1,12 @@
-# POCKET+ C++ Implementation
+# CCSDS 124.0-B-1 C++ Implementation
 
-[![C++ Build](https://github.com/tanagraspace/pocket-plus/actions/workflows/cpp-build.yml/badge.svg)](https://github.com/tanagraspace/pocket-plus/actions/workflows/cpp-build.yml) [![Lines](https://raw.githubusercontent.com/tanagraspace/pocket-plus/main/implementations/cpp/assets/coverage-lines.svg)](https://tanagraspace.com/pocket-plus/cpp/coverage/) [![Functions](https://raw.githubusercontent.com/tanagraspace/pocket-plus/main/implementations/cpp/assets/coverage-functions.svg)](https://tanagraspace.com/pocket-plus/cpp/coverage/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![C++ Build](https://github.com/tanagraspace/ccsds124/actions/workflows/cpp-build.yml/badge.svg)](https://github.com/tanagraspace/ccsds124/actions/workflows/cpp-build.yml) [![Lines](https://raw.githubusercontent.com/tanagraspace/ccsds124/main/implementations/cpp/assets/coverage-lines.svg)](https://tanagraspace.com/ccsds124/cpp/coverage/) [![Functions](https://raw.githubusercontent.com/tanagraspace/ccsds124/main/implementations/cpp/assets/coverage-functions.svg)](https://tanagraspace.com/ccsds124/cpp/coverage/) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Header-only C++17 implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) POCKET+ lossless compression algorithm of fixed-length housekeeping data.
+Header-only C++17 implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) lossless compression algorithm of fixed-length housekeeping data.
 
 ## Citation
 
-If POCKET+ contributes to your research, please cite:
+If CCSDS 124.0-B-1 contributes to your research, please cite:
 
 > D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," *Proceedings of the Small Satellite Conference*, Communications, SSC22-XII-03. https://digitalcommons.usu.edu/smallsat/2022/all2022/133/
 
@@ -14,7 +14,7 @@ If POCKET+ contributes to your research, please cite:
 <summary>BibTeX</summary>
 
 ```bibtex
-@inproceedings{evans2022pocketplus,
+@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labrèche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -53,35 +53,35 @@ docker-compose run --rm --build cpp            # Rebuild after changes
 
 ```bash
 # Compress
-./build/pocketplus input.bin 90 20 50 100 2
+./build/ccsds124 input.bin 90 20 50 100 2
 # Output: input.bin.pkt
 
 # Decompress
-./build/pocketplus -d input.bin.pkt 90 2
+./build/ccsds124 -d input.bin.pkt 90 2
 # Output: input.bin.depkt
 
 # Help
-./build/pocketplus --help
+./build/ccsds124 --help
 
 # Version
-./build/pocketplus --version
+./build/ccsds124 --version
 ```
 
 ## Library Usage
 
-This is a **header-only library**. Simply include the headers in your project - no linking required (except for the CLI tool). All template implementations are in the `include/pocketplus/` headers.
+This is a **header-only library**. Simply include the headers in your project - no linking required (except for the CLI tool). All template implementations are in the `include/ccsds124/` headers.
 
 ### High-Level API
 
 ```cpp
-#include <pocketplus/pocketplus.hpp>
+#include <ccsds124/ccsds124.hpp>
 
 // Compress 90-byte packets (720 bits) with robustness=2
 std::uint8_t input[9000];    // 100 packets
 std::uint8_t output[18000];
 std::size_t output_size;
 
-auto result = pocketplus::compress<720>(
+auto result = ccsds124::compress<720>(
     input, sizeof(input),
     output, sizeof(output),
     output_size,
@@ -95,7 +95,7 @@ auto result = pocketplus::compress<720>(
 std::uint8_t decompressed[9000];
 std::size_t decompressed_size;
 
-result = pocketplus::decompress<720>(
+result = ccsds124::decompress<720>(
     output, output_size,
     decompressed, sizeof(decompressed),
     decompressed_size,
@@ -106,10 +106,10 @@ result = pocketplus::decompress<720>(
 ### Low-Level API
 
 ```cpp
-#include <pocketplus/compressor.hpp>
-#include <pocketplus/decompressor.hpp>
+#include <ccsds124/compressor.hpp>
+#include <ccsds124/decompressor.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 // Create compressor for 720-bit packets with robustness=2
 Compressor<720> comp(2);
@@ -146,7 +146,7 @@ decomp.decompress_packet(reader, output_packet);
 ## File Structure
 
 ```
-include/pocketplus/
+include/ccsds124/
 ├── config.hpp       # Configuration constants
 ├── error.hpp        # Error codes
 ├── bitvector.hpp    # Fixed-length bit vectors
@@ -157,7 +157,7 @@ include/pocketplus/
 ├── mask.hpp         # Mask update operations
 ├── compressor.hpp   # Compression algorithm
 ├── decompressor.hpp # Decompression algorithm
-└── pocketplus.hpp   # High-level API
+└── ccsds124.hpp   # High-level API
 ```
 
 ## Safety-Critical Code Compliance
@@ -202,10 +202,10 @@ The open-source checks enabled here provide comparable coverage for the most cri
 cd build && cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 # Run clang-tidy
-clang-tidy -p build ../include/pocketplus/*.hpp
+clang-tidy -p build ../include/ccsds124/*.hpp
 
 # Run cppcheck
-cppcheck --enable=all --std=c++17 -Iinclude include/pocketplus/*.hpp
+cppcheck --enable=all --std=c++17 -Iinclude include/ccsds124/*.hpp
 ```
 
 ## References

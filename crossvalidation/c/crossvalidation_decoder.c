@@ -3,13 +3,13 @@
  * @brief Cross-validation decoder harness for CCSDS 124.0-B-1.
  *
  * Reads a .124+config input file, decompresses each element using the
- * pocket_decompress_packet_checked() API, and writes the output in .raw+large_f
+ * ccsds124_decompress_packet_checked() API, and writes the output in .raw+large_f
  * format (status bytes + decoded packets + final 32-bit BE packet length).
  *
  * Usage: crossvalidation_decoder <input.124+config> <output.raw+large_f>
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,11 +77,11 @@ static uint32_t discover_F_from_file(const uint8_t *file_data, size_t file_size,
 
         /* Try to discover F from this packet's bitstream */
         uint32_t F = 0;
-        int rc = pocket_discover_packet_length(&file_data[pos], (size_t)length_bits, &F);
-        if (rc == POCKET_OK && F > 0U) {
+        int rc = ccsds124_discover_packet_length(&file_data[pos], (size_t)length_bits, &F);
+        if (rc == CCSDS124_OK && F > 0U) {
             return F; /* Strict discovery — found F */
         }
-        if (rc == POCKET_STATUS_TRUNCATED_LENGTH && F > 0U && weak_F == 0U) {
+        if (rc == CCSDS124_STATUS_TRUNCATED_LENGTH && F > 0U && weak_F == 0U) {
             weak_F = F; /* Remember first signaled length; keep scanning */
         }
 
@@ -167,13 +167,13 @@ int main(int argc, char *argv[]) {
     uint32_t discovered_F = 0;
     uint32_t weak_F = 0;
     int F_known = 0;
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
 
     if (file_data != NULL && file_size > 0) {
         discovered_F = discover_F_from_file(file_data, (size_t)file_size, &weak_F);
-        if (discovered_F > 0U && discovered_F <= POCKET_MAX_PACKET_LENGTH) {
+        if (discovered_F > 0U && discovered_F <= CCSDS124_MAX_PACKET_LENGTH) {
             F_known = 1;
-            pocket_decompressor_init(&decomp, (size_t)discovered_F, NULL, 0);
+            ccsds124_decompressor_init(&decomp, (size_t)discovered_F, NULL, 0);
         }
     }
 
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
 
             /* Notify decompressor of packet loss */
             if (F_known) {
-                pocket_decompressor_notify_packet_loss(&decomp, 1);
+                ccsds124_decompressor_notify_packet_loss(&decomp, 1);
             }
             continue;
         }
@@ -237,15 +237,15 @@ int main(int argc, char *argv[]) {
 
         /* Decompress with accuracy guarantee checking */
         bitvector_t output_vec;
-        int rc = pocket_decompress_packet_checked(
+        int rc = ccsds124_decompress_packet_checked(
             &decomp, packet_data, (size_t)length_bits, &output_vec, NULL);
 
-        if (rc == POCKET_OK) {
+        if (rc == CCSDS124_OK) {
             /* Guaranteed: write status 0x00 + decoded packet */
             uint8_t status = 0x00;
             append_output(&output_data, &output_size, &output_cap, &status, 1);
 
-            uint8_t pkt_bytes[POCKET_MAX_PACKET_BYTES];
+            uint8_t pkt_bytes[CCSDS124_MAX_PACKET_BYTES];
             memset(pkt_bytes, 0, sizeof(pkt_bytes));
             bitvector_to_bytes(&output_vec, pkt_bytes, (size_t)packet_bytes_F);
             append_output(&output_data, &output_size, &output_cap,

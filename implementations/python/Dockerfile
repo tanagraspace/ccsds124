@@ -11,11 +11,11 @@ RUN pip install --no-cache-dir -e ".[dev]"
 CMD ["sh", "-c", "\
     ruff format --check . && \
     ruff check . && \
-    mypy pocketplus && \
+    mypy ccsds124 && \
     mkdir -p build/docs && \
-    pytest -v --cov=pocketplus \
+    pytest -v --cov=ccsds124 \
         --cov-report=html:build/docs/coverage \
         --cov-report=xml:build/docs/coverage.xml \
         --html=build/docs/tests/index.html --self-contained-html && \
-    pdoc -d google pocketplus -o build/docs/api \
+    pdoc -d google ccsds124 -o build/docs/api \
 "]

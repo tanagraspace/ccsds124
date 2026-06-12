@@ -1,6 +1,6 @@
 //! Sequential bit reader for parsing compressed data.
 //!
-//! This module provides a bit reader for parsing compressed POCKET+ packets.
+//! This module provides a bit reader for parsing compressed CCSDS 124.0-B-1 packets.
 //! Bits are read MSB-first as per CCSDS 124.0-B-1.
 //!
 //! ## Bit Ordering
@@ -10,7 +10,7 @@
 
 #![allow(clippy::cast_possible_truncation)]
 
-use crate::error::PocketError;
+use crate::error::Ccsds124Error;
 
 /// Sequential bit reader for parsing compressed data.
 ///
@@ -62,9 +62,9 @@ impl<'a> BitReader<'a> {
     /// # Returns
     /// The bit value (0 or 1), or error if no bits remain.
     #[inline]
-    pub fn read_bit(&mut self) -> Result<u8, PocketError> {
+    pub fn read_bit(&mut self) -> Result<u8, Ccsds124Error> {
         if self.bit_pos >= self.num_bits {
-            return Err(PocketError::Underflow);
+            return Err(Ccsds124Error::Underflow);
         }
 
         let byte_index = self.bit_pos >> 3; // / 8
@@ -86,13 +86,13 @@ impl<'a> BitReader<'a> {
     /// # Returns
     /// The bits packed into a u32 (right-justified), or error.
     #[inline]
-    pub fn read_bits(&mut self, num_bits: usize) -> Result<u32, PocketError> {
+    pub fn read_bits(&mut self, num_bits: usize) -> Result<u32, Ccsds124Error> {
         if num_bits == 0 || num_bits > 32 {
-            return Err(PocketError::InvalidLength);
+            return Err(Ccsds124Error::InvalidLength);
         }
 
         if self.remaining() < num_bits {
-            return Err(PocketError::Underflow);
+            return Err(Ccsds124Error::Underflow);
         }
 
         // Optimized path: read bytes directly when possible
@@ -132,9 +132,9 @@ impl<'a> BitReader<'a> {
     ///
     /// # Returns
     /// The bit value (0 or 1), or error if no bits remain.
-    pub fn peek_bit(&self) -> Result<u8, PocketError> {
+    pub fn peek_bit(&self) -> Result<u8, Ccsds124Error> {
         if self.bit_pos >= self.num_bits {
-            return Err(PocketError::Underflow);
+            return Err(Ccsds124Error::Underflow);
         }
 
         let byte_index = self.bit_pos / 8;
@@ -153,9 +153,9 @@ impl<'a> BitReader<'a> {
     ///
     /// # Returns
     /// Ok(()) on success, or error if not enough bits remain.
-    pub fn skip(&mut self, count: usize) -> Result<(), PocketError> {
+    pub fn skip(&mut self, count: usize) -> Result<(), Ccsds124Error> {
         if self.remaining() < count {
-            return Err(PocketError::Underflow);
+            return Err(Ccsds124Error::Underflow);
         }
 
         self.bit_pos += count;
@@ -168,9 +168,9 @@ impl<'a> BitReader<'a> {
     ///
     /// # Returns
     /// Ok(()) on success, or error if already at position 0.
-    pub fn back(&mut self) -> Result<(), PocketError> {
+    pub fn back(&mut self) -> Result<(), Ccsds124Error> {
         if self.bit_pos == 0 {
-            return Err(PocketError::Underflow);
+            return Err(Ccsds124Error::Underflow);
         }
 
         self.bit_pos -= 1;
@@ -233,7 +233,10 @@ mod tests {
         let mut reader = BitReader::new(&data, 8);
 
         // Try to read more bits than available
-        assert!(matches!(reader.read_bits(16), Err(PocketError::Underflow)));
+        assert!(matches!(
+            reader.read_bits(16),
+            Err(Ccsds124Error::Underflow)
+        ));
     }
 
     #[test]
@@ -244,13 +247,13 @@ mod tests {
         // Zero bits
         assert!(matches!(
             reader.read_bits(0),
-            Err(PocketError::InvalidLength)
+            Err(Ccsds124Error::InvalidLength)
         ));
 
         // More than 32 bits
         assert!(matches!(
             reader.read_bits(33),
-            Err(PocketError::InvalidLength)
+            Err(Ccsds124Error::InvalidLength)
         ));
     }
 
@@ -306,7 +309,7 @@ mod tests {
         assert_eq!(reader.remaining(), 0);
 
         // Try to skip more
-        assert!(matches!(reader.skip(1), Err(PocketError::Underflow)));
+        assert!(matches!(reader.skip(1), Err(Ccsds124Error::Underflow)));
     }
 
     #[test]
@@ -323,7 +326,7 @@ mod tests {
         assert_eq!(reader.position(), 0);
 
         // Try to go back at position 0
-        assert!(matches!(reader.back(), Err(PocketError::Underflow)));
+        assert!(matches!(reader.back(), Err(Ccsds124Error::Underflow)));
     }
 
     #[test]
@@ -339,7 +342,7 @@ mod tests {
         assert_eq!(reader.read_bit().unwrap(), 0);
 
         // No more bits
-        assert!(matches!(reader.read_bit(), Err(PocketError::Underflow)));
+        assert!(matches!(reader.read_bit(), Err(Ccsds124Error::Underflow)));
     }
 
     #[test]
@@ -349,7 +352,7 @@ mod tests {
 
         assert!(!reader.has_bits());
         assert_eq!(reader.remaining(), 0);
-        assert!(matches!(reader.read_bit(), Err(PocketError::Underflow)));
-        assert!(matches!(reader.peek_bit(), Err(PocketError::Underflow)));
+        assert!(matches!(reader.read_bit(), Err(Ccsds124Error::Underflow)));
+        assert!(matches!(reader.peek_bit(), Err(Ccsds124Error::Underflow)));
     }
 }

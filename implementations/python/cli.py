@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-POCKET+ command line interface.
+CCSDS 124.0-B-1 command line interface.
 
 Provides compression and decompression for CCSDS 124.0-B-1.
 
@@ -20,14 +20,14 @@ Examples:
 
 import sys
 
-from pocketplus import __version__, compress, decompress
+from ccsds124 import __version__, compress, decompress
 
 BANNER = """
-  ____   ___   ____ _  _______ _____     _
- |  _ \\ / _ \\ / ___| |/ / ____|_   _|  _| |_
- | |_) | | | | |   | ' /|  _|   | |   |_   _|
- |  __/| |_| | |___| . \\| |___  | |     |_|
- |_|    \\___/ \\____|_|\\_\\_____| |_|
+  ____ ____ ____  ____  ____    _ ____  _  _
+ / ___/ ___/ ___||  _ \\/ ___|  / |___ \\| || |
+| |  | |   \\___ \\| | | \\___ \\  | | __) | || |_
+| |__| |___ ___) | |_| |___) | | |/ __/|__   _|
+ \\____\\____|____/|____/|____/  |_|_____|  |_|
 
          by  T A N A G R A  S P A C E
 """
@@ -35,7 +35,7 @@ BANNER = """
 
 def print_version() -> None:
     """Print version information."""
-    print(f"pocketplus {__version__}")
+    print(f"ccsds124 {__version__}")
 
 
 def print_help(prog_name: str) -> None:
@@ -46,8 +46,7 @@ def print_help(prog_name: str) -> None:
     print()
     print("References:")
     print("  CCSDS 124.0-B-1: https://ccsds.org/Pubs/124x0b1.pdf")
-    print("  ESA POCKET+: https://opssat.esa.int/pocket-plus/")
-    print("  Documentation: https://tanagraspace.com/pocket-plus")
+    print("  Documentation: https://tanagraspace.com/ccsds124")
     print()
     print("Citation:")
     print("  D. Evans, G. Labreche, D. Marszk, S. Bammens, M. Hernandez-Cabronero,")

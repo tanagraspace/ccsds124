@@ -1,4 +1,4 @@
-# Dockerfile for POCKET+ fuzzing with libFuzzer
+# Dockerfile for CCSDS 124.0-B-1 fuzzing with libFuzzer
 # Based on alpine:edge with Clang/libFuzzer
 FROM alpine:edge
 

@@ -1,4 +1,4 @@
-# POCKET+ Implementation Gotchas
+# CCSDS 124.0-B-1 Implementation Gotchas
 
 **⚠️ READ THIS BEFORE IMPLEMENTING!**
 
@@ -344,7 +344,7 @@ for (int i = num_positions - 1; i >= 0; i--) {
 
 ```c
 // For kₜ component: FORWARD order (low to high position)
-int pocket_bit_extract_forward(bitbuffer_t *output,
+int ccsds124_bit_extract_forward(bitbuffer_t *output,
                                 const bitvector_t *data,
                                 const bitvector_t *mask) {
     // Collect positions where mask has '1' bits
@@ -361,7 +361,7 @@ int pocket_bit_extract_forward(bitbuffer_t *output,
 }
 
 // For uₜ component (BE): REVERSE order (high to low position)
-int pocket_bit_extract(bitbuffer_t *output,
+int ccsds124_bit_extract(bitbuffer_t *output,
                         const bitvector_t *data,
                         const bitvector_t *mask) {
     // Collect positions where mask has '1' bits
@@ -382,10 +382,10 @@ int pocket_bit_extract(bitbuffer_t *output,
 ```c
 // Component kₜ (mask values at changed positions)
 inverted_mask = NOT(mask);
-pocket_bit_extract_forward(output, inverted_mask, Xt);  // ✅ Forward order
+ccsds124_bit_extract_forward(output, inverted_mask, Xt);  // ✅ Forward order
 
 // Component uₜ (unpredictable bits)
-pocket_bit_extract(output, input, mask);  // ✅ Reverse order
+ccsds124_bit_extract(output, input, mask);  // ✅ Reverse order
 ```
 
 ### 📊 Impact
@@ -628,8 +628,8 @@ Either store the current flag before computing cₜ, or include it explicitly:
 
 ```c
 // CORRECT: Include current packet's flag in the count
-int pocket_compute_ct_flag(
-    const pocket_compressor_t *comp,
+int ccsds124_compute_ct_flag(
+    const ccsds124_compressor_t *comp,
     uint8_t Vt,
     int current_new_mask_flag  // Pass current packet's pt flag
 ) {
@@ -1213,7 +1213,7 @@ Set `prev_mask = mask` before the first call, then always use XOR:
 // In compressor init or before first packet:
 bitvector_copy(&comp->prev_mask, &comp->mask);  // M₋₁ = M₀
 
-// In pocket_compute_change (no special case for t=0):
+// In ccsds124_compute_change (no special case for t=0):
 bitvector_xor(change, mask, prev_mask);  // D₀ = M₀ XOR M₀ = 0
 ```
 
@@ -1242,9 +1242,9 @@ bitvector_xor(change, mask, prev_mask);  // D₀ = M₀ XOR M₀ = 0
 
 **⭐ Discovery - February 2026 (CCSDS Cross-Validation)**
 
-### ✅ What POCKET+ Requires
+### ✅ What CCSDS 124.0-B-1 Requires
 
-POCKET+ uses **MSB-first bit packing** (CCSDS convention). In a bitvector of length F, the valid bits occupy the **high** (most significant) bits of each byte. When F is not a multiple of 8, the last byte has padding bits in the **low** positions.
+CCSDS 124.0-B-1 uses **MSB-first bit packing** (CCSDS convention). In a bitvector of length F, the valid bits occupy the **high** (most significant) bits of each byte. When F is not a multiple of 8, the last byte has padding bits in the **low** positions.
 
 ### ❌ Common Mistake
 
@@ -1271,7 +1271,7 @@ uint8_t byte_mask = (uint8_t)(0xFFU << (8U - bits_in_last_byte));
 result_byte = (~input_byte) & byte_mask;
 ```
 
-**Why this matters for POCKET+:**
+**Why this matters for CCSDS 124.0-B-1:**
 - The NOT operation is used to compute the inverted mask for kₜ extraction
 - If padding bits become `1` instead of `0`, the hamming weight is wrong, changing eₜ and kₜ encoding
 - Downstream: wrong RLE, wrong bit counts, complete output divergence
@@ -1299,7 +1299,7 @@ result_byte = (~input_byte) & byte_mask;
 
 ### The Problem
 
-The POCKET+ decoder must not silently produce wrong output when given corrupt compressed data. The UAB reference decoder implements strict validation checks (documented in README_crossvalidation.md v1.4-v1.13) that reject invalid packets. Without these checks, the decoder happily decompresses garbage into wrong output, causing cross-validation failures where the expected behavior is an error status (0x01).
+The CCSDS 124.0-B-1 decoder must not silently produce wrong output when given corrupt compressed data. The UAB reference decoder implements strict validation checks (documented in README_crossvalidation.md v1.4-v1.13) that reject invalid packets. Without these checks, the decoder happily decompresses garbage into wrong output, causing cross-validation failures where the expected behavior is an error status (0x01).
 
 ### Three Categories of Validation
 
@@ -1307,11 +1307,11 @@ The POCKET+ decoder must not silently produce wrong output when given corrupt co
 
 Key locations:
 - `bitreader_read_bits`: check `bitreader_remaining(reader) >= num_bits` upfront
-- `pocket_count_decode`: check remaining bits before Case 3 (5-bit read) and Case 4 (variable-length read); check `bitreader_read_bit` return during zero-counting
-- `pocket_bit_insert`: check `bitreader_remaining(reader) >= hamming` before insert loop
-- `pocket_decompress_packet`: check return values for Vt, et, kt, ct, dt, ft, rt, and I_t reads
+- `ccsds124_count_decode`: check remaining bits before Case 3 (5-bit read) and Case 4 (variable-length read); check `bitreader_read_bit` return during zero-counting
+- `ccsds124_bit_insert`: check `bitreader_remaining(reader) >= hamming` before insert loop
+- `ccsds124_decompress_packet`: check return values for Vt, et, kt, ct, dt, ft, rt, and I_t reads
 
-**RLE delta bounds checking:** In `pocket_rle_decode`, when a delta exceeds the remaining bit position, the mask position is invalid. Return an error instead of silently ignoring the delta.
+**RLE delta bounds checking:** In `ccsds124_rle_decode`, when a delta exceeds the remaining bit position, the mask position is invalid. Return an error instead of silently ignoring the delta.
 
 ```c
 /* Before fix: silently ignored invalid deltas */
@@ -1322,7 +1322,7 @@ if (delta <= bit_position) {
 
 /* After fix: return error on invalid delta */
 if (delta > bit_position) {
-    return POCKET_ERROR_OVERFLOW;
+    return CCSDS124_ERROR_OVERFLOW;
 }
 bit_position -= delta;
 bitvector_set_bit(result, bit_position, 1);
@@ -1350,13 +1350,13 @@ When the decoder doesn't know the encoder's initial mask (`large_m_0`), it start
 
 ### Library Support
 
-The C implementation internalizes all accuracy guarantee logic in `pocket_decompress_packet_checked()`, which handles mask synchronization tracking, status history, state save/restore, and the guarantee decision tree. This means implementations using this function get correct guarantee behavior automatically — the cross-validation decoder harness is reduced to thin I/O glue.
+The C implementation internalizes all accuracy guarantee logic in `ccsds124_decompress_packet_checked()`, which handles mask synchronization tracking, status history, state save/restore, and the guarantee decision tree. This means implementations using this function get correct guarantee behavior automatically — the cross-validation decoder harness is reduced to thin I/O glue.
 
-The function returns `POCKET_OK` for guaranteed packets, `POCKET_STATUS_UNGUARANTEED` for unguaranteed packets (with state restored), or a negative error code. An optional `pocket_decompress_result_t` struct provides Vt, ft, and rt values.
+The function returns `CCSDS124_OK` for guaranteed packets, `CCSDS124_STATUS_UNGUARANTEED` for unguaranteed packets (with state restored), or a negative error code. An optional `ccsds124_decompress_result_t` struct provides Vt, ft, and rt values.
 
 ### Key Behaviors the Decoder Must Implement
 
-These behaviors are handled automatically by `pocket_decompress_packet_checked()` in the C library. Other language implementations must replicate this logic:
+These behaviors are handled automatically by `ccsds124_decompress_packet_checked()` in the C library. Other language implementations must replicate this logic:
 
 **1. Mask synchronization tracking (`mask_synced`):**
 The decoder must track whether its mask has been synchronized with the encoder's via a full mask transmission (`ft=1`). Start with `mask_synced=0`. Set to `1` only when a guaranteed (`0x00`) packet with `ft=1` is successfully decoded. Reset to `0` on decompression failure, packet loss, or mask inconsistency detection.
@@ -1383,9 +1383,9 @@ On decompression failure or unguaranteed status: restore the decompressor state 
 
 ### Additional Reverse-Engineered Rules (June 2026)
 
-Three more reference behaviors were identified from the test vectors and implemented in `pocket_discover_packet_length()` and `pocket_decompress_packet_checked()`:
+Three more reference behaviors were identified from the test vectors and implemented in `ccsds124_discover_packet_length()` and `ccsds124_decompress_packet_checked()`:
 
-1. **Truncated reference packets signal F:** `pocket_discover_packet_length()` returns `POCKET_STATUS_TRUNCATED_LENGTH` with the signaled length when the bitstream ends inside `I_t` — per the cross-validation rule that a decodable `COUNT(F)` "is to be considered" even from a packet that cannot be fully decoded. Harnesses report it in the output trailer when no fully-valid reference packet exists.
+1. **Truncated reference packets signal F:** `ccsds124_discover_packet_length()` returns `CCSDS124_STATUS_TRUNCATED_LENGTH` with the signaled length when the bitstream ends inside `I_t` — per the cross-validation rule that a decodable `COUNT(F)` "is to be considered" even from a packet that cannot be fully decoded. Harnesses report it in the output trailer when no fully-valid reference packet exists.
 2. **Signaled-length validity (v1.6):** a signaled `COUNT(F)` is only trusted when it is in range (1–65535) and the packet's own RLE spans fit within it (X_t span ≤ F, full-mask span ≤ F). Corrupt `COUNT(F)` values betray themselves by encoding bit positions beyond the signaled length.
 3. **Excess-bits tolerance for reference packets:** `rt=1` packets are self-delimiting via `COUNT(F)`, so excess trailing bits are ignored rather than rejected; `rt=0` packets keep the strict at-most-7-padding-bits rule (v1.10).
 

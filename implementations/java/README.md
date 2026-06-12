@@ -1,14 +1,14 @@
-# POCKET+ Java Implementation
+# CCSDS 124.0-B-1 Java Implementation
 
-[![Build](https://github.com/tanagraspace/pocket-plus/actions/workflows/java-build.yml/badge.svg)](https://github.com/tanagraspace/pocket-plus/actions/workflows/java-build.yml)
-[![Coverage](assets/coverage.svg)](https://tanagraspace.com/pocket-plus/java/coverage/)
+[![Build](https://github.com/tanagraspace/ccsds124/actions/workflows/java-build.yml/badge.svg)](https://github.com/tanagraspace/ccsds124/actions/workflows/java-build.yml)
+[![Coverage](assets/coverage.svg)](https://tanagraspace.com/ccsds124/java/coverage/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Java implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) POCKET+ lossless compression algorithm for satellite housekeeping telemetry.
+Java implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) lossless compression algorithm for satellite housekeeping telemetry.
 
 ## Citation
 
-If POCKET+ contributes to your research, please cite:
+If CCSDS 124.0-B-1 contributes to your research, please cite:
 
 > D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," *Proceedings of the Small Satellite Conference*, Communications, SSC22-XII-03. https://digitalcommons.usu.edu/smallsat/2022/all2022/133/
 
@@ -16,7 +16,7 @@ If POCKET+ contributes to your research, please cite:
 <summary>BibTeX</summary>
 
 ```bibtex
-@inproceedings{evans2022pocketplus,
+@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labrèche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -56,8 +56,8 @@ make docs
 
 ```bash
 # Build and run tests in container
-docker build -t pocketplus-java .
-docker run --rm pocketplus-java
+docker build -t ccsds124-java .
+docker run --rm ccsds124-java
 
 # Or use docker-compose from repository root
 docker-compose run --rm java
@@ -69,22 +69,22 @@ docker-compose run --rm java
 
 ```bash
 # Compress
-java -jar target/pocketplus-1.0.0.jar input.bin 90 20 50 100 2
+java -jar target/ccsds124-1.0.0.jar input.bin 90 20 50 100 2
 
 # Decompress
-java -jar target/pocketplus-1.0.0.jar -d input.bin.pkt 90 2
+java -jar target/ccsds124-1.0.0.jar -d input.bin.pkt 90 2
 
 # Show version
-java -jar target/pocketplus-1.0.0.jar --version
+java -jar target/ccsds124-1.0.0.jar --version
 ```
 
 ### Library API
 
 ```java
-import space.tanagra.pocketplus.PocketPlus;
+import space.tanagra.ccsds124.Ccsds124;
 
 // Compress data
-byte[] compressed = PocketPlus.compress(
+byte[] compressed = Ccsds124.compress(
     inputData,    // byte array of concatenated packets
     90,           // packet size in bytes
     2,            // robustness (0-7)
@@ -94,14 +94,14 @@ byte[] compressed = PocketPlus.compress(
 );
 
 // Decompress data
-byte[] decompressed = PocketPlus.decompress(
+byte[] decompressed = Ccsds124.decompress(
     compressed,   // compressed data
     90,           // packet size in bytes
     2             // robustness (0-7)
 );
 
 // Check version
-String version = PocketPlus.version();
+String version = Ccsds124.version();
 ```
 
 ### Parameters
@@ -126,7 +126,7 @@ String version = PocketPlus.version();
 
 ```
 implementations/java/
-├── src/main/java/space/tanagra/pocketplus/
+├── src/main/java/space/tanagra/ccsds124/
 │   ├── BitVector.java       # Fixed-length bit vectors
 │   ├── BitBuffer.java       # Variable-length output buffer
 │   ├── BitReader.java       # Sequential bit reading
@@ -135,8 +135,8 @@ implementations/java/
 │   ├── MaskOperations.java  # Mask/build vector operations
 │   ├── Compressor.java      # Compression algorithm
 │   ├── Decompressor.java    # Decompression algorithm
-│   ├── PocketPlus.java      # High-level API
-│   ├── PocketException.java # Custom exception
+│   ├── Ccsds124.java      # High-level API
+│   ├── Ccsds124Exception.java # Custom exception
 │   └── cli/Main.java        # CLI tool
 ├── src/test/java/           # Unit tests
 ├── pom.xml                  # Maven build
@@ -149,8 +149,8 @@ implementations/java/
 
 ### High-Level
 
-- `PocketPlus.compress()` / `PocketPlus.decompress()` - Compress/decompress entire buffer
-- `PocketPlus.version()` - Library version
+- `Ccsds124.compress()` / `Ccsds124.decompress()` - Compress/decompress entire buffer
+- `Ccsds124.version()` - Library version
 
 ### Low-Level
 

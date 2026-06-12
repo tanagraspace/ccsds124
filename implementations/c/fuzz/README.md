@@ -1,6 +1,6 @@
-# POCKET+ Fuzzing Infrastructure
+# CCSDS 124.0-B-1 Fuzzing Infrastructure
 
-This directory contains fuzzing harnesses for the POCKET+ C implementation using libFuzzer and AFL++.
+This directory contains fuzzing harnesses for the CCSDS 124.0-B-1 C implementation using libFuzzer and AFL++.
 
 ## Harnesses
 

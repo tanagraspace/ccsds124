@@ -1,11 +1,11 @@
-//! # POCKET+ Rust Implementation
+//! # CCSDS 124.0-B-1 Rust Implementation
 //!
 //! Rust implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf)
 //! lossless compression algorithm of fixed-length housekeeping data.
 //!
 //! ## Citation
 //!
-//! If POCKET+ contributes to your research, please cite:
+//! If CCSDS 124.0-B-1 contributes to your research, please cite:
 //!
 //! > D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero,
 //! > V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022.
@@ -49,7 +49,7 @@
 //! ## Usage
 //!
 //! ```rust,ignore
-//! use pocketplus::{compress, decompress};
+//! use ccsds124::{compress, decompress};
 //!
 //! // Sample housekeeping data (90 bytes = 720 bits per packet)
 //! let data: Vec<u8> = vec![0u8; 90];
@@ -73,7 +73,7 @@
 //! ## References
 //!
 //! - [CCSDS 124.0-B-1 Standard](https://ccsds.org/Pubs/124x0b1.pdf)
-//! - [ESA POCKET+ Reference](https://opssat.esa.int/pocket-plus/)
+//! - [POCKET+ on OPS-SAT-1 (SmallSat 2022)](https://digitalcommons.usu.edu/smallsat/2022/all2022/133/)
 
 #![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
@@ -98,7 +98,7 @@ pub use compress::compress;
 pub use decode::{bit_insert, count_decode, rle_decode};
 pub use decompress::decompress;
 pub use encode::{bit_extract, bit_extract_forward, count_encode, rle_encode};
-pub use error::PocketError;
+pub use error::Ccsds124Error;
 pub use mask::{compute_change, update_build, update_mask};
 
 #[cfg(test)]

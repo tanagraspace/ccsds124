@@ -1,15 +1,15 @@
-# POCKET+ Python Implementation
+# CCSDS 124.0-B-1 Python Implementation
 
-[![Python Build](https://github.com/tanagraspace/pocket-plus/actions/workflows/python-build.yml/badge.svg)](https://github.com/tanagraspace/pocket-plus/actions/workflows/python-build.yml)
-[![MicroPython Build](https://github.com/tanagraspace/pocket-plus/actions/workflows/micropython-build.yml/badge.svg)](https://github.com/tanagraspace/pocket-plus/actions/workflows/micropython-build.yml)
-[![Coverage](assets/coverage.svg)](https://tanagraspace.com/pocket-plus/python/coverage/)
+[![Python Build](https://github.com/tanagraspace/ccsds124/actions/workflows/python-build.yml/badge.svg)](https://github.com/tanagraspace/ccsds124/actions/workflows/python-build.yml)
+[![MicroPython Build](https://github.com/tanagraspace/ccsds124/actions/workflows/micropython-build.yml/badge.svg)](https://github.com/tanagraspace/ccsds124/actions/workflows/micropython-build.yml)
+[![Coverage](assets/coverage.svg)](https://tanagraspace.com/ccsds124/python/coverage/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Python and MicroPython compatible implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) POCKET+ lossless compression algorithm of fixed-length housekeeping data.
+Python and MicroPython compatible implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) lossless compression algorithm of fixed-length housekeeping data.
 
 ## Citation
 
-If POCKET+ contributes to your research, please cite:
+If CCSDS 124.0-B-1 contributes to your research, please cite:
 
 > D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," *Proceedings of the Small Satellite Conference*, Communications, SSC22-XII-03. https://digitalcommons.usu.edu/smallsat/2022/all2022/133/
 
@@ -17,7 +17,7 @@ If POCKET+ contributes to your research, please cite:
 <summary>BibTeX</summary>
 
 ```bibtex
-@inproceedings{evans2022pocketplus,
+@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labrèche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -63,7 +63,7 @@ python cli.py --help
 ### Python API
 
 ```python
-from pocketplus import compress, decompress
+from ccsds124 import compress, decompress
 
 # Compress: packet_size in bits, robustness 0-7
 compressed = compress(data, packet_size=720, robustness=1,
@@ -83,7 +83,7 @@ pytest tests/test_vectors.py     # Reference validation only
 
 Generate HTML reports:
 ```bash
-pytest --cov=pocketplus --cov-report=html:build/docs/coverage \
+pytest --cov=ccsds124 --cov-report=html:build/docs/coverage \
        --html=build/docs/tests/report.html --self-contained-html
 ```
 
@@ -92,8 +92,8 @@ pytest --cov=pocketplus --cov-report=html:build/docs/coverage \
 ```bash
 ruff format .                    # Format code
 ruff check .                     # Lint
-mypy pocketplus                  # Type check
-pdoc -d google pocketplus -o build/docs/api  # Generate API docs
+mypy ccsds124                  # Type check
+pdoc -d google ccsds124 -o build/docs/api  # Generate API docs
 ```
 
 ## Design
@@ -106,7 +106,7 @@ pdoc -d google pocketplus -o build/docs/api  # Generate API docs
 
 ```
 implementations/python/
-├── pocketplus/
+├── ccsds124/
 │   ├── __init__.py          # Public API exports
 │   ├── bitvector.py         # Fixed-length bit vectors
 │   ├── bitbuffer.py         # Variable-length output buffer

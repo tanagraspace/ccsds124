@@ -1,4 +1,4 @@
-//! POCKET+ compression algorithm implementation.
+//! CCSDS 124.0-B-1 compression algorithm implementation.
 //!
 //! Implements CCSDS 124.0-B-1 Section 5.3 (Encoding Step):
 //! - Compressor initialization and state management
@@ -12,7 +12,7 @@
 use crate::bitbuffer::BitBuffer;
 use crate::bitvector::BitVector;
 use crate::encode::{bit_extract, bit_extract_forward, count_encode, rle_encode};
-use crate::error::PocketError;
+use crate::error::Ccsds124Error;
 use crate::mask::{compute_change, update_build, update_mask};
 
 /// Maximum history size for robustness.
@@ -32,7 +32,7 @@ pub struct CompressionParams {
     pub uncompressed_flag: bool,
 }
 
-/// POCKET+ compressor state.
+/// CCSDS 124.0-B-1 compressor state.
 #[derive(Clone)]
 pub struct Compressor {
     /// Packet length in bits (F).
@@ -82,12 +82,12 @@ impl Compressor {
         pt_limit: usize,
         ft_limit: usize,
         rt_limit: usize,
-    ) -> Result<Self, PocketError> {
+    ) -> Result<Self, Ccsds124Error> {
         if f == 0 || f > 65535 {
-            return Err(PocketError::InvalidPacketSize(f));
+            return Err(Ccsds124Error::InvalidPacketSize(f));
         }
         if robustness > 7 {
-            return Err(PocketError::InvalidRobustness(robustness as usize));
+            return Err(Ccsds124Error::InvalidRobustness(robustness as usize));
         }
 
         let mask = initial_mask.cloned().unwrap_or_else(|| BitVector::new(f));
@@ -218,9 +218,9 @@ impl Compressor {
         &mut self,
         input: &BitVector,
         params: &CompressionParams,
-    ) -> Result<BitBuffer, PocketError> {
+    ) -> Result<BitBuffer, Ccsds124Error> {
         if input.len() != self.f {
-            return Err(PocketError::InvalidInputLength {
+            return Err(Ccsds124Error::InvalidInputLength {
                 expected: self.f,
                 actual: input.len(),
             });
@@ -332,15 +332,15 @@ pub fn compress(
     pt_limit: usize,
     ft_limit: usize,
     rt_limit: usize,
-) -> Result<Vec<u8>, PocketError> {
+) -> Result<Vec<u8>, Ccsds124Error> {
     if packet_size == 0 {
-        return Err(PocketError::InvalidPacketSize(packet_size));
+        return Err(Ccsds124Error::InvalidPacketSize(packet_size));
     }
     if packet_size % 8 != 0 {
-        return Err(PocketError::InvalidPacketSize(packet_size));
+        return Err(Ccsds124Error::InvalidPacketSize(packet_size));
     }
     if robustness > 7 {
-        return Err(PocketError::InvalidRobustness(robustness));
+        return Err(Ccsds124Error::InvalidRobustness(robustness));
     }
 
     let packet_bytes = packet_size / 8;
@@ -348,7 +348,7 @@ pub fn compress(
         return Ok(Vec::new());
     }
     if data.len() % packet_bytes != 0 {
-        return Err(PocketError::InvalidInputLength {
+        return Err(Ccsds124Error::InvalidInputLength {
             expected: (data.len() / packet_bytes + 1) * packet_bytes,
             actual: data.len(),
         });
@@ -444,21 +444,21 @@ mod tests {
     fn test_compress_invalid_packet_size_zero() {
         let data = vec![0u8; 90];
         let result = compress(&data, 0, 1, 10, 20, 50);
-        assert!(matches!(result, Err(PocketError::InvalidPacketSize(0))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidPacketSize(0))));
     }
 
     #[test]
     fn test_compress_invalid_packet_size_not_byte_aligned() {
         let data = vec![0u8; 90];
         let result = compress(&data, 719, 1, 10, 20, 50);
-        assert!(matches!(result, Err(PocketError::InvalidPacketSize(719))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidPacketSize(719))));
     }
 
     #[test]
     fn test_compress_invalid_robustness() {
         let data = vec![0u8; 90];
         let result = compress(&data, 720, 8, 10, 20, 50);
-        assert!(matches!(result, Err(PocketError::InvalidRobustness(8))));
+        assert!(matches!(result, Err(Ccsds124Error::InvalidRobustness(8))));
     }
 
     #[test]

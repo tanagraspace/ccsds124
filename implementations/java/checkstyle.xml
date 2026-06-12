@@ -4,7 +4,7 @@
     "https://checkstyle.org/dtds/configuration_1_3.dtd">
 
 <!--
-    Checkstyle configuration for POCKET+ Java implementation.
+    Checkstyle configuration for CCSDS 124.0-B-1 Java implementation.
     Based on Google Java Style Guide with minor adjustments.
 -->
 <module name="Checker">

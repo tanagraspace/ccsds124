@@ -4,9 +4,9 @@ cmake_minimum_required(VERSION 3.14)
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" VERSION_CONTENT)
 string(STRIP "${VERSION_CONTENT}" PROJECT_VERSION)
 
-project(pocketplus
+project(ccsds124
     VERSION ${PROJECT_VERSION}
-    DESCRIPTION "CCSDS 124.0-B-1 POCKET+ Compression Library"
+    DESCRIPTION "CCSDS 124.0-B-1 Compression Library"
     LANGUAGES CXX
 )
 
@@ -19,33 +19,33 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Options
-option(POCKET_NO_EXCEPTIONS "Disable exceptions for embedded use" OFF)
-option(POCKET_NO_RTTI "Disable RTTI for embedded use" OFF)
-option(POCKET_BUILD_TESTS "Build unit tests" ON)
-option(POCKET_BUILD_CLI "Build CLI tool" ON)
-option(POCKET_BUILD_BENCH "Build benchmarks" ON)
-option(POCKET_COVERAGE "Enable code coverage" OFF)
+option(CCSDS124_NO_EXCEPTIONS "Disable exceptions for embedded use" OFF)
+option(CCSDS124_NO_RTTI "Disable RTTI for embedded use" OFF)
+option(CCSDS124_BUILD_TESTS "Build unit tests" ON)
+option(CCSDS124_BUILD_CLI "Build CLI tool" ON)
+option(CCSDS124_BUILD_BENCH "Build benchmarks" ON)
+option(CCSDS124_COVERAGE "Enable code coverage" OFF)
 
 # Compiler flags
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-if(POCKET_NO_EXCEPTIONS)
+if(CCSDS124_NO_EXCEPTIONS)
     add_compile_options(-fno-exceptions)
-    add_compile_definitions(POCKET_NO_EXCEPTIONS=1)
+    add_compile_definitions(CCSDS124_NO_EXCEPTIONS=1)
 endif()
 
-if(POCKET_NO_RTTI)
+if(CCSDS124_NO_RTTI)
     add_compile_options(-fno-rtti)
-    add_compile_definitions(POCKET_NO_RTTI=1)
+    add_compile_definitions(CCSDS124_NO_RTTI=1)
 endif()
 
-if(POCKET_COVERAGE)
+if(CCSDS124_COVERAGE)
     add_compile_options(--coverage -O0 -g)
     add_link_options(--coverage)
 endif()
 
 # Library sources
-set(POCKET_SOURCES
+set(CCSDS124_SOURCES
     src/bitvector.cpp
     src/bitbuffer.cpp
     src/bitreader.cpp
@@ -55,20 +55,20 @@ set(POCKET_SOURCES
     src/decompressor.cpp
 )
 
-# Static library (named pocketplus_cxx to avoid conflict with C library)
-add_library(pocketplus_cxx STATIC ${POCKET_SOURCES})
-target_include_directories(pocketplus_cxx PUBLIC include)
-target_compile_features(pocketplus_cxx PUBLIC cxx_std_17)
+# Static library (named ccsds124_cxx to avoid conflict with C library)
+add_library(ccsds124_cxx STATIC ${CCSDS124_SOURCES})
+target_include_directories(ccsds124_cxx PUBLIC include)
+target_compile_features(ccsds124_cxx PUBLIC cxx_std_17)
 
 # CLI executable
-if(POCKET_BUILD_CLI)
-    add_executable(pocketplus_cli src/cli.cpp)
-    target_link_libraries(pocketplus_cli PRIVATE pocketplus_cxx)
-    set_target_properties(pocketplus_cli PROPERTIES OUTPUT_NAME pocketplus)
+if(CCSDS124_BUILD_CLI)
+    add_executable(ccsds124_cli src/cli.cpp)
+    target_link_libraries(ccsds124_cli PRIVATE ccsds124_cxx)
+    set_target_properties(ccsds124_cli PROPERTIES OUTPUT_NAME ccsds124)
 endif()
 
 # Testing with Catch2 (single-header)
-if(POCKET_BUILD_TESTS)
+if(CCSDS124_BUILD_TESTS)
     enable_testing()
 
     # Fetch Catch2 v3
@@ -93,7 +93,7 @@ if(POCKET_BUILD_TESTS)
         tests/test_vectors.cpp
         tests/test_edge_cases.cpp
     )
-    target_link_libraries(tests PRIVATE pocketplus_cxx Catch2::Catch2WithMain)
+    target_link_libraries(tests PRIVATE ccsds124_cxx Catch2::Catch2WithMain)
 
     # Register tests
     include(CTest)
@@ -102,14 +102,14 @@ if(POCKET_BUILD_TESTS)
 endif()
 
 # Benchmarks
-if(POCKET_BUILD_BENCH)
+if(CCSDS124_BUILD_BENCH)
     add_executable(bench bench/bench.cpp)
-    target_link_libraries(bench PRIVATE pocketplus_cxx)
+    target_link_libraries(bench PRIVATE ccsds124_cxx)
 endif()
 
 # Install
-install(TARGETS pocketplus_cxx
+install(TARGETS ccsds124_cxx
     LIBRARY DESTINATION lib
     ARCHIVE DESTINATION lib
 )
-install(DIRECTORY include/pocketplus DESTINATION include)
+install(DIRECTORY include/ccsds124 DESTINATION include)

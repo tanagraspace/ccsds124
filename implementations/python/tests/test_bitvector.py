@@ -2,7 +2,7 @@
 
 import pytest
 
-from pocketplus.bitvector import BitVector
+from ccsds124.bitvector import BitVector
 
 
 class TestBitVectorInit:

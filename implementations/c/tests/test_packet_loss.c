@@ -1,10 +1,10 @@
 /**
  * @file test_packet_loss.c
- * @brief Packet loss recovery tests for POCKET+ compression.
+ * @brief Packet loss recovery tests for CCSDS 124.0-B-1 compression.
  *
  * Tests actual packet loss recovery per CCSDS 124.0-B-1 Section 2.2:
  * - Simulates packet loss by dropping compressed packets
- * - Uses pocket_decompressor_notify_packet_loss() to inform decompressor
+ * - Uses ccsds124_decompressor_notify_packet_loss() to inform decompressor
  * - Verifies recovery when loss <= R (with rt=1 sync packets)
  * - Verifies failure when loss > R
  *
@@ -20,7 +20,7 @@
  * | ... and so on for R=3 through R=7 |
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -68,12 +68,12 @@ static int compress_packets_with_rt(
     compressed_packet_t *packets,
     int rt_period
 ) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input_vec;
     bitbuffer_t output;
-    pocket_params_t params = {0};
+    ccsds124_params_t params = {0};
 
-    if (pocket_compressor_init(&comp, PACKET_BITS, NULL, r, 0, 0, 0) != POCKET_OK) {
+    if (ccsds124_compressor_init(&comp, PACKET_BITS, NULL, r, 0, 0, 0) != CCSDS124_OK) {
         return 0;
     }
     bitvector_init(&input_vec, PACKET_BITS);
@@ -108,7 +108,7 @@ static int compress_packets_with_rt(
 
         /* Compress */
         bitbuffer_init(&output);
-        if (pocket_compress_packet(&comp, &input_vec, &output, &params) != POCKET_OK) {
+        if (ccsds124_compress_packet(&comp, &input_vec, &output, &params) != CCSDS124_OK) {
             return 0;
         }
 
@@ -142,11 +142,11 @@ static int decompress_with_loss_notification(
     uint8_t *output,
     size_t *decompressed_count
 ) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
     bitvector_t output_vec;
     bitreader_t reader;
 
-    if (pocket_decompressor_init(&decomp, PACKET_BITS, NULL, r) != POCKET_OK) {
+    if (ccsds124_decompressor_init(&decomp, PACKET_BITS, NULL, r) != CCSDS124_OK) {
         return 0;
     }
     bitvector_init(&output_vec, PACKET_BITS);
@@ -167,15 +167,15 @@ static int decompress_with_loss_notification(
 
         /* If we just exited loss region, notify decompressor */
         if (in_loss_region) {
-            pocket_decompressor_notify_packet_loss(&decomp, (uint32_t)loss_count);
+            ccsds124_decompressor_notify_packet_loss(&decomp, (uint32_t)loss_count);
             in_loss_region = 0;
         }
 
         /* Decompress this packet */
         bitreader_init(&reader, packets[i].data, packets[i].num_bits);
-        int result = pocket_decompress_packet(&decomp, &reader, &output_vec);
+        int result = ccsds124_decompress_packet(&decomp, &reader, &output_vec);
 
-        if (result != POCKET_OK) {
+        if (result != CCSDS124_OK) {
             /* Decompression failed - may be expected after too many losses */
             return 0;
         }
@@ -372,7 +372,7 @@ static void test_R1_recovery_from_1_loss(void) {
 /* ============================================================================
  * Test Matrix: All R values with various loss counts
  *
- * Key insight: POCKET+ robustness (R) is about MASK synchronization.
+ * Key insight: CCSDS 124.0-B-1 robustness (R) is about MASK synchronization.
  * The Xt window tracks mask changes from the last Vt+1 packets.
  *
  * To properly test R parameter behavior:

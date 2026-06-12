@@ -4,7 +4,7 @@ This file provides guidance for AI agents (like Claude Code) working on the CCSD
 
 ## Project Overview
 
-CCSDS 124.0-B-1 is a multi-language implementation of the CCSDS 124.0-B-1 lossless compression algorithm designed for spacecraft housekeeping data. This is a **monorepo** with independent implementations in C, C++, Python, Go, Rust, and Java.
+This repository provides multi-language implementations of the CCSDS 124.0-B-1 lossless compression algorithm designed for spacecraft housekeeping data. This is a **monorepo** with independent implementations in C, C++, Python, Go, Rust, and Java.
 
 ## Repository Structure
 

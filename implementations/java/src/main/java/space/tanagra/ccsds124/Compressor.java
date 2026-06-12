@@ -6,7 +6,7 @@
 package space.tanagra.ccsds124;
 
 /**
- * CCSDS 124.0-B-1 compressor implementing CCSDS 124.0-B-1 Section 5.3.
+ * Compressor implementing CCSDS 124.0-B-1 Section 5.3.
  *
  * <p>Output packet format: oₜ = hₜ ∥ qₜ ∥ uₜ
  *

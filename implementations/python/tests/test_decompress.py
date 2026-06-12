@@ -1,10 +1,10 @@
-"""Tests for POCKET+ decompression."""
+"""Tests for CCSDS 124.0-B-1 decompression."""
 
 import pytest
 
-from pocketplus.bitvector import BitVector
-from pocketplus.compress import compress
-from pocketplus.decompress import Decompressor, decompress
+from ccsds124.bitvector import BitVector
+from ccsds124.compress import compress
+from ccsds124.decompress import Decompressor, decompress
 
 
 class TestDecompressorInit:

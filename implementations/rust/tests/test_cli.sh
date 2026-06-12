@@ -1,12 +1,12 @@
 #!/bin/sh
-# CLI round-trip tests for POCKET+ Rust compress/decompress
+# CLI round-trip tests for CCSDS 124.0-B-1 Rust compress/decompress
 #
 # Tests the CLI executable by compressing test vectors,
 # decompressing them, and verifying the output matches the original.
 
 set -e
 
-CLI="./target/release/pocketplus"
+CLI="./target/release/ccsds124"
 TEST_VECTORS_DIR="../../test-vectors/input"
 TEMP_DIR="$(mktemp -d)"
 TESTS_RUN=0

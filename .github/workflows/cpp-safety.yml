@@ -25,7 +25,7 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DPOCKET_BUILD_TESTS=OFF
+          cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCCSDS124_BUILD_TESTS=OFF
 
       - name: Run clang-tidy
         working-directory: implementations/cpp
@@ -36,7 +36,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Run clang-tidy on library source files
-          SOURCES=$(find include/pocketplus -name "*.hpp" | sort)
+          SOURCES=$(find include/ccsds124 -name "*.hpp" | sort)
 
           TOTAL_WARNINGS=0
           REPORT=""
@@ -96,7 +96,7 @@ jobs:
               --suppress=unusedFunction \
               -Iinclude \
               --output-file=build/cppcheck-report.txt \
-              include/pocketplus/*.hpp src/*.cpp 2>&1 || true
+              include/ccsds124/*.hpp src/*.cpp 2>&1 || true
 
           # Count issues (exclude style/information for summary)
           ERRORS=$(grep -c "\(error\)" build/cppcheck-report.txt 2>/dev/null || echo "0")

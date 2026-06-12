@@ -3,13 +3,13 @@
  * @brief Unit tests for Encoder functions (COUNT, RLE, BE).
  */
 
-#include <pocketplus/bitbuffer.hpp>
-#include <pocketplus/bitvector.hpp>
-#include <pocketplus/encoder.hpp>
+#include <ccsds124/bitbuffer.hpp>
+#include <ccsds124/bitvector.hpp>
+#include <ccsds124/encoder.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 TEST_CASE("COUNT encoding A=1", "[encoder]") {
     BitBuffer<64> bb;

@@ -1,4 +1,4 @@
-# POCKET+ C++ Implementation Makefile
+# CCSDS 124.0-B-1 C++ Implementation Makefile
 # Wrapper for CMake build system
 
 BUILD_DIR := build
@@ -24,7 +24,7 @@ debug:
 # Build for embedded (no exceptions, no RTTI)
 embedded:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && cmake $(CMAKE_FLAGS) -DPOCKET_NO_EXCEPTIONS=ON -DPOCKET_NO_RTTI=ON ..
+	@cd $(BUILD_DIR) && cmake $(CMAKE_FLAGS) -DCCSDS124_NO_EXCEPTIONS=ON -DCCSDS124_NO_RTTI=ON ..
 	@cmake --build $(BUILD_DIR) -- -j1
 
 # Run tests
@@ -35,12 +35,12 @@ test: build
 test-report: build
 	@mkdir -p $(DOCS_DIR)/tests/html
 	@$(MAKE) test 2>&1 | tee $(BUILD_DIR)/test-output.txt
-	@../../scripts/generate-test-report.sh $(BUILD_DIR)/test-output.txt $(DOCS_DIR)/tests/html/index.html "POCKET+ C++ Test Report"
+	@../../scripts/generate-test-report.sh $(BUILD_DIR)/test-output.txt $(DOCS_DIR)/tests/html/index.html "CCSDS 124.0-B-1 C++ Test Report"
 
 # Run tests with coverage (text summary)
 coverage:
 	@mkdir -p $(BUILD_DIR)
-	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DPOCKET_COVERAGE=ON ..
+	@cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=Debug -DCCSDS124_COVERAGE=ON ..
 	@cmake --build $(BUILD_DIR) -- -j1
 	@cd $(BUILD_DIR) && ctest --output-on-failure
 	@lcov --capture --directory $(BUILD_DIR) --output-file $(BUILD_DIR)/coverage.info --ignore-errors source,gcov
@@ -103,7 +103,7 @@ valgrind: build
 check: fmt-check build test
 
 help:
-	@echo "POCKET+ C++ Build Targets:"
+	@echo "CCSDS 124.0-B-1 C++ Build Targets:"
 	@echo "  make build        - Build library and CLI"
 	@echo "  make debug        - Build with debug symbols"
 	@echo "  make embedded     - Build without exceptions/RTTI"

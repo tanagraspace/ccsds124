@@ -1,6 +1,6 @@
 /**
  * @file test_mask.cpp
- * @brief Unit tests for POCKET+ mask update logic.
+ * @brief Unit tests for CCSDS 124.0-B-1 mask update logic.
  *
  * Tests for CCSDS 124.0-B-1 Section 4:
  * - Update build vector (Equation 6)
@@ -8,12 +8,12 @@
  * - Compute change vector (Equation 8)
  */
 
-#include <pocketplus/bitvector.hpp>
-#include <pocketplus/mask.hpp>
+#include <ccsds124/bitvector.hpp>
+#include <ccsds124/mask.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 // ============================================================================
 // Update Build Vector Tests (CCSDS Equation 6)

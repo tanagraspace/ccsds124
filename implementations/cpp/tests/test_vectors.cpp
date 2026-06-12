@@ -6,7 +6,7 @@
  * and interoperability with the C implementation.
  */
 
-#include <pocketplus/pocketplus.hpp>
+#include <ccsds124/ccsds124.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -15,7 +15,7 @@
 #include <fstream>
 #include <vector>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 // Test vector paths - check environment variable first, then use relative path
 static std::string get_test_vectors_dir() {
@@ -24,7 +24,7 @@ static std::string get_test_vectors_dir() {
         return env;
     }
     // Default: relative path from build directory (implementations/cpp/build/)
-    // Goes up to repo root: build/ -> cpp/ -> implementations/ -> pocket-plus/
+    // Goes up to repo root: build/ -> cpp/ -> implementations/ -> ccsds124/
     return "../../../test-vectors";
 }
 

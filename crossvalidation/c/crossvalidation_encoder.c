@@ -3,13 +3,13 @@
  * @brief Cross-validation encoder harness for CCSDS 124.0-B-1.
  *
  * Reads a .raw+config input file, compresses each packet using the
- * pocket_compress_packet() API with per-packet flags, and writes
+ * ccsds124_compress_packet() API with per-packet flags, and writes
  * the concatenated byte-aligned compressed output to a .124 file.
  *
  * Usage: crossvalidation_encoder <input.raw+config> <output.124>
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
     pos += 4U;
 
     /* Validate large_f */
-    if (large_f == 0U || large_f > POCKET_MAX_PACKET_LENGTH) {
+    if (large_f == 0U || large_f > CCSDS124_MAX_PACKET_LENGTH) {
         /* Invalid large_f -> empty output (t_error = 0) */
         goto write_output;
     }
@@ -123,14 +123,14 @@ int main(int argc, char *argv[]) {
     }
 
     /* Initialize compressor in manual mode */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t initial_mask;
     bitvector_init(&initial_mask, (size_t)large_f);
     bitvector_from_bytes(&initial_mask, &file_data[pos], (size_t)packet_bytes);
     pos += packet_bytes;
 
-    int rc = pocket_compressor_init(&comp, (size_t)large_f, &initial_mask, 0, 0, 0, 0);
-    if (rc != POCKET_OK) {
+    int rc = ccsds124_compressor_init(&comp, (size_t)large_f, &initial_mask, 0, 0, 0, 0);
+    if (rc != CCSDS124_OK) {
         goto write_output;
     }
 
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
         uint8_t R_val  = flag_byte & 0x0FU;
 
         /* Validate R (must be 0-7) */
-        if (R_val > POCKET_MAX_ROBUSTNESS) {
+        if (R_val > CCSDS124_MAX_ROBUSTNESS) {
             break; /* Stop: invalid parameter */
         }
 
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
         comp.robustness = R_val;
 
         /* Set up params */
-        pocket_params_t params;
+        ccsds124_params_t params;
         params.min_robustness = R_val;
         params.send_mask_flag = f_flag;
         params.new_mask_flag = p_flag;
@@ -200,13 +200,13 @@ int main(int argc, char *argv[]) {
         bitbuffer_t packet_output;
         bitbuffer_init(&packet_output);
 
-        rc = pocket_compress_packet(&comp, &input_vec, &packet_output, &params);
-        if (rc != POCKET_OK) {
+        rc = ccsds124_compress_packet(&comp, &input_vec, &packet_output, &params);
+        if (rc != CCSDS124_OK) {
             break; /* Stop on compression error */
         }
 
         /* Convert to bytes (byte-aligned with zero padding) */
-        uint8_t packet_out_bytes[POCKET_MAX_OUTPUT_BYTES];
+        uint8_t packet_out_bytes[CCSDS124_MAX_OUTPUT_BYTES];
         size_t packet_out_size = bitbuffer_to_bytes(&packet_output, packet_out_bytes, sizeof(packet_out_bytes));
 
         /* Append to output */

@@ -1,4 +1,4 @@
-# POCKET+ C++ Code Style
+# CCSDS 124.0-B-1 C++ Code Style
 # Based on LLVM style with modifications for embedded compatibility
 
 Language: Cpp
@@ -39,7 +39,7 @@ DerivePointerAlignment: false
 IncludeBlocks: Regroup
 IncludeCategories:
   # Project headers
-  - Regex: '^<pocketplus/'
+  - Regex: '^<ccsds124/'
     Priority: 1
   # Catch2 test headers
   - Regex: '^<catch2/'

@@ -2,3 +2,5 @@
 build/
 
 *.gcov
+# Doxygen theme downloaded by `make docs`
+doxygen-awesome-css/

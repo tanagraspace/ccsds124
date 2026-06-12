@@ -8,7 +8,7 @@
  *                        |___/                  |_|
  * ============================================================================
  *
- * POCKET+ C Implementation - Compression Tests
+ * CCSDS 124.0-B-1 C Implementation - Compression Tests
  * TDD: Write tests first, then implement
  *
  * Tests for CCSDS 124.0-B-1 Section 5.3 (Compression)
@@ -19,7 +19,7 @@
  * ============================================================================
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -49,11 +49,11 @@ static int tests_passed = 0;
  * ======================================================================== */
 
 TEST(test_compressor_init_valid) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
 
-    int result = pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    int result = ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(comp.F == 8);
     assert(comp.robustness == 0);
     assert(comp.t == 0);
@@ -61,15 +61,15 @@ TEST(test_compressor_init_valid) {
 }
 
 TEST(test_compressor_init_with_initial_mask) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t initial_mask;
 
     bitvector_init(&initial_mask, 8);
     initial_mask.data[0] = 0x0F000000;  /* Some initial mask */
 
-    int result = pocket_compressor_init(&comp, 8, &initial_mask, 1, 0, 0, 0);
+    int result = ccsds124_compressor_init(&comp, 8, &initial_mask, 1, 0, 0, 0);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(comp.F == 8);
     assert(comp.robustness == 1);
     assert(comp.mask.data[0] == 0x0F000000);
@@ -77,44 +77,44 @@ TEST(test_compressor_init_with_initial_mask) {
 }
 
 TEST(test_compressor_init_invalid_length) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
 
     /* F = 0 should fail */
-    int result = pocket_compressor_init(&comp, 0, NULL, 0, 0, 0, 0);
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    int result = ccsds124_compressor_init(&comp, 0, NULL, 0, 0, 0, 0);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 
     /* F > max should fail */
-    result = pocket_compressor_init(&comp, POCKET_MAX_PACKET_LENGTH + 1, NULL, 0, 0, 0, 0);
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    result = ccsds124_compressor_init(&comp, CCSDS124_MAX_PACKET_LENGTH + 1, NULL, 0, 0, 0, 0);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
 TEST(test_compressor_init_invalid_robustness) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
 
     /* Robustness > 7 should fail */
-    int result = pocket_compressor_init(&comp, 8, NULL, 8, 0, 0, 0);
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    int result = ccsds124_compressor_init(&comp, 8, NULL, 8, 0, 0, 0);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
 TEST(test_compressor_reset) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
     /* Initialize and compress one packet */
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 8);
     input.data[0] = 0xAA000000;
     bitbuffer_init(&output);
 
-    pocket_params_t params = {0, 0, 0, 0};
-    pocket_compress_packet(&comp, &input, &output, &params);
+    ccsds124_params_t params = {0, 0, 0, 0};
+    ccsds124_compress_packet(&comp, &input, &output, &params);
 
     /* State should have changed */
     assert(comp.t > 0);
 
     /* Reset */
-    pocket_compressor_reset(&comp);
+    ccsds124_compressor_reset(&comp);
 
     /* State should be back to initial */
     assert(comp.t == 0);
@@ -127,12 +127,12 @@ TEST(test_compressor_reset) {
 
 TEST(test_compress_first_packet) {
     /* First packet (t=0) with Rt=0 should produce output */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
-    pocket_params_t params;
+    ccsds124_params_t params;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 8);
     bitbuffer_init(&output);
 
@@ -144,9 +144,9 @@ TEST(test_compress_first_packet) {
     params.send_mask_flag = 0;
     params.uncompressed_flag = 0;
 
-    int result = pocket_compress_packet(&comp, &input, &output, &params);
+    int result = ccsds124_compress_packet(&comp, &input, &output, &params);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(output.num_bits > 0);  /* Should produce some output */
     assert(comp.t == 1);           /* Time should advance */
 }
@@ -156,15 +156,15 @@ TEST(test_compress_d0_zero_with_nonzero_mask) {
      * With a non-zero initial mask, D_0 = M_0 XOR M_{-1} = M_0 XOR M_0 = 0.
      * This means X_0 is a zero vector and RLE(X_0) = '10' (just terminator).
      * The first 2 bits of the compressed output must be '1','0'. */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input, initial_mask;
     bitbuffer_t output;
-    pocket_params_t params;
+    ccsds124_params_t params;
 
     bitvector_init(&initial_mask, 8);
     initial_mask.data[0] = 0xFF000000;  /* Non-zero mask: all bits unpredictable */
 
-    pocket_compressor_init(&comp, 8, &initial_mask, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, &initial_mask, 0, 0, 0, 0);
     bitvector_init(&input, 8);
     bitbuffer_init(&output);
 
@@ -175,11 +175,11 @@ TEST(test_compress_d0_zero_with_nonzero_mask) {
     params.send_mask_flag = 0;
     params.uncompressed_flag = 0;
 
-    int result = pocket_compress_packet(&comp, &input, &output, &params);
-    assert(result == POCKET_OK);
+    int result = ccsds124_compress_packet(&comp, &input, &output, &params);
+    assert(result == CCSDS124_OK);
 
     /* Convert to bytes and check first 2 bits are '10' (RLE terminator for zero X_0) */
-    uint8_t out_bytes[POCKET_MAX_OUTPUT_BYTES];
+    uint8_t out_bytes[CCSDS124_MAX_OUTPUT_BYTES];
     size_t out_size = bitbuffer_to_bytes(&output, out_bytes, sizeof(out_bytes));
     assert(out_size > 0);
 
@@ -189,12 +189,12 @@ TEST(test_compress_d0_zero_with_nonzero_mask) {
 
 TEST(test_compress_two_identical_packets) {
     /* Two identical packets should compress well (no changes) */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output1, output2;
-    pocket_params_t params;
+    ccsds124_params_t params;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 8);
     input.data[0] = 0xCC000000;
 
@@ -205,12 +205,12 @@ TEST(test_compress_two_identical_packets) {
 
     /* First packet */
     bitbuffer_init(&output1);
-    pocket_compress_packet(&comp, &input, &output1, &params);
+    ccsds124_compress_packet(&comp, &input, &output1, &params);
     size_t size1 = output1.num_bits;
 
     /* Second packet (identical) */
     bitbuffer_init(&output2);
-    pocket_compress_packet(&comp, &input, &output2, &params);
+    ccsds124_compress_packet(&comp, &input, &output2, &params);
     size_t size2 = output2.num_bits;
 
     /* Second packet should be smaller (no changes, no unpredictable bits) */
@@ -219,12 +219,12 @@ TEST(test_compress_two_identical_packets) {
 
 TEST(test_compress_with_change) {
     /* Test compression when input changes */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input1, input2;
     bitbuffer_t output;
-    pocket_params_t params;
+    ccsds124_params_t params;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input1, 8);
     bitvector_init(&input2, 8);
     bitbuffer_init(&output);
@@ -238,45 +238,45 @@ TEST(test_compress_with_change) {
     params.uncompressed_flag = 0;
 
     /* Compress first packet */
-    pocket_compress_packet(&comp, &input1, &output, &params);
+    ccsds124_compress_packet(&comp, &input1, &output, &params);
 
     /* Compress second packet */
     bitbuffer_clear(&output);
-    int result = pocket_compress_packet(&comp, &input2, &output, &params);
+    int result = ccsds124_compress_packet(&comp, &input2, &output, &params);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(output.num_bits > 0);  /* Should encode the change */
 }
 
 TEST(test_compress_null_params) {
     /* NULL params should use defaults */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 8);
     bitbuffer_init(&output);
     input.data[0] = 0xFF000000;
 
-    int result = pocket_compress_packet(&comp, &input, &output, NULL);
+    int result = ccsds124_compress_packet(&comp, &input, &output, NULL);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(output.num_bits > 0);
 }
 
 TEST(test_compress_invalid_input) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 16);  /* Wrong length! */
     bitbuffer_init(&output);
 
-    int result = pocket_compress_packet(&comp, &input, &output, NULL);
+    int result = ccsds124_compress_packet(&comp, &input, &output, NULL);
 
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
 /* ========================================================================
@@ -286,10 +286,10 @@ TEST(test_compress_invalid_input) {
 TEST(test_compute_robustness_window_rt_zero) {
     /* Test Xₜ calculation when Rₜ = 0
      * Xₜ = <Dₜ> (just reverse the current change) */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t Dt, Xt, expected;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);  /* Rₜ = 0 */
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);  /* Rₜ = 0 */
     bitvector_init(&Dt, 8);
     bitvector_init(&Xt, 8);
     bitvector_init(&expected, 8);
@@ -300,19 +300,19 @@ TEST(test_compute_robustness_window_rt_zero) {
     /* Expected: Xₜ = Dₜ (no reversal - RLE processes LSB to MSB) */
     expected.data[0] = 0x05000000;
 
-    pocket_compute_robustness_window(&Xt, &comp, &Dt);
+    ccsds124_compute_robustness_window(&Xt, &comp, &Dt);
 
     assert(bitvector_equals(&Xt, &expected));
 }
 
 TEST(test_compute_robustness_window_with_history) {
     /* Test Xₜ with Rₜ = 1: Xₜ = <(Dₜ₋₁ OR Dₜ)> */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input1, input2, Xt, expected;
     bitbuffer_t output;
-    pocket_params_t params = {0};
+    ccsds124_params_t params = {0};
 
-    pocket_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
+    ccsds124_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
     bitvector_init(&input1, 8);
     bitvector_init(&input2, 8);
     bitvector_init(&Xt, 8);
@@ -325,49 +325,49 @@ TEST(test_compute_robustness_window_with_history) {
 
     /* Packet 1: t=0 */
     input1.data[0] = 0x00000000;
-    pocket_compress_packet(&comp, &input1, &output, &params);
+    ccsds124_compress_packet(&comp, &input1, &output, &params);
 
     /* Packet 2: t=1, D₁ = 0x01 (bit 0 changed) */
     input2.data[0] = 0x01000000;
     bitbuffer_clear(&output);
-    pocket_compress_packet(&comp, &input2, &output, &params);
+    ccsds124_compress_packet(&comp, &input2, &output, &params);
 
     /* Get the current change D₁ */
-    size_t recent_idx = (comp.history_index - 1 + POCKET_MAX_HISTORY) % POCKET_MAX_HISTORY;
+    size_t recent_idx = (comp.history_index - 1 + CCSDS124_MAX_HISTORY) % CCSDS124_MAX_HISTORY;
     bitvector_t *D1 = &comp.change_history[recent_idx];
 
     /* At t=1 with Rₜ=1: Xₜ = D₀ OR D₁ = 0 OR 0x01 = 0x01 (no reversal) */
     expected.data[0] = 0x01000000;
 
-    pocket_compute_robustness_window(&Xt, &comp, D1);
+    ccsds124_compute_robustness_window(&Xt, &comp, D1);
 
     assert(bitvector_equals(&Xt, &expected));
 }
 
 TEST(test_compute_effective_robustness_base_case) {
     /* Test Vₜ = Rₜ when there are mask changes */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t Dt;
 
-    pocket_compressor_init(&comp, 8, NULL, 2, 0, 0, 0);  /* Rₜ = 2 */
+    ccsds124_compressor_init(&comp, 8, NULL, 2, 0, 0, 0);  /* Rₜ = 2 */
     bitvector_init(&Dt, 8);
 
     /* Dₜ has changes */
     Dt.data[0] = 0x01000000;
 
-    uint8_t Vt = pocket_compute_effective_robustness(&comp, &Dt);
+    uint8_t Vt = ccsds124_compute_effective_robustness(&comp, &Dt);
 
     assert(Vt == 2);  /* Should equal Rₜ */
 }
 
 TEST(test_compute_effective_robustness_with_no_changes) {
     /* Test Vₜ = Rₜ + Cₜ when consecutive packets have no mask changes */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input, Dt;
     bitbuffer_t output;
-    pocket_params_t params = {0};
+    ccsds124_params_t params = {0};
 
-    pocket_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
+    ccsds124_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
     bitvector_init(&input, 8);
     bitvector_init(&Dt, 8);
     bitbuffer_init(&output);
@@ -383,7 +383,7 @@ TEST(test_compute_effective_robustness_with_no_changes) {
             params.send_mask_flag = 0;
             params.uncompressed_flag = 0;
         }
-        pocket_compress_packet(&comp, &input, &output, &params);
+        ccsds124_compress_packet(&comp, &input, &output, &params);
     }
 
     /* After 5 identical packets (4 with no changes after t=0):
@@ -391,7 +391,7 @@ TEST(test_compute_effective_robustness_with_no_changes) {
      * At t=4: consecutive no-change count = 4
      * Vₜ = Rₜ + 4 = 1 + 4 = 5 */
     bitvector_zero(&Dt);  /* Current change is also 0 */
-    uint8_t Vt = pocket_compute_effective_robustness(&comp, &Dt);
+    uint8_t Vt = ccsds124_compute_effective_robustness(&comp, &Dt);
 
     assert(Vt >= 1);  /* Should be at least Rₜ */
     assert(Vt <= 15);  /* Should be capped at 15 */
@@ -415,7 +415,7 @@ TEST(test_has_positive_updates_all_unpredictable) {
     mask.data[0] = 0x01000000;
 
     /* Changed bit is unpredictable → eₜ = 0 */
-    int et = pocket_has_positive_updates(&Xt, &mask);
+    int et = ccsds124_has_positive_updates(&Xt, &mask);
     assert(et == 0);
 }
 
@@ -433,7 +433,7 @@ TEST(test_has_positive_updates_has_predictable) {
     mask.data[0] = 0x00000000;
 
     /* Changed bit is predictable → eₜ = 1 */
-    int et = pocket_has_positive_updates(&Xt, &mask);
+    int et = ccsds124_has_positive_updates(&Xt, &mask);
     if (et != 1) {
         fprintf(stderr, "FAIL: Expected et=1, got et=%d\n", et);
         fprintf(stderr, "Xt.data[0] = 0x%08X, mask.data[0] = 0x%08X\n", Xt.data[0], mask.data[0]);
@@ -444,41 +444,41 @@ TEST(test_has_positive_updates_has_predictable) {
 
 TEST(test_compute_ct_flag_single_update) {
     /* Test cₜ = 0 when new_mask_flag set only once */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
 
-    pocket_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);
 
     /* Simulate one new_mask_flag set at t=0 */
     comp.new_mask_flag_history[0] = 1;
-    for (size_t i = 1U; i < POCKET_MAX_VT_HISTORY; i++) {
+    for (size_t i = 1U; i < CCSDS124_MAX_VT_HISTORY; i++) {
         comp.new_mask_flag_history[i] = 0;
     }
     comp.flag_history_index = 1;
     comp.t = 1;
 
     uint8_t Vt = 2;  /* Check last 2 iterations */
-    int ct = pocket_compute_ct_flag(&comp, Vt, 0);  /* current flag = 0 */
+    int ct = ccsds124_compute_ct_flag(&comp, Vt, 0);  /* current flag = 0 */
 
     assert(ct == 0);  /* Only one update → cₜ = 0 */
 }
 
 TEST(test_compute_ct_flag_multiple_updates) {
     /* Test cₜ = 1 when new_mask_flag set 2+ times */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
 
-    pocket_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);
 
     /* Simulate two new_mask_flag sets */
     comp.new_mask_flag_history[0] = 1;
     comp.new_mask_flag_history[1] = 1;
-    for (size_t i = 2U; i < POCKET_MAX_VT_HISTORY; i++) {
+    for (size_t i = 2U; i < CCSDS124_MAX_VT_HISTORY; i++) {
         comp.new_mask_flag_history[i] = 0;
     }
     comp.flag_history_index = 2;
     comp.t = 2;
 
     uint8_t Vt = 2;  /* Check last 2 iterations */
-    int ct = pocket_compute_ct_flag(&comp, Vt, 0);  /* current flag = 0 */
+    int ct = ccsds124_compute_ct_flag(&comp, Vt, 0);  /* current flag = 0 */
 
     assert(ct == 1);  /* Two updates → cₜ = 1 */
 }
@@ -487,33 +487,33 @@ TEST(test_compute_ct_flag_multiple_updates) {
  * High-Level API Error Tests
  * ======================================================================== */
 
-TEST(test_pocket_compress_invalid_size) {
-    pocket_compressor_t comp;
+TEST(test_ccsds124_compress_invalid_size) {
+    ccsds124_compressor_t comp;
     uint8_t input[11] = {0};  /* Not a multiple of packet size */
     uint8_t output[100];
     size_t output_size;
 
-    pocket_compressor_init(&comp, 16, NULL, 0, 0, 0, 0);  /* 2 bytes per packet */
+    ccsds124_compressor_init(&comp, 16, NULL, 0, 0, 0, 0);  /* 2 bytes per packet */
 
     /* 11 bytes is not a multiple of 2 */
-    int result = pocket_compress(&comp, input, 11, output, sizeof(output), &output_size);
+    int result = ccsds124_compress(&comp, input, 11, output, sizeof(output), &output_size);
 
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
-TEST(test_pocket_compress_manual_mode) {
-    /* pocket_compress() with all limits=0 triggers manual control mode
+TEST(test_ccsds124_compress_manual_mode) {
+    /* ccsds124_compress() with all limits=0 triggers manual control mode
      * (else branch: ft=0, rt=0, pt=0 for all packets). */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     uint8_t input_data[4] = {0xAA, 0xBB, 0xAA, 0xBB};  /* 2 identical 16-bit packets */
     uint8_t output[256];
     size_t output_size = 0;
 
-    pocket_compressor_init(&comp, 16, NULL, 0, 0, 0, 0);  /* All limits = 0 */
+    ccsds124_compressor_init(&comp, 16, NULL, 0, 0, 0, 0);  /* All limits = 0 */
 
-    int result = pocket_compress(&comp, input_data, 4, output, sizeof(output), &output_size);
+    int result = ccsds124_compress(&comp, input_data, 4, output, sizeof(output), &output_size);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(output_size > 0);
 }
 
@@ -524,12 +524,12 @@ TEST(test_pocket_compress_manual_mode) {
 TEST(test_robustness_window_rt_zero) {
     /* Test Xₜ calculation when Rₜ = 0
      * According to ALGORITHM.md: Xₜ = <Dₜ> if Rₜ = 0 */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input1, input2;
     bitbuffer_t output;
-    pocket_params_t params = {0};
+    ccsds124_params_t params = {0};
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);  /* Rₜ = 0 */
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);  /* Rₜ = 0 */
     bitvector_init(&input1, 8);
     bitvector_init(&input2, 8);
     bitbuffer_init(&output);
@@ -538,31 +538,31 @@ TEST(test_robustness_window_rt_zero) {
     input1.data[0] = 0xAA000000;  /* 10101010 */
     params.send_mask_flag = 1;
     params.uncompressed_flag = 1;
-    pocket_compress_packet(&comp, &input1, &output, &params);
+    ccsds124_compress_packet(&comp, &input1, &output, &params);
 
     /* Second packet - different value */
     input2.data[0] = 0xAB000000;  /* 10101011 */
     params.send_mask_flag = 0;
     params.uncompressed_flag = 0;
     bitbuffer_clear(&output);
-    pocket_compress_packet(&comp, &input2, &output, &params);
+    ccsds124_compress_packet(&comp, &input2, &output, &params);
 
     /* Xₜ should just be <Dₜ> which is reverse of (0xAA XOR 0xAB) = 0x01 */
     /* Change history should contain this at the most recent index */
     /* After 2 packets: t=2, history_index=2, so most recent change is at index 1 */
-    size_t most_recent = (comp.history_index - 1 + POCKET_MAX_HISTORY) % POCKET_MAX_HISTORY;
+    size_t most_recent = (comp.history_index - 1 + CCSDS124_MAX_HISTORY) % CCSDS124_MAX_HISTORY;
     assert(comp.change_history[most_recent].data[0] == 0x01000000);
 }
 
 TEST(test_robustness_window_with_history) {
     /* Test Xₜ calculation with Rₜ > 0
      * Xₜ = <(Dₜ₋ᴿₜ OR Dₜ₋ᴿₜ₊₁ OR ... OR Dₜ)> */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
-    pocket_params_t params = {0};
+    ccsds124_params_t params = {0};
 
-    pocket_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
+    ccsds124_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
     bitvector_init(&input, 8);
     bitbuffer_init(&output);
 
@@ -571,19 +571,19 @@ TEST(test_robustness_window_with_history) {
 
     /* First packet (t=0) */
     input.data[0] = 0x00000000;
-    pocket_compress_packet(&comp, &input, &output, &params);
+    ccsds124_compress_packet(&comp, &input, &output, &params);
 
     /* Second packet (t=1) */
     input.data[0] = 0x01000000;  /* Change in bit 0 */
     params.send_mask_flag = 0;
     params.uncompressed_flag = 0;
     bitbuffer_clear(&output);
-    pocket_compress_packet(&comp, &input, &output, &params);
+    ccsds124_compress_packet(&comp, &input, &output, &params);
 
     /* Third packet (t=2) */
     input.data[0] = 0x03000000;  /* Change in bit 1 */
     bitbuffer_clear(&output);
-    pocket_compress_packet(&comp, &input, &output, &params);
+    ccsds124_compress_packet(&comp, &input, &output, &params);
 
     /* At t=2 with Rₜ=1: Xₜ = <(D₁ OR D₂)>
      * D₁ = 0x01 (bit 0 changed)
@@ -604,12 +604,12 @@ TEST(test_robustness_window_with_history) {
 TEST(test_effective_robustness_no_changes) {
     /* Test Vₜ calculation: Vₜ = Rₜ + Cₜ
      * where Cₜ = number of consecutive iterations with no mask changes */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
-    pocket_params_t params = {0};
+    ccsds124_params_t params = {0};
 
-    pocket_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
+    ccsds124_compressor_init(&comp, 8, NULL, 1, 0, 0, 0);  /* Rₜ = 1 */
     bitvector_init(&input, 8);
     bitbuffer_init(&output);
 
@@ -626,7 +626,7 @@ TEST(test_effective_robustness_no_changes) {
             params.send_mask_flag = 0;
             params.uncompressed_flag = 0;
         }
-        pocket_compress_packet(&comp, &input, &output, &params);
+        ccsds124_compress_packet(&comp, &input, &output, &params);
     }
 
     /* After identical packets, Vₜ should be higher than Rₜ
@@ -642,12 +642,12 @@ TEST(test_effective_robustness_no_changes) {
 TEST(test_compression_with_robustness) {
     /* Integration test: compress packets with robustness and verify
      * the output includes proper robustness window encoding */
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input1, input2, input3;
     bitbuffer_t output;
-    pocket_params_t params = {0};
+    ccsds124_params_t params = {0};
 
-    pocket_compressor_init(&comp, 16, NULL, 2, 0, 0, 0);  /* Rₜ = 2 */
+    ccsds124_compressor_init(&comp, 16, NULL, 2, 0, 0, 0);  /* Rₜ = 2 */
     bitvector_init(&input1, 16);
     bitvector_init(&input2, 16);
     bitvector_init(&input3, 16);
@@ -658,7 +658,7 @@ TEST(test_compression_with_robustness) {
     input1.data[1] = 0x34000000;
     params.send_mask_flag = 1;
     params.uncompressed_flag = 1;
-    pocket_compress_packet(&comp, &input1, &output, &params);
+    ccsds124_compress_packet(&comp, &input1, &output, &params);
     size_t size1 = output.num_bits;
     assert(size1 > 0);
 
@@ -668,7 +668,7 @@ TEST(test_compression_with_robustness) {
     params.send_mask_flag = 1;
     params.uncompressed_flag = 1;
     bitbuffer_clear(&output);
-    pocket_compress_packet(&comp, &input2, &output, &params);
+    ccsds124_compress_packet(&comp, &input2, &output, &params);
     size_t size2 = output.num_bits;
     assert(size2 > 0);
 
@@ -678,7 +678,7 @@ TEST(test_compression_with_robustness) {
     params.send_mask_flag = 0;
     params.uncompressed_flag = 0;
     bitbuffer_clear(&output);
-    pocket_compress_packet(&comp, &input3, &output, &params);
+    ccsds124_compress_packet(&comp, &input3, &output, &params);
     size_t size3 = output.num_bits;
 
     /* Should be compressed (smaller than uncompressed) */
@@ -721,8 +721,8 @@ int main(void) {
     RUN_TEST(test_compute_ct_flag_multiple_updates);
 
     printf("\nHigh-Level API Tests:\n");
-    RUN_TEST(test_pocket_compress_invalid_size);
-    RUN_TEST(test_pocket_compress_manual_mode);
+    RUN_TEST(test_ccsds124_compress_invalid_size);
+    RUN_TEST(test_ccsds124_compress_manual_mode);
 
     printf("\nCCSDS Encoding Component Tests:\n");
     RUN_TEST(test_robustness_window_rt_zero);

@@ -8,12 +8,12 @@
  *                        |___/                  |_|
  * ============================================================================
  *
- * POCKET+ C Implementation - Bit Vector Tests
+ * CCSDS 124.0-B-1 C Implementation - Bit Vector Tests
  * TDD: Write tests first, then implement
  * ============================================================================
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -46,7 +46,7 @@ TEST(test_bitvector_init_valid) {
     bitvector_t bv;
     int result = bitvector_init(&bv, 8);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bv.length == 8);
     assert(bv.num_words == 1);  /* Ceiling(Ceiling(8/8)/4) = Ceiling(1/4) = 1 */
 }
@@ -55,31 +55,31 @@ TEST(test_bitvector_init_non_byte_aligned) {
     bitvector_t bv;
     int result = bitvector_init(&bv, 13);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bv.length == 13);
     assert(bv.num_words == 1);  /* Ceiling(Ceiling(13/8)/4) = Ceiling(2/4) = 1 */
 }
 
 TEST(test_bitvector_init_max_size) {
     bitvector_t bv;
-    int result = bitvector_init(&bv, POCKET_MAX_PACKET_LENGTH);
+    int result = bitvector_init(&bv, CCSDS124_MAX_PACKET_LENGTH);
 
-    assert(result == POCKET_OK);
-    assert(bv.length == POCKET_MAX_PACKET_LENGTH);
+    assert(result == CCSDS124_OK);
+    assert(bv.length == CCSDS124_MAX_PACKET_LENGTH);
 }
 
 TEST(test_bitvector_init_too_large) {
     bitvector_t bv;
-    int result = bitvector_init(&bv, POCKET_MAX_PACKET_LENGTH + 1);
+    int result = bitvector_init(&bv, CCSDS124_MAX_PACKET_LENGTH + 1);
 
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
 TEST(test_bitvector_init_zero) {
     bitvector_t bv;
     int result = bitvector_init(&bv, 0);
 
-    assert(result == POCKET_ERROR_INVALID_ARG);
+    assert(result == CCSDS124_ERROR_INVALID_ARG);
 }
 
 TEST(test_bitvector_zero) {
@@ -256,7 +256,7 @@ TEST(test_bitvector_from_bytes) {
     uint8_t bytes[] = {0xAB, 0xCD};
     int result = bitvector_from_bytes(&bv, bytes, 2);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     /* Big-endian packing: word[0] = (byte[0] << 24) | (byte[1] << 16) */
     assert(bv.data[0] == 0xABCD0000);
 }
@@ -271,7 +271,7 @@ TEST(test_bitvector_to_bytes) {
     uint8_t bytes[2];
     int result = bitvector_to_bytes(&bv, bytes, 2);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bytes[0] == 0xAB);
     assert(bytes[1] == 0xCD);
 }
@@ -358,7 +358,7 @@ TEST(test_bitvector_from_bytes_overflow) {
     uint8_t bytes[] = {0xAB, 0xCD, 0xEF};  /* 3 bytes */
     int result = bitvector_from_bytes(&bv, bytes, 3);
 
-    assert(result == POCKET_ERROR_OVERFLOW);
+    assert(result == CCSDS124_ERROR_OVERFLOW);
 }
 
 TEST(test_bitvector_to_bytes_underflow) {
@@ -370,7 +370,7 @@ TEST(test_bitvector_to_bytes_underflow) {
     uint8_t bytes[2];  /* Only 2 bytes buffer */
     int result = bitvector_to_bytes(&bv, bytes, 2);
 
-    assert(result == POCKET_ERROR_UNDERFLOW);
+    assert(result == CCSDS124_ERROR_UNDERFLOW);
 }
 
 TEST(test_bitvector_to_bytes_full_word) {
@@ -382,7 +382,7 @@ TEST(test_bitvector_to_bytes_full_word) {
     uint8_t bytes[4];
     int result = bitvector_to_bytes(&bv, bytes, 4);
 
-    assert(result == POCKET_OK);
+    assert(result == CCSDS124_OK);
     assert(bytes[0] == 0xAA);
     assert(bytes[1] == 0xBB);
     assert(bytes[2] == 0xCC);

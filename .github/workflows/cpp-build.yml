@@ -182,7 +182,7 @@ jobs:
         working-directory: implementations/cpp
         run: |
           mkdir -p build/docs/coverage/html
-          lcov --capture --directory build --output-file build/coverage.info --include "*/include/pocketplus/*" 2>/dev/null || true
+          lcov --capture --directory build --output-file build/coverage.info --include "*/include/ccsds124/*" 2>/dev/null || true
           genhtml build/coverage.info --output-directory build/docs/coverage/html 2>/dev/null || true
 
       - name: Parse coverage summary and update badges
@@ -283,9 +283,9 @@ jobs:
         run: |
           cmake -B build-embedded \
             -DCMAKE_CXX_FLAGS="-fno-exceptions -fno-rtti" \
-            -DPOCKET_BUILD_TESTS=OFF \
-            -DPOCKET_BUILD_CLI=OFF \
-            -DPOCKET_BUILD_BENCH=OFF
+            -DCCSDS124_BUILD_TESTS=OFF \
+            -DCCSDS124_BUILD_CLI=OFF \
+            -DCCSDS124_BUILD_BENCH=OFF
           cmake --build build-embedded
 
       - name: Report embedded build status

@@ -1,6 +1,6 @@
 /**
  * @file fuzz_roundtrip.c
- * @brief libFuzzer harness for POCKET+ roundtrip testing.
+ * @brief libFuzzer harness for CCSDS 124.0-B-1 roundtrip testing.
  *
  * Tests that compress(decompress(x)) == x for valid data.
  * This catches compression/decompression mismatches and data corruption.
@@ -13,7 +13,7 @@
  *   ./fuzz_roundtrip corpus/ -max_len=4096
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
@@ -45,8 +45,8 @@ int main(void) {
     input_bytes = (input_bytes / packet_bytes) * packet_bytes;
     if (input_bytes == 0) return 0;
 
-    pocket_compressor_t comp;
-    if (pocket_compressor_init(&comp, F, NULL, r, pt, ft, ft * 2) != POCKET_OK) {
+    ccsds124_compressor_t comp;
+    if (ccsds124_compressor_init(&comp, F, NULL, r, pt, ft, ft * 2) != CCSDS124_OK) {
         return 0;
     }
 
@@ -55,15 +55,15 @@ int main(void) {
     if (!compressed) return 0;
 
     size_t compressed_size = 0;
-    int result = pocket_compress(&comp, data + 4, input_bytes,
+    int result = ccsds124_compress(&comp, data + 4, input_bytes,
                                   compressed, compressed_size_max, &compressed_size);
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         free(compressed);
         return 0;
     }
 
-    pocket_decompressor_t decomp;
-    pocket_decompressor_init(&decomp, F, NULL, r);
+    ccsds124_decompressor_t decomp;
+    ccsds124_decompressor_init(&decomp, F, NULL, r);
 
     uint8_t *decompressed = malloc(input_bytes);
     if (!decompressed) {
@@ -72,10 +72,10 @@ int main(void) {
     }
 
     size_t decompressed_size = 0;
-    result = pocket_decompress(&decomp, compressed, compressed_size,
+    result = ccsds124_decompress(&decomp, compressed, compressed_size,
                                 decompressed, input_bytes, &decompressed_size);
 
-    if (result == POCKET_OK && decompressed_size == input_bytes) {
+    if (result == CCSDS124_OK && decompressed_size == input_bytes) {
         assert(memcmp(data + 4, decompressed, input_bytes) == 0);
     }
 
@@ -118,8 +118,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     /* Compress */
-    pocket_compressor_t comp;
-    if (pocket_compressor_init(&comp, F, NULL, r, (int)pt, (int)ft, (int)(ft * 2)) != POCKET_OK) {
+    ccsds124_compressor_t comp;
+    if (ccsds124_compressor_init(&comp, F, NULL, r, (int)pt, (int)ft, (int)(ft * 2)) != CCSDS124_OK) {
         return 0;
     }
 
@@ -130,16 +130,16 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     size_t compressed_size = 0;
-    int result = pocket_compress(&comp, data + 4, input_bytes,
+    int result = ccsds124_compress(&comp, data + 4, input_bytes,
                                   compressed, compressed_size_max, &compressed_size);
-    if (result != POCKET_OK) {
+    if (result != CCSDS124_OK) {
         free(compressed);
         return 0;
     }
 
     /* Decompress */
-    pocket_decompressor_t decomp;
-    pocket_decompressor_init(&decomp, F, NULL, r);
+    ccsds124_decompressor_t decomp;
+    ccsds124_decompressor_init(&decomp, F, NULL, r);
 
     uint8_t *decompressed = (uint8_t *)malloc(input_bytes);
     if (!decompressed) {
@@ -148,11 +148,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     size_t decompressed_size = 0;
-    result = pocket_decompress(&decomp, compressed, compressed_size,
+    result = ccsds124_decompress(&decomp, compressed, compressed_size,
                                 decompressed, input_bytes, &decompressed_size);
 
     /* Verify roundtrip */
-    if (result == POCKET_OK && decompressed_size == input_bytes) {
+    if (result == CCSDS124_OK && decompressed_size == input_bytes) {
         /* This assertion will trigger if roundtrip fails */
         assert(memcmp(data + 4, decompressed, input_bytes) == 0);
     }

@@ -1,4 +1,4 @@
-# Multi-stage Dockerfile for deterministic POCKET+ test vector generation
+# Multi-stage Dockerfile for deterministic CCSDS 124.0-B-1 test vector generation
 # Pinned versions ensure reproducible builds across different systems
 
 # Stage 1: Builder - Compile the C reference implementation

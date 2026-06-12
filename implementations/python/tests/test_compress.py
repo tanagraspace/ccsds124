@@ -1,9 +1,9 @@
-"""Tests for POCKET+ compression."""
+"""Tests for CCSDS 124.0-B-1 compression."""
 
 import pytest
 
-from pocketplus.bitvector import BitVector
-from pocketplus.compress import (
+from ccsds124.bitvector import BitVector
+from ccsds124.compress import (
     Compressor,
     CompressParams,
     compress,

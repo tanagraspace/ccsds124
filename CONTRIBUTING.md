@@ -1,4 +1,4 @@
-# Contributing to POCKET+
+# Contributing to CCSDS 124.0-B-1
 
 ## Versioning Strategy
 
@@ -30,8 +30,8 @@ To release a new version of an implementation:
 ```bash
 # Example: releasing Python v1.0.0
 cd implementations/python
-# Update version in pyproject.toml and pocketplus/__init__.py, then update CHANGELOG.md
-git add pyproject.toml pocketplus/__init__.py CHANGELOG.md
+# Update version in pyproject.toml and ccsds124/__init__.py, then update CHANGELOG.md
+git add pyproject.toml ccsds124/__init__.py CHANGELOG.md
 git commit -m "python: release v1.0.0"
 git tag python/v1.0.0
 git push origin python/v1.0.0
@@ -39,7 +39,7 @@ git push origin python/v1.0.0
 
 ## Documentation
 
-- [Algorithm Specification](docs/ALGORITHM.md) - POCKET+ algorithm details
+- [Algorithm Specification](docs/ALGORITHM.md) - CCSDS 124.0-B-1 algorithm details
 - [Implementation Guidelines](docs/GUIDELINES.md) - Quick start for implementers
 - [Common Gotchas](docs/GOTCHAS.md) - Critical pitfalls to avoid
 - [Test Vectors](test-vectors/README.md) - Validation test data

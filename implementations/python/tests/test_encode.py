@@ -2,9 +2,9 @@
 
 import pytest
 
-from pocketplus.bitbuffer import BitBuffer
-from pocketplus.bitvector import BitVector
-from pocketplus.encode import bit_extract, bit_extract_forward, count_encode, rle_encode
+from ccsds124.bitbuffer import BitBuffer
+from ccsds124.bitvector import BitVector
+from ccsds124.encode import bit_extract, bit_extract_forward, count_encode, rle_encode
 
 
 class TestCountEncode:

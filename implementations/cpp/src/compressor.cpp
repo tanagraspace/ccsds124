@@ -19,9 +19,9 @@
  * - Provides a compilation unit for the static library
  * - Can hold non-template utilities if needed in the future
  *
- * @see include/pocketplus/compressor.hpp for the full implementation
+ * @see include/ccsds124/compressor.hpp for the full implementation
  */
 
-#include <pocketplus/compressor.hpp>
+#include <ccsds124/compressor.hpp>
 
 // All implementation is in the header (template class)

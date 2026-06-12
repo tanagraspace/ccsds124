@@ -3,15 +3,15 @@
  * @brief Unit tests for Decompressor class.
  */
 
-#include <pocketplus/bitbuffer.hpp>
-#include <pocketplus/bitreader.hpp>
-#include <pocketplus/bitvector.hpp>
-#include <pocketplus/compressor.hpp>
-#include <pocketplus/decompressor.hpp>
+#include <ccsds124/bitbuffer.hpp>
+#include <ccsds124/bitreader.hpp>
+#include <ccsds124/bitvector.hpp>
+#include <ccsds124/compressor.hpp>
+#include <ccsds124/decompressor.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 TEST_CASE("Decompressor construction", "[decompressor]") {
     SECTION("default construction") {

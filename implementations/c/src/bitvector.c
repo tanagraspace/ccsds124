@@ -14,7 +14,7 @@
  * @endcond
  *
  * This module provides fixed-length bit vector operations optimized for
- * POCKET+ compression. Uses 32-bit words with big-endian byte packing to
+ * CCSDS 124.0-B-1 compression. Uses 32-bit words with big-endian byte packing to
  * match ESA/ESOC reference implementation.
  *
  * @par Bit Numbering Convention (CCSDS 124.0-B-1 Section 1.6.1)
@@ -32,7 +32,7 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <string.h>
 
 /**
@@ -42,10 +42,10 @@
 
 
 int bitvector_init(bitvector_t *bv, size_t num_bits) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if (bv != NULL) {
-        if ((num_bits > 0U) && (num_bits <= (size_t)POCKET_MAX_PACKET_LENGTH)) {
+        if ((num_bits > 0U) && (num_bits <= (size_t)CCSDS124_MAX_PACKET_LENGTH)) {
             bv->length = num_bits;
             /* Calculate number of 32-bit words needed */
             size_t num_bytes = (num_bits + 7U) / 8U;
@@ -54,7 +54,7 @@ int bitvector_init(bitvector_t *bv, size_t num_bits) {
             /* Zero all words */
             (void)memset(bv->data, 0, bv->num_words * sizeof(uint32_t));
 
-            result = POCKET_OK;
+            result = CCSDS124_OK;
         }
     }
 
@@ -79,7 +79,7 @@ void bitvector_copy(bitvector_t *dest, const bitvector_t *src) {
 
 /** @} */ /* End of Initialization Functions */
 
-/* Note: bitvector_get_bit and bitvector_set_bit are now static inline in pocketplus.h */
+/* Note: bitvector_get_bit and bitvector_set_bit are now static inline in ccsds124.h */
 
 /**
  * @name Bitwise Operations
@@ -267,12 +267,12 @@ int bitvector_equals(const bitvector_t *a, const bitvector_t *b) {
 
 
 int bitvector_from_bytes(bitvector_t *bv, const uint8_t *data, size_t num_bytes) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((bv != NULL) && (data != NULL)) {
         size_t expected_bytes = (bv->length + 7U) / 8U;
         if (num_bytes > expected_bytes) {
-            result = POCKET_ERROR_OVERFLOW;
+            result = CCSDS124_ERROR_OVERFLOW;
         } else {
             /* Zero the array first */
             (void)memset(bv->data, 0, bv->num_words * sizeof(uint32_t));
@@ -300,7 +300,7 @@ int bitvector_from_bytes(bitvector_t *bv, const uint8_t *data, size_t num_bytes)
                 bv->data[current_word] = bytes_to_int;
             }
 
-            result = POCKET_OK;
+            result = CCSDS124_OK;
         }
     }
 
@@ -309,12 +309,12 @@ int bitvector_from_bytes(bitvector_t *bv, const uint8_t *data, size_t num_bytes)
 
 
 int bitvector_to_bytes(const bitvector_t *bv, uint8_t *data, size_t num_bytes) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((bv != NULL) && (data != NULL)) {
         size_t expected_bytes = (bv->length + 7U) / 8U;
         if (num_bytes < expected_bytes) {
-            result = POCKET_ERROR_UNDERFLOW;
+            result = CCSDS124_ERROR_UNDERFLOW;
         } else {
             /* Extract bytes from 32-bit words (big-endian) */
             size_t byte_index = 0U;
@@ -328,7 +328,7 @@ int bitvector_to_bytes(const bitvector_t *bv, uint8_t *data, size_t num_bytes) {
                 }
             }
 
-            result = POCKET_OK;
+            result = CCSDS124_OK;
         }
     }
 

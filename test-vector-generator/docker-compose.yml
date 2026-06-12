@@ -3,8 +3,8 @@ services:
     build:
       context: ..
       dockerfile: test-vector-generator/Dockerfile
-    image: pocket-plus-test-vector-generator:latest
-    container_name: pocket-plus-test-vectors
+    image: ccsds124-test-vector-generator:latest
+    container_name: ccsds124-test-vectors
     volumes:
       # Mount output directory to persist generated test vectors
       - ./output:/workspace/output

@@ -1,5 +1,5 @@
 #!/bin/bash
-# POCKET+ C++ CLI Integration Tests
+# CCSDS 124.0-B-1 C++ CLI Integration Tests
 #
 # Tests the CLI tool for compression and decompression round-trips.
 # Verifies that compressed output matches expected reference and
@@ -20,7 +20,7 @@ FAILED=0
 # Paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR="${SCRIPT_DIR}/../build"
-CLI="${BUILD_DIR}/pocketplus"
+CLI="${BUILD_DIR}/ccsds124"
 TEST_VECTORS="/app/test-vectors"
 
 # Check if running in Docker (test vectors at /app) or local
@@ -55,13 +55,13 @@ if [ ! -x "$CLI" ]; then
 fi
 
 echo "========================================"
-echo "POCKET+ C++ CLI Integration Tests"
+echo "CCSDS 124.0-B-1 C++ CLI Integration Tests"
 echo "========================================"
 echo ""
 
 # Test 1: Version flag
 echo "Test 1: Version flag"
-if $CLI --version 2>&1 | grep -q "pocketplus"; then
+if $CLI --version 2>&1 | grep -q "ccsds124"; then
     pass "Version flag works"
 else
     fail "Version flag"

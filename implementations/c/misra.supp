@@ -1,4 +1,4 @@
-// MISRA-C:2012 Suppression File for POCKET+ C Implementation
+// MISRA-C:2012 Suppression File for CCSDS 124.0-B-1 C Implementation
 // ============================================================
 //
 // This file documents intentional deviations from MISRA-C:2012 rules.
@@ -15,7 +15,7 @@
 // supported architectures. These provide significant performance benefits
 // (5x improvement) and are supported by all major C compilers for embedded
 // systems (GCC, Clang, ARM CC). The functions are well-defined and portable
-// across POCKET+ target platforms.
+// across CCSDS 124.0-B-1 target platforms.
 misra-c2012-17.3
 
 // -----------------------------------------------------------------------------
@@ -36,7 +36,7 @@ misra-c2012-15.5
 // -----------------------------------------------------------------------------
 // Rule 2.5 (Advisory): Unused macro declarations
 // -----------------------------------------------------------------------------
-// Rationale: Version macros (POCKET_VERSION_*) are defined in the public
+// Rationale: Version macros (CCSDS124_VERSION_*) are defined in the public
 // header for library version identification. They are used by CLI but may
 // appear unused when analyzing library source files in isolation.
 misra-c2012-2.5

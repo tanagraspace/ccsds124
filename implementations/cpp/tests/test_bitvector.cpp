@@ -3,11 +3,11 @@
  * @brief Unit tests for BitVector class.
  */
 
-#include <pocketplus/bitvector.hpp>
+#include <ccsds124/bitvector.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 TEST_CASE("BitVector construction", "[bitvector]") {
     SECTION("default construction with size") {

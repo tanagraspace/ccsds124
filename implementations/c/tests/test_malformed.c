@@ -1,6 +1,6 @@
 /**
  * @file test_malformed.c
- * @brief Malformed input tests for POCKET+ compression/decompression.
+ * @brief Malformed input tests for CCSDS 124.0-B-1 compression/decompression.
  *
  * Tests error handling for:
  * - Invalid parameters (F=0, R>7, invalid timing)
@@ -11,7 +11,7 @@
  * Part of comprehensive test validation per CCSDS standardization approach.
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -38,33 +38,33 @@ static int tests_total = 0;
  * ============================================================================ */
 
 static void test_compress_F_zero(void) {
-    pocket_compressor_t comp;
-    int result = pocket_compressor_init(&comp, 0, NULL, 0, 0, 0, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Compressor F=0 rejected");
+    ccsds124_compressor_t comp;
+    int result = ccsds124_compressor_init(&comp, 0, NULL, 0, 0, 0, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Compressor F=0 rejected");
 }
 
 static void test_compress_F_exceeds_max(void) {
-    pocket_compressor_t comp;
-    int result = pocket_compressor_init(&comp, POCKET_MAX_PACKET_LENGTH + 1, NULL, 0, 0, 0, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Compressor F>max rejected");
+    ccsds124_compressor_t comp;
+    int result = ccsds124_compressor_init(&comp, CCSDS124_MAX_PACKET_LENGTH + 1, NULL, 0, 0, 0, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Compressor F>max rejected");
 }
 
 static void test_compress_R_exceeds_max(void) {
-    pocket_compressor_t comp;
-    int result = pocket_compressor_init(&comp, 8, NULL, 8, 0, 0, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Compressor R=8 rejected");
+    ccsds124_compressor_t comp;
+    int result = ccsds124_compressor_init(&comp, 8, NULL, 8, 0, 0, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Compressor R=8 rejected");
 
-    result = pocket_compressor_init(&comp, 8, NULL, 255, 0, 0, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Compressor R=255 rejected");
+    result = ccsds124_compressor_init(&comp, 8, NULL, 255, 0, 0, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Compressor R=255 rejected");
 }
 
 static void test_compress_all_valid_R_values(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     int all_passed = 1;
 
     for (uint8_t r = 0; r <= 7; r++) {
-        int result = pocket_compressor_init(&comp, 8, NULL, r, 0, 0, 0);
-        if (result != POCKET_OK) {
+        int result = ccsds124_compressor_init(&comp, 8, NULL, r, 0, 0, 0);
+        if (result != CCSDS124_OK) {
             all_passed = 0;
             printf("    R=%u unexpectedly rejected\n", r);
         }
@@ -73,43 +73,43 @@ static void test_compress_all_valid_R_values(void) {
 }
 
 static void test_compress_null_compressor(void) {
-    int result = pocket_compressor_init(NULL, 8, NULL, 0, 0, 0, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "NULL compressor rejected");
+    int result = ccsds124_compressor_init(NULL, 8, NULL, 0, 0, 0, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "NULL compressor rejected");
 }
 
 static void test_compress_null_input(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitbuffer_t output;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitbuffer_init(&output);
 
-    int result = pocket_compress_packet(&comp, NULL, &output, NULL);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "NULL input packet rejected");
+    int result = ccsds124_compress_packet(&comp, NULL, &output, NULL);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "NULL input packet rejected");
 }
 
 static void test_compress_null_output(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 8);
 
-    int result = pocket_compress_packet(&comp, &input, NULL, NULL);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "NULL output buffer rejected");
+    int result = ccsds124_compress_packet(&comp, &input, NULL, NULL);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "NULL output buffer rejected");
 }
 
 static void test_compress_mismatched_input_length(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
-    pocket_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 8, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 16);  /* 16 bits, but compressor expects 8 */
     bitbuffer_init(&output);
 
-    int result = pocket_compress_packet(&comp, &input, &output, NULL);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Mismatched input length rejected");
+    int result = ccsds124_compress_packet(&comp, &input, &output, NULL);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Mismatched input length rejected");
 }
 
 /* ============================================================================
@@ -117,30 +117,30 @@ static void test_compress_mismatched_input_length(void) {
  * ============================================================================ */
 
 static void test_decompress_F_zero(void) {
-    pocket_decompressor_t decomp;
-    int result = pocket_decompressor_init(&decomp, 0, NULL, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Decompressor F=0 rejected");
+    ccsds124_decompressor_t decomp;
+    int result = ccsds124_decompressor_init(&decomp, 0, NULL, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Decompressor F=0 rejected");
 }
 
 static void test_decompress_F_exceeds_max(void) {
-    pocket_decompressor_t decomp;
-    int result = pocket_decompressor_init(&decomp, POCKET_MAX_PACKET_LENGTH + 1, NULL, 0);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Decompressor F>max rejected");
+    ccsds124_decompressor_t decomp;
+    int result = ccsds124_decompressor_init(&decomp, CCSDS124_MAX_PACKET_LENGTH + 1, NULL, 0);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Decompressor F>max rejected");
 }
 
 static void test_decompress_R_exceeds_max(void) {
-    pocket_decompressor_t decomp;
-    int result = pocket_decompressor_init(&decomp, 8, NULL, 8);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Decompressor R=8 rejected");
+    ccsds124_decompressor_t decomp;
+    int result = ccsds124_decompressor_init(&decomp, 8, NULL, 8);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Decompressor R=8 rejected");
 }
 
 static void test_decompress_all_valid_R_values(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
     int all_passed = 1;
 
     for (uint8_t r = 0; r <= 7; r++) {
-        int result = pocket_decompressor_init(&decomp, 8, NULL, r);
-        if (result != POCKET_OK) {
+        int result = ccsds124_decompressor_init(&decomp, 8, NULL, r);
+        if (result != CCSDS124_OK) {
             all_passed = 0;
             printf("    R=%u unexpectedly rejected\n", r);
         }
@@ -153,32 +153,32 @@ static void test_decompress_all_valid_R_values(void) {
  * ============================================================================ */
 
 static void test_decompress_empty_input(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
     uint8_t output[16];
     size_t output_size = 0;
 
-    pocket_decompressor_init(&decomp, 8, NULL, 0);
+    ccsds124_decompressor_init(&decomp, 8, NULL, 0);
 
-    int result = pocket_decompress(&decomp, NULL, 0, output, sizeof(output), &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Empty input (NULL) rejected");
+    int result = ccsds124_decompress(&decomp, NULL, 0, output, sizeof(output), &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Empty input (NULL) rejected");
 
     uint8_t empty[1] = {0};
-    result = pocket_decompress(&decomp, empty, 0, output, sizeof(output), &output_size);
+    result = ccsds124_decompress(&decomp, empty, 0, output, sizeof(output), &output_size);
     TEST_ASSERT(output_size == 0, "Zero-length input produces no output");
 }
 
 static void test_decompress_single_byte(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
     uint8_t input[1] = {0xFF};  /* Single incomplete byte */
     uint8_t output[16];
     size_t output_size = 0;
 
-    pocket_decompressor_init(&decomp, 64, NULL, 0);  /* 8 bytes per packet */
+    ccsds124_decompressor_init(&decomp, 64, NULL, 0);  /* 8 bytes per packet */
 
     /* Single byte cannot contain a complete packet header */
-    int result = pocket_decompress(&decomp, input, 1, output, sizeof(output), &output_size);
+    int result = ccsds124_decompress(&decomp, input, 1, output, sizeof(output), &output_size);
     /* Should either fail or produce no output */
-    TEST_ASSERT(result != POCKET_OK || output_size == 0, "Single byte insufficient for packet");
+    TEST_ASSERT(result != CCSDS124_OK || output_size == 0, "Single byte insufficient for packet");
 }
 
 static void test_count_decode_truncated(void) {
@@ -191,10 +191,10 @@ static void test_count_decode_truncated(void) {
     uint8_t data[1] = {0xC0};  /* 0b11000000 - only 4 bits available */
     bitreader_init(&reader, data, 4);
 
-    int result = pocket_count_decode(&reader, &value);
+    int result = ccsds124_count_decode(&reader, &value);
     /* Current implementation proceeds with available bits - this behavior could
-     * be tightened to return POCKET_ERROR_UNDERFLOW in future versions. */
-    TEST_ASSERT(result == POCKET_OK || result == POCKET_ERROR_UNDERFLOW,
+     * be tightened to return CCSDS124_ERROR_UNDERFLOW in future versions. */
+    TEST_ASSERT(result == CCSDS124_OK || result == CCSDS124_ERROR_UNDERFLOW,
                 "COUNT decode truncated data handled");
 }
 
@@ -207,9 +207,9 @@ static void test_count_decode_truncated_extended(void) {
     uint8_t data[1] = {0xE0};  /* 0b11100000 */
     bitreader_init(&reader, data, 3);
 
-    int result = pocket_count_decode(&reader, &value);
+    int result = ccsds124_count_decode(&reader, &value);
     /* Current implementation may proceed without strict underflow checking */
-    TEST_ASSERT(result == POCKET_OK || result == POCKET_ERROR_UNDERFLOW,
+    TEST_ASSERT(result == CCSDS124_OK || result == CCSDS124_ERROR_UNDERFLOW,
                 "COUNT extended decode truncated handled");
 }
 
@@ -222,9 +222,9 @@ static void test_rle_decode_truncated(void) {
     bitreader_init(&reader, data, 1);
     bitvector_init(&result_vec, 64);  /* Need 64 bits total */
 
-    int result = pocket_rle_decode(&reader, &result_vec, 64);
+    int result = ccsds124_rle_decode(&reader, &result_vec, 64);
     /* Should fail because we can't decode enough runs for 64 bits */
-    TEST_ASSERT(result != POCKET_OK, "RLE decode with insufficient data fails");
+    TEST_ASSERT(result != CCSDS124_OK, "RLE decode with insufficient data fails");
 }
 
 /* ============================================================================
@@ -232,37 +232,37 @@ static void test_rle_decode_truncated(void) {
  * ============================================================================ */
 
 static void test_decompress_corrupted_compressed_stream(void) {
-    pocket_compressor_t comp;
-    pocket_decompressor_t decomp;
+    ccsds124_compressor_t comp;
+    ccsds124_decompressor_t decomp;
     uint8_t input_data[16] = {0xAA, 0xBB, 0xCC, 0xDD, 0x11, 0x22, 0x33, 0x44,
                                0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC};
 
-    pocket_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
+    ccsds124_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
 
     uint8_t compressed[256];
     size_t compressed_size = 0;
-    pocket_compress(&comp, input_data, 16, compressed, sizeof(compressed), &compressed_size);
+    ccsds124_compress(&comp, input_data, 16, compressed, sizeof(compressed), &compressed_size);
 
     /* Corrupt the compressed data by flipping bits */
     if (compressed_size > 2) {
         compressed[1] ^= 0xFF;  /* Flip all bits in second byte */
     }
 
-    pocket_decompressor_init(&decomp, 64, NULL, 1);
+    ccsds124_decompressor_init(&decomp, 64, NULL, 1);
     uint8_t output[16];
     size_t output_size = 0;
 
-    int result = pocket_decompress(&decomp, compressed, compressed_size,
+    int result = ccsds124_decompress(&decomp, compressed, compressed_size,
                                     output, sizeof(output), &output_size);
 
     /* Corrupted data should either fail or produce wrong output */
-    int data_corrupted = (result != POCKET_OK) ||
+    int data_corrupted = (result != CCSDS124_OK) ||
                          (memcmp(input_data, output, 16) != 0);
     TEST_ASSERT(data_corrupted, "Corrupted stream detected or produces wrong data");
 }
 
 static void test_decompress_random_garbage(void) {
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
 
     /* Random garbage that looks nothing like valid compressed data */
     uint8_t garbage[32];
@@ -270,15 +270,15 @@ static void test_decompress_random_garbage(void) {
         garbage[i] = (uint8_t)(i * 17 + 13);  /* Pseudo-random pattern */
     }
 
-    pocket_decompressor_init(&decomp, 64, NULL, 0);
+    ccsds124_decompressor_init(&decomp, 64, NULL, 0);
     uint8_t output[64];
     size_t output_size = 0;
 
-    int result = pocket_decompress(&decomp, garbage, sizeof(garbage),
+    int result = ccsds124_decompress(&decomp, garbage, sizeof(garbage),
                                     output, sizeof(output), &output_size);
 
     /* Should either fail or we detect data doesn't round-trip */
-    TEST_ASSERT(result != POCKET_OK || output_size != 64,
+    TEST_ASSERT(result != CCSDS124_OK || output_size != 64,
                 "Random garbage rejected or produces unexpected output");
 }
 
@@ -287,27 +287,27 @@ static void test_decompress_random_garbage(void) {
  * ============================================================================ */
 
 static void test_compress_all_zeros(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
-    pocket_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 64);
     bitvector_zero(&input);
     bitbuffer_init(&output);
 
-    int result = pocket_compress_packet(&comp, &input, &output, NULL);
+    int result = ccsds124_compress_packet(&comp, &input, &output, NULL);
 
-    TEST_ASSERT(result == POCKET_OK, "All-zeros input compresses OK");
+    TEST_ASSERT(result == CCSDS124_OK, "All-zeros input compresses OK");
     TEST_ASSERT(output.num_bits > 0, "All-zeros produces output");
 }
 
 static void test_compress_all_ones(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
-    pocket_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 64);
 
     /* Set all bits to 1 */
@@ -316,18 +316,18 @@ static void test_compress_all_ones(void) {
     }
     bitbuffer_init(&output);
 
-    int result = pocket_compress_packet(&comp, &input, &output, NULL);
+    int result = ccsds124_compress_packet(&comp, &input, &output, NULL);
 
-    TEST_ASSERT(result == POCKET_OK, "All-ones input compresses OK");
+    TEST_ASSERT(result == CCSDS124_OK, "All-ones input compresses OK");
     TEST_ASSERT(output.num_bits > 0, "All-ones produces output");
 }
 
 static void test_compress_alternating_pattern(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
-    pocket_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
     bitvector_init(&input, 64);
 
     /* Alternating pattern: 10101010... */
@@ -336,79 +336,79 @@ static void test_compress_alternating_pattern(void) {
     }
     bitbuffer_init(&output);
 
-    int result = pocket_compress_packet(&comp, &input, &output, NULL);
+    int result = ccsds124_compress_packet(&comp, &input, &output, NULL);
 
-    TEST_ASSERT(result == POCKET_OK, "Alternating pattern compresses OK");
+    TEST_ASSERT(result == CCSDS124_OK, "Alternating pattern compresses OK");
 }
 
 static void test_roundtrip_all_zeros(void) {
-    pocket_compressor_t comp;
-    pocket_decompressor_t decomp;
+    ccsds124_compressor_t comp;
+    ccsds124_decompressor_t decomp;
     uint8_t input[8] = {0, 0, 0, 0, 0, 0, 0, 0};
     uint8_t compressed[64];
     uint8_t output[8];
     size_t compressed_size = 0, output_size = 0;
 
-    pocket_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
-    pocket_compress(&comp, input, 8, compressed, sizeof(compressed), &compressed_size);
+    ccsds124_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
+    ccsds124_compress(&comp, input, 8, compressed, sizeof(compressed), &compressed_size);
 
-    pocket_decompressor_init(&decomp, 64, NULL, 1);
-    pocket_decompress(&decomp, compressed, compressed_size, output, sizeof(output), &output_size);
+    ccsds124_decompressor_init(&decomp, 64, NULL, 1);
+    ccsds124_decompress(&decomp, compressed, compressed_size, output, sizeof(output), &output_size);
 
     TEST_ASSERT(output_size == 8, "All-zeros roundtrip correct size");
     TEST_ASSERT(memcmp(input, output, 8) == 0, "All-zeros roundtrip matches");
 }
 
 static void test_roundtrip_all_ones(void) {
-    pocket_compressor_t comp;
-    pocket_decompressor_t decomp;
+    ccsds124_compressor_t comp;
+    ccsds124_decompressor_t decomp;
     uint8_t input[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
     uint8_t compressed[64];
     uint8_t output[8];
     size_t compressed_size = 0, output_size = 0;
 
-    pocket_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
-    pocket_compress(&comp, input, 8, compressed, sizeof(compressed), &compressed_size);
+    ccsds124_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
+    ccsds124_compress(&comp, input, 8, compressed, sizeof(compressed), &compressed_size);
 
-    pocket_decompressor_init(&decomp, 64, NULL, 1);
-    pocket_decompress(&decomp, compressed, compressed_size, output, sizeof(output), &output_size);
+    ccsds124_decompressor_init(&decomp, 64, NULL, 1);
+    ccsds124_decompress(&decomp, compressed, compressed_size, output, sizeof(output), &output_size);
 
     TEST_ASSERT(output_size == 8, "All-ones roundtrip correct size");
     TEST_ASSERT(memcmp(input, output, 8) == 0, "All-ones roundtrip matches");
 }
 
 static void test_compress_minimum_F(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
     /* Minimum valid F is 1 bit */
-    int result = pocket_compressor_init(&comp, 1, NULL, 0, 0, 0, 0);
-    TEST_ASSERT(result == POCKET_OK, "F=1 (minimum) accepted");
+    int result = ccsds124_compressor_init(&comp, 1, NULL, 0, 0, 0, 0);
+    TEST_ASSERT(result == CCSDS124_OK, "F=1 (minimum) accepted");
 
-    if (result == POCKET_OK) {
+    if (result == CCSDS124_OK) {
         bitvector_init(&input, 1);
         bitbuffer_init(&output);
-        result = pocket_compress_packet(&comp, &input, &output, NULL);
-        TEST_ASSERT(result == POCKET_OK, "F=1 compression works");
+        result = ccsds124_compress_packet(&comp, &input, &output, NULL);
+        TEST_ASSERT(result == CCSDS124_OK, "F=1 compression works");
     }
 }
 
 static void test_compress_large_F(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     bitvector_t input;
     bitbuffer_t output;
 
     /* Large but valid F */
     size_t large_F = 8192;  /* 1024 bytes */
-    int result = pocket_compressor_init(&comp, large_F, NULL, 0, 0, 0, 0);
-    TEST_ASSERT(result == POCKET_OK, "F=8192 accepted");
+    int result = ccsds124_compressor_init(&comp, large_F, NULL, 0, 0, 0, 0);
+    TEST_ASSERT(result == CCSDS124_OK, "F=8192 accepted");
 
-    if (result == POCKET_OK) {
+    if (result == CCSDS124_OK) {
         bitvector_init(&input, large_F);
         bitbuffer_init(&output);
-        result = pocket_compress_packet(&comp, &input, &output, NULL);
-        TEST_ASSERT(result == POCKET_OK, "F=8192 compression works");
+        result = ccsds124_compress_packet(&comp, &input, &output, NULL);
+        TEST_ASSERT(result == CCSDS124_OK, "F=8192 compression works");
     }
 }
 
@@ -417,26 +417,26 @@ static void test_compress_large_F(void) {
  * ============================================================================ */
 
 static void test_decompress_output_buffer_too_small(void) {
-    pocket_compressor_t comp;
-    pocket_decompressor_t decomp;
+    ccsds124_compressor_t comp;
+    ccsds124_decompressor_t decomp;
     uint8_t input[16] = {0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0,
                           0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
 
-    pocket_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
+    ccsds124_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
 
     uint8_t compressed[256];
     size_t compressed_size = 0;
-    pocket_compress(&comp, input, 16, compressed, sizeof(compressed), &compressed_size);
+    ccsds124_compress(&comp, input, 16, compressed, sizeof(compressed), &compressed_size);
 
-    pocket_decompressor_init(&decomp, 64, NULL, 1);
+    ccsds124_decompressor_init(&decomp, 64, NULL, 1);
 
     uint8_t output[4];  /* Too small for 16 bytes of output */
     size_t output_size = 0;
 
-    int result = pocket_decompress(&decomp, compressed, compressed_size,
+    int result = ccsds124_decompress(&decomp, compressed, compressed_size,
                                     output, sizeof(output), &output_size);
 
-    TEST_ASSERT(result == POCKET_ERROR_OVERFLOW, "Small output buffer returns overflow");
+    TEST_ASSERT(result == CCSDS124_ERROR_OVERFLOW, "Small output buffer returns overflow");
 }
 
 /* ============================================================================
@@ -444,40 +444,40 @@ static void test_decompress_output_buffer_too_small(void) {
  * ============================================================================ */
 
 static void test_compress_input_not_multiple_of_packet_size(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     uint8_t input[11] = {0};  /* 11 bytes, not multiple of 2 */
     uint8_t output[100];
     size_t output_size = 0;
 
-    pocket_compressor_init(&comp, 16, NULL, 0, 0, 0, 0);  /* 16 bits = 2 bytes per packet */
+    ccsds124_compressor_init(&comp, 16, NULL, 0, 0, 0, 0);  /* 16 bits = 2 bytes per packet */
 
-    int result = pocket_compress(&comp, input, 11, output, sizeof(output), &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "Non-multiple input size rejected");
+    int result = ccsds124_compress(&comp, input, 11, output, sizeof(output), &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "Non-multiple input size rejected");
 }
 
 static void test_compress_api_null_arguments(void) {
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
     uint8_t input[8] = {0};
     uint8_t output[64];
     size_t output_size;
 
-    pocket_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
+    ccsds124_compressor_init(&comp, 64, NULL, 0, 0, 0, 0);
 
     /* NULL compressor */
-    int result = pocket_compress(NULL, input, 8, output, sizeof(output), &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "pocket_compress NULL comp rejected");
+    int result = ccsds124_compress(NULL, input, 8, output, sizeof(output), &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "ccsds124_compress NULL comp rejected");
 
     /* NULL input */
-    result = pocket_compress(&comp, NULL, 8, output, sizeof(output), &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "pocket_compress NULL input rejected");
+    result = ccsds124_compress(&comp, NULL, 8, output, sizeof(output), &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "ccsds124_compress NULL input rejected");
 
     /* NULL output */
-    result = pocket_compress(&comp, input, 8, NULL, 64, &output_size);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "pocket_compress NULL output rejected");
+    result = ccsds124_compress(&comp, input, 8, NULL, 64, &output_size);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "ccsds124_compress NULL output rejected");
 
     /* NULL output_size */
-    result = pocket_compress(&comp, input, 8, output, sizeof(output), NULL);
-    TEST_ASSERT(result == POCKET_ERROR_INVALID_ARG, "pocket_compress NULL size rejected");
+    result = ccsds124_compress(&comp, input, 8, output, sizeof(output), NULL);
+    TEST_ASSERT(result == CCSDS124_ERROR_INVALID_ARG, "ccsds124_compress NULL size rejected");
 }
 
 /* ============================================================================
@@ -485,8 +485,8 @@ static void test_compress_api_null_arguments(void) {
  * ============================================================================ */
 
 static void test_many_identical_packets(void) {
-    pocket_compressor_t comp;
-    pocket_decompressor_t decomp;
+    ccsds124_compressor_t comp;
+    ccsds124_decompressor_t decomp;
 
     size_t num_packets = 100;
     size_t packet_bytes = 8;
@@ -507,19 +507,19 @@ static void test_many_identical_packets(void) {
     /* All packets identical */
     memset(input, 0x55, total_bytes);
 
-    pocket_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
+    ccsds124_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
     size_t compressed_size = 0;
-    int result = pocket_compress(&comp, input, total_bytes, compressed,
+    int result = ccsds124_compress(&comp, input, total_bytes, compressed,
                                   total_bytes * 2, &compressed_size);
 
-    int compress_ok = (result == POCKET_OK);
+    int compress_ok = (result == CCSDS124_OK);
 
-    pocket_decompressor_init(&decomp, 64, NULL, 1);
+    ccsds124_decompressor_init(&decomp, 64, NULL, 1);
     size_t output_size = 0;
-    result = pocket_decompress(&decomp, compressed, compressed_size,
+    result = ccsds124_decompress(&decomp, compressed, compressed_size,
                                 output, total_bytes, &output_size);
 
-    int decompress_ok = (result == POCKET_OK && output_size == total_bytes);
+    int decompress_ok = (result == CCSDS124_OK && output_size == total_bytes);
     int data_matches = (memcmp(input, output, total_bytes) == 0);
 
     TEST_ASSERT(compress_ok, "100 identical packets compress OK");
@@ -532,8 +532,8 @@ static void test_many_identical_packets(void) {
 }
 
 static void test_alternating_packets(void) {
-    pocket_compressor_t comp;
-    pocket_decompressor_t decomp;
+    ccsds124_compressor_t comp;
+    ccsds124_decompressor_t decomp;
 
     size_t num_packets = 50;
     size_t packet_bytes = 8;
@@ -557,19 +557,19 @@ static void test_alternating_packets(void) {
         memset(input + i * packet_bytes, pattern, packet_bytes);
     }
 
-    pocket_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
+    ccsds124_compressor_init(&comp, 64, NULL, 1, 10, 20, 50);
     size_t compressed_size = 0;
-    int result = pocket_compress(&comp, input, total_bytes, compressed,
+    int result = ccsds124_compress(&comp, input, total_bytes, compressed,
                                   total_bytes * 2, &compressed_size);
 
-    int compress_ok = (result == POCKET_OK);
+    int compress_ok = (result == CCSDS124_OK);
 
-    pocket_decompressor_init(&decomp, 64, NULL, 1);
+    ccsds124_decompressor_init(&decomp, 64, NULL, 1);
     size_t output_size = 0;
-    result = pocket_decompress(&decomp, compressed, compressed_size,
+    result = ccsds124_decompress(&decomp, compressed, compressed_size,
                                 output, total_bytes, &output_size);
 
-    int decompress_ok = (result == POCKET_OK && output_size == total_bytes);
+    int decompress_ok = (result == CCSDS124_OK && output_size == total_bytes);
     int data_matches = (memcmp(input, output, total_bytes) == 0);
 
     TEST_ASSERT(compress_ok, "Alternating packets compress OK");

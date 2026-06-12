@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>space.tanagra</groupId>
-    <artifactId>pocketplus</artifactId>
+    <artifactId>ccsds124</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>POCKET+</name>
-    <description>CCSDS 124.0-B-1 POCKET+ lossless compression algorithm</description>
-    <url>https://github.com/tanagraspace/pocket-plus</url>
+    <name>CCSDS 124.0-B-1</name>
+    <description>CCSDS 124.0-B-1 lossless compression algorithm</description>
+    <url>https://github.com/tanagraspace/ccsds124</url>
 
     <licenses>
         <license>
@@ -89,7 +89,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>space.tanagra.pocketplus.cli.Main</mainClass>
+                            <mainClass>space.tanagra.ccsds124.cli.Main</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                     </archive>
@@ -186,8 +186,8 @@
                     <doclint>all,-missing</doclint>
                     <source>11</source>
                     <overview>${basedir}/src/main/javadoc/overview.html</overview>
-                    <doctitle>POCKET+ Java API</doctitle>
-                    <windowtitle>POCKET+ Java - CCSDS 124.0-B-1</windowtitle>
+                    <doctitle>CCSDS 124.0-B-1 Java API</doctitle>
+                    <windowtitle>CCSDS 124.0-B-1 Java API</windowtitle>
                 </configuration>
             </plugin>
         </plugins>

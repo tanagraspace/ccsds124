@@ -1,5 +1,5 @@
 #!/bin/bash
-# Cross-implementation benchmark script for POCKET+ implementations
+# Cross-implementation benchmark script for CCSDS 124.0-B-1 implementations
 # Runs benchmarks for C, C++, Go, Rust, and Java implementations
 # Generates docs/BENCHMARK.md with comparison tables
 
@@ -140,7 +140,7 @@ run_go_bench() {
     cd /app/implementations/go
 
     local output
-    output=$(go test -bench=. -benchtime=100x ./pocketplus 2>&1) || true
+    output=$(go test -bench=. -benchtime=100x ./ccsds124 2>&1) || true
 
     # Parse Go output: "BenchmarkCompressSimple-N    100    XXXX ns/op    XX.XX MB/s"
     while IFS= read -r line; do
@@ -219,7 +219,7 @@ run_java_bench() {
     cd /app/implementations/java
 
     local output
-    output=$(java -cp target/classes space.tanagra.pocketplus.cli.Bench 2>&1) || true
+    output=$(java -cp target/classes space.tanagra.ccsds124.cli.Bench 2>&1) || true
 
     # Parse output - same format as C/C++
     while IFS= read -r line; do
@@ -405,9 +405,9 @@ generate_markdown() {
     eval "$(get_compiler_info)"
 
     cat > "$OUTPUT_FILE" << EOF
-# POCKET+ Benchmark Results
+# CCSDS 124.0-B-1 Benchmark Results
 
-Performance comparison across POCKET+ implementations.
+Performance comparison across CCSDS 124.0-B-1 implementations.
 
 ## Environment
 
@@ -495,7 +495,7 @@ FOOTER
 # Main execution
 main() {
     echo "=========================================="
-    echo "POCKET+ Cross-Implementation Benchmarks"
+    echo "CCSDS 124.0-B-1 Cross-Implementation Benchmarks"
     echo "=========================================="
     echo ""
 

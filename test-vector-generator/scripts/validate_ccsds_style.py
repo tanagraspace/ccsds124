@@ -10,7 +10,7 @@ Reads faulted compressed streams and tests the implementation:
 Usage:
     python validate_ccsds_style.py \
         --vectors ../output/ccsds-style \
-        --impl ../../implementations/c/build/pocketplus
+        --impl ../../implementations/c/build/ccsds124
 """
 
 import argparse

@@ -1,4 +1,4 @@
-# Multi-language benchmark container for POCKET+ implementations
+# Multi-language benchmark container for CCSDS 124.0-B-1 implementations
 # Builds and benchmarks C, C++, Go, Rust, and Java implementations
 
 FROM alpine:3.20

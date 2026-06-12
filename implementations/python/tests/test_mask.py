@@ -1,7 +1,7 @@
 """Tests for mask operations (build, mask, change vectors)."""
 
-from pocketplus.bitvector import BitVector
-from pocketplus.mask import compute_change, update_build, update_mask
+from ccsds124.bitvector import BitVector
+from ccsds124.mask import compute_change, update_build, update_mask
 
 
 class TestUpdateBuild:

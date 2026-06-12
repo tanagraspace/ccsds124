@@ -34,3 +34,5 @@ ccsds124_full_crossvalidation/
 
 # Cross-validation results (generated at runtime)
 crossvalidation-results.txt
+# macOS SMB/AFP "delete-pending" placeholder artifacts
+.!*!*

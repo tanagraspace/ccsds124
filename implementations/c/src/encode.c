@@ -1,6 +1,6 @@
 /**
  * @file encode.c
- * @brief POCKET+ encoding functions (COUNT, RLE, BE).
+ * @brief CCSDS 124.0-B-1 encoding functions (COUNT, RLE, BE).
  *
  * @cond INTERNAL
  * ============================================================================
@@ -24,7 +24,7 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 
 /**
  * @name Counter Encoding (COUNT)
@@ -37,8 +37,8 @@
  * @{
  */
 
-int pocket_count_encode(bitbuffer_t *output, uint32_t A) {
-    int result = POCKET_ERROR_INVALID_ARG;
+int ccsds124_count_encode(bitbuffer_t *output, uint32_t A) {
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     /**
      * Pre-computed COUNT encodings for values 1-33.
@@ -88,14 +88,14 @@ int pocket_count_encode(bitbuffer_t *output, uint32_t A) {
 
             /* Append '111' prefix MSB-first: 1, 1, 1 */
             result = bitbuffer_append_bit(output, 1);
-            if (result == POCKET_OK) {
+            if (result == CCSDS124_OK) {
                 result = bitbuffer_append_bit(output, 1);
             }
-            if (result == POCKET_OK) {
+            if (result == CCSDS124_OK) {
                 result = bitbuffer_append_bit(output, 1);
             }
 
-            if (result == POCKET_OK) {
+            if (result == CCSDS124_OK) {
                 /* Calculate E = 2⌊log₂(A-2)+1⌋ - 6
                  * floor(log2(value)) = highest set bit = 31 - clz(value) */
                 uint32_t value = A - 2U;
@@ -103,7 +103,7 @@ int pocket_count_encode(bitbuffer_t *output, uint32_t A) {
                 int E = (2 * (highest_bit + 1)) - 6;
 
                 /* Append BIT_E(A-2) MSB-first - E bits from bit E-1 down to bit 0 */
-                for (int i = E - 1; (i >= 0) && (result == POCKET_OK); i--) {
+                for (int i = E - 1; (i >= 0) && (result == CCSDS124_OK); i--) {
                     uint32_t shifted = value >> (uint32_t)i;
                     uint32_t masked = shifted & 1U;
                     int bit = (int)masked;
@@ -132,8 +132,8 @@ int pocket_count_encode(bitbuffer_t *output, uint32_t A) {
  */
 
 
-int pocket_rle_encode(bitbuffer_t *output, const bitvector_t *input) {
-    int result = POCKET_ERROR_INVALID_ARG;
+int ccsds124_rle_encode(bitbuffer_t *output, const bitvector_t *input) {
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((output != NULL) && (input != NULL)) {
         /* DeBruijn lookup table for fast LSB finding (matches reference implementation) */
@@ -143,17 +143,17 @@ int pocket_rle_encode(bitbuffer_t *output, const bitvector_t *input) {
             27U, 13U, 19U, 7U, 12U, 6U, 11U, 10U
         };
 
-        result = POCKET_OK;
+        result = CCSDS124_OK;
 
         /* Start from the end of the vector */
         int old_bit_position = (int)input->length;
 
         /* Process words in reverse order (from high to low) */
-        for (int word = (int)input->num_words - 1; (word >= 0) && (result == POCKET_OK); word--) {
+        for (int word = (int)input->num_words - 1; (word >= 0) && (result == CCSDS124_OK); word--) {
             uint32_t word_data = input->data[word];
 
             /* Process all set bits in this word */
-            while ((word_data != 0U) && (result == POCKET_OK)) {
+            while ((word_data != 0U) && (result == CCSDS124_OK)) {
                 /* Isolate the LSB: x = change & -change */
                 uint32_t lsb = word_data & (uint32_t)(-(int32_t)word_data);
 
@@ -171,7 +171,7 @@ int pocket_rle_encode(bitbuffer_t *output, const bitvector_t *input) {
                 int delta = old_bit_position - new_bit_position;
 
                 /* Encode the count */
-                result = pocket_count_encode(output, (uint32_t)delta);
+                result = ccsds124_count_encode(output, (uint32_t)delta);
 
                 /* Update old position for next iteration */
                 old_bit_position = new_bit_position;
@@ -182,10 +182,10 @@ int pocket_rle_encode(bitbuffer_t *output, const bitvector_t *input) {
         }
 
         /* Append terminator '10' MSB-first (bits: 1, 0) */
-        if (result == POCKET_OK) {
+        if (result == CCSDS124_OK) {
             result = bitbuffer_append_bit(output, 1);
         }
-        if (result == POCKET_OK) {
+        if (result == CCSDS124_OK) {
             result = bitbuffer_append_bit(output, 0);
         }
     }
@@ -217,8 +217,8 @@ int pocket_rle_encode(bitbuffer_t *output, const bitvector_t *input) {
  */
 
 
-int pocket_bit_extract(bitbuffer_t *output, const bitvector_t *data, const bitvector_t *mask) {
-    int result = POCKET_ERROR_INVALID_ARG;
+int ccsds124_bit_extract(bitbuffer_t *output, const bitvector_t *data, const bitvector_t *mask) {
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((output != NULL) && (data != NULL) && (mask != NULL)) {
         if (data->length != mask->length) {
@@ -231,16 +231,16 @@ int pocket_bit_extract(bitbuffer_t *output, const bitvector_t *data, const bitve
                 27U, 13U, 19U, 7U, 12U, 6U, 11U, 10U
             };
 
-            result = POCKET_OK;
+            result = CCSDS124_OK;
 
             /* Process words in REVERSE order (high to low) like RLE.
              * This gives bits from highest position to lowest, which is
              * the correct output order for BE (no reversal needed). */
-            for (int word = (int)mask->num_words - 1; (word >= 0) && (result == POCKET_OK); word--) {
+            for (int word = (int)mask->num_words - 1; (word >= 0) && (result == CCSDS124_OK); word--) {
                 uint32_t mask_word = mask->data[word];
                 uint32_t data_word = data->data[word];
 
-                while ((mask_word != 0U) && (result == POCKET_OK)) {
+                while ((mask_word != 0U) && (result == CCSDS124_OK)) {
                     /* Isolate LSB */
                     uint32_t lsb = mask_word & (uint32_t)(-(int32_t)mask_word);
 
@@ -270,23 +270,23 @@ int pocket_bit_extract(bitbuffer_t *output, const bitvector_t *data, const bitve
 }
 
 
-int pocket_bit_extract_forward(bitbuffer_t *output, const bitvector_t *data, const bitvector_t *mask) {
-    int result = POCKET_ERROR_INVALID_ARG;
+int ccsds124_bit_extract_forward(bitbuffer_t *output, const bitvector_t *data, const bitvector_t *mask) {
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((output != NULL) && (data != NULL) && (mask != NULL)) {
         if (data->length != mask->length) {
             /* Length mismatch - result already set to INVALID_ARG */
         } else {
-            result = POCKET_OK;
+            result = CCSDS124_OK;
 
             /* Process words in FORWARD order (low to high).
              * Within each word, find MSBs first using clz to get
              * bits from lowest position to highest. */
-            for (size_t word = 0U; (word < mask->num_words) && (result == POCKET_OK); word++) {
+            for (size_t word = 0U; (word < mask->num_words) && (result == CCSDS124_OK); word++) {
                 uint32_t mask_word = mask->data[word];
                 uint32_t data_word = data->data[word];
 
-                while ((mask_word != 0U) && (result == POCKET_OK)) {
+                while ((mask_word != 0U) && (result == CCSDS124_OK)) {
                     /* Find MSB position using count leading zeros */
                     int clz = __builtin_clz(mask_word);
                     int bit_pos_in_word = clz;  /* Physical position from left */

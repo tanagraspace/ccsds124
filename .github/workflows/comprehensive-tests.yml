@@ -299,8 +299,8 @@ jobs:
                 F_BYTES=$((F_BITS / 8))
 
                 # Run compression test
-                if ./build/pocketplus compress "$SAMPLE" /tmp/test_compressed.pkt -r $r -f $F_BITS 2>/dev/null; then
-                  if ./build/pocketplus decompress /tmp/test_compressed.pkt /tmp/test_decompressed.bin -r $r -f $F_BITS 2>/dev/null; then
+                if ./build/ccsds124 compress "$SAMPLE" /tmp/test_compressed.pkt -r $r -f $F_BITS 2>/dev/null; then
+                  if ./build/ccsds124 decompress /tmp/test_compressed.pkt /tmp/test_decompressed.bin -r $r -f $F_BITS 2>/dev/null; then
                     if cmp -s "$SAMPLE" /tmp/test_decompressed.bin; then
                       echo "| R=$r | $pattern | $FILES | :white_check_mark: |" >> $GITHUB_STEP_SUMMARY
                       PASS=$((PASS + 1))

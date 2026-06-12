@@ -8,7 +8,7 @@
  *                        |___/                  |_|
  * ============================================================================
  *
- * POCKET+ C Implementation - Mask Update Logic Tests
+ * CCSDS 124.0-B-1 C Implementation - Mask Update Logic Tests
  * TDD: Write tests first, then implement
  *
  * Tests for CCSDS 124.0-B-1 Section 4:
@@ -22,7 +22,7 @@
  * ============================================================================
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -48,7 +48,7 @@ static int tests_passed = 0;
 } while(0)
 
 /* Forward declarations for mask functions */
-void pocket_update_build(
+void ccsds124_update_build(
     bitvector_t *build,
     const bitvector_t *input,
     const bitvector_t *prev_input,
@@ -56,7 +56,7 @@ void pocket_update_build(
     size_t t
 );
 
-void pocket_update_mask(
+void ccsds124_update_mask(
     bitvector_t *mask,
     const bitvector_t *input,
     const bitvector_t *prev_input,
@@ -64,7 +64,7 @@ void pocket_update_mask(
     int new_mask_flag
 );
 
-void pocket_compute_change(
+void ccsds124_compute_change(
     bitvector_t *change,
     const bitvector_t *mask,
     const bitvector_t *prev_mask,
@@ -91,7 +91,7 @@ TEST(test_update_build_at_t0) {
     input.data[0] = 0xAB000000;
     prev_input.data[0] = 0xCD000000;
 
-    pocket_update_build(&build, &input, &prev_input, 0, 0);
+    ccsds124_update_build(&build, &input, &prev_input, 0, 0);
 
     /* At t=0, build should be cleared to 0 */
     assert(build.data[0] == 0x00000000);
@@ -109,7 +109,7 @@ TEST(test_update_build_with_new_mask_flag) {
     input.data[0] = 0xAB000000;
     prev_input.data[0] = 0xCD000000;
 
-    pocket_update_build(&build, &input, &prev_input, 1, 5);
+    ccsds124_update_build(&build, &input, &prev_input, 1, 5);
 
     /* With new_mask_flag=1, build should be cleared */
     assert(build.data[0] == 0x00000000);
@@ -137,7 +137,7 @@ TEST(test_update_build_normal_case) {
     prev_input.data[0] = 0xA1000000;
     build.data[0] = 0x0C000000;
 
-    pocket_update_build(&build, &input, &prev_input, 0, 1);
+    ccsds124_update_build(&build, &input, &prev_input, 0, 1);
 
     assert(build.data[0] == 0x1E000000);
 }
@@ -154,7 +154,7 @@ TEST(test_update_build_no_change) {
     prev_input.data[0] = 0xAA000000;  /* Same as input */
     build.data[0] = 0x55000000;
 
-    pocket_update_build(&build, &input, &prev_input, 0, 3);
+    ccsds124_update_build(&build, &input, &prev_input, 0, 3);
 
     /* XOR of identical values is 0, so build stays 0x55 */
     assert(build.data[0] == 0x55000000);
@@ -191,7 +191,7 @@ TEST(test_update_mask_normal_case) {
     mask.data[0] = 0x41000000;
     build_prev.data[0] = 0xFF000000;  /* Not used when new_mask_flag=0 */
 
-    pocket_update_mask(&mask, &input, &prev_input, &build_prev, 0);
+    ccsds124_update_mask(&mask, &input, &prev_input, &build_prev, 0);
 
     assert(mask.data[0] == 0x51000000);
 }
@@ -221,7 +221,7 @@ TEST(test_update_mask_with_new_mask_flag) {
     mask.data[0] = 0x41000000;       /* Old mask, replaced */
     build_prev.data[0] = 0x0F000000;
 
-    pocket_update_mask(&mask, &input, &prev_input, &build_prev, 1);
+    ccsds124_update_mask(&mask, &input, &prev_input, &build_prev, 1);
 
     assert(mask.data[0] == 0x5F000000);
 }
@@ -240,7 +240,7 @@ TEST(test_update_mask_no_change) {
     mask.data[0] = 0x33000000;
     build_prev.data[0] = 0xFF000000;
 
-    pocket_update_mask(&mask, &input, &prev_input, &build_prev, 0);
+    ccsds124_update_mask(&mask, &input, &prev_input, &build_prev, 0);
 
     /* XOR is 0, so mask OR 0 = mask = 0x33 */
     assert(mask.data[0] == 0x33000000);
@@ -266,7 +266,7 @@ TEST(test_compute_change_at_t0) {
     prev_mask.data[0] = 0xFF000000;  /* Same as mask (mimics compress.c line 359) */
     change.data[0] = 0xBB000000;  /* Some initial value */
 
-    pocket_compute_change(&change, &mask, &prev_mask, 0);
+    ccsds124_compute_change(&change, &mask, &prev_mask, 0);
 
     /* D₀ = M₀ XOR M₀ = 0 */
     assert(change.data[0] == 0x00000000);
@@ -291,7 +291,7 @@ TEST(test_compute_change_normal_case) {
     mask.data[0] = 0xCC000000;
     prev_mask.data[0] = 0xAA000000;
 
-    pocket_compute_change(&change, &mask, &prev_mask, 1);
+    ccsds124_compute_change(&change, &mask, &prev_mask, 1);
 
     assert(change.data[0] == 0x66000000);
 }
@@ -308,7 +308,7 @@ TEST(test_compute_change_no_mask_change) {
     prev_mask.data[0] = 0x77000000;  /* Same as current */
     change.data[0] = 0xFF000000;     /* Some initial value */
 
-    pocket_compute_change(&change, &mask, &prev_mask, 5);
+    ccsds124_compute_change(&change, &mask, &prev_mask, 5);
 
     /* XOR of identical values is 0 */
     assert(change.data[0] == 0x00000000);
@@ -325,7 +325,7 @@ TEST(test_compute_change_all_bits_flip) {
     mask.data[0] = 0xFF000000;
     prev_mask.data[0] = 0x00000000;
 
-    pocket_compute_change(&change, &mask, &prev_mask, 2);
+    ccsds124_compute_change(&change, &mask, &prev_mask, 2);
 
     /* All bits flipped, so XOR yields all 1s */
     assert(change.data[0] == 0xFF000000);
@@ -357,26 +357,26 @@ TEST(test_mask_update_sequence) {
     /* t=0: First input */
     input_t0.data[0] = 0xAA000000;
 
-    pocket_update_build(&build, &input_t0, NULL, 0, 0);
+    ccsds124_update_build(&build, &input_t0, NULL, 0, 0);
     assert(build.data[0] == 0x00000000);  /* At t=0, build is 0 */
 
-    pocket_compute_change(&change, &mask, &prev_mask, 0);
+    ccsds124_compute_change(&change, &mask, &prev_mask, 0);
     assert(change.data[0] == 0x00000000);  /* At t=0, change is 0 */
 
     /* t=1: Second input */
     input_t1.data[0] = 0xCC000000;
     bitvector_copy(&prev_mask, &mask);  /* Save previous mask */
 
-    pocket_update_build(&build, &input_t1, &input_t0, 0, 1);
+    ccsds124_update_build(&build, &input_t1, &input_t0, 0, 1);
     /* Iₜ XOR Iₜ₋₁ = 0xCC XOR 0xAA = 0x66
      * Bₜ = 0x66 OR 0x00 = 0x66 */
     assert(build.data[0] == 0x66000000);
 
-    pocket_update_mask(&mask, &input_t1, &input_t0, &build, 0);
+    ccsds124_update_mask(&mask, &input_t1, &input_t0, &build, 0);
     /* Mₜ = 0x66 OR 0x00 = 0x66 */
     assert(mask.data[0] == 0x66000000);
 
-    pocket_compute_change(&change, &mask, &prev_mask, 1);
+    ccsds124_compute_change(&change, &mask, &prev_mask, 1);
     /* Dₜ = 0x66 XOR 0x00 = 0x66 */
     assert(change.data[0] == 0x66000000);
 
@@ -384,16 +384,16 @@ TEST(test_mask_update_sequence) {
     input_t2.data[0] = 0xCC000000;
     bitvector_copy(&prev_mask, &mask);
 
-    pocket_update_build(&build, &input_t2, &input_t1, 0, 2);
+    ccsds124_update_build(&build, &input_t2, &input_t1, 0, 2);
     /* Iₜ XOR Iₜ₋₁ = 0xCC XOR 0xCC = 0x00
      * Bₜ = 0x00 OR 0x66 = 0x66 */
     assert(build.data[0] == 0x66000000);
 
-    pocket_update_mask(&mask, &input_t2, &input_t1, &build, 0);
+    ccsds124_update_mask(&mask, &input_t2, &input_t1, &build, 0);
     /* Mₜ = 0x00 OR 0x66 = 0x66 */
     assert(mask.data[0] == 0x66000000);
 
-    pocket_compute_change(&change, &mask, &prev_mask, 2);
+    ccsds124_compute_change(&change, &mask, &prev_mask, 2);
     /* Dₜ = 0x66 XOR 0x66 = 0x00 (no change) */
     assert(change.data[0] == 0x00000000);
 }

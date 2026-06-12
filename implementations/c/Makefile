@@ -1,4 +1,4 @@
-# POCKET+ C Implementation Makefile
+# CCSDS 124.0-B-1 C Implementation Makefile
 
 CC = gcc
 CFLAGS_BASE = -Wall -Wextra -std=c99 -Iinclude -pedantic -Werror -O3 -flto
@@ -31,9 +31,9 @@ TEST_BINS = $(TEST_SRCS:$(TEST_DIR)/%.c=$(BUILD_DIR)/%)
 COV_TEST_BINS = $(TEST_SRCS:$(TEST_DIR)/%.c=$(COV_DIR)/%)
 
 # Library and CLI
-LIB = $(BUILD_DIR)/libpocketplus.a
-CLI = $(BUILD_DIR)/pocketplus
-COV_LIB = $(COV_DIR)/libpocketplus.a
+LIB = $(BUILD_DIR)/libccsds124.a
+CLI = $(BUILD_DIR)/ccsds124
+COV_LIB = $(COV_DIR)/libccsds124.a
 
 # MISRA-C source files (excludes cli.c - ground tool, not flight software)
 MISRA_SRCS = $(SRC_DIR)/bitvector.c $(SRC_DIR)/bitbuffer.c $(SRC_DIR)/compress.c \
@@ -71,7 +71,7 @@ $(COV_LIB): $(COV_OBJS)
 	ar rcs $@ $^
 
 $(CLI): $(SRC_DIR)/cli.c $(LIB) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -lpocketplus $(LDFLAGS) -o $@
+	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -lccsds124 $(LDFLAGS) -o $@
 
 test: $(TEST_BINS)
 	@for test in $(TEST_BINS); do \
@@ -82,7 +82,7 @@ test: $(TEST_BINS)
 test-report: $(TEST_BINS)
 	@mkdir -p $(DOCS_DIR)/tests/html
 	@$(MAKE) test 2>&1 | tee $(BUILD_DIR)/test-output.txt
-	@../../scripts/generate-test-report.sh $(BUILD_DIR)/test-output.txt $(DOCS_DIR)/tests/html/index.html "POCKET+ C Test Report"
+	@../../scripts/generate-test-report.sh $(BUILD_DIR)/test-output.txt $(DOCS_DIR)/tests/html/index.html "CCSDS 124.0-B-1 C Test Report"
 
 test-cli: $(CLI)
 	@$(TEST_DIR)/test_cli.sh
@@ -94,10 +94,10 @@ bench: $(BUILD_DIR)/test_bench
 	@$(BUILD_DIR)/test_bench
 
 $(BUILD_DIR)/%: $(TEST_DIR)/%.c $(LIB) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -lpocketplus $(LDFLAGS) -o $@
+	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -lccsds124 $(LDFLAGS) -o $@
 
 $(COV_DIR)/%: $(TEST_DIR)/%.c $(COV_LIB) | $(COV_DIR)
-	$(CC) $(COV_CFLAGS) $< -L$(COV_DIR) -lpocketplus $(COV_LDFLAGS) -o $@
+	$(CC) $(COV_CFLAGS) $< -L$(COV_DIR) -lccsds124 $(COV_LDFLAGS) -o $@
 
 coverage: $(COV_TEST_BINS)
 	@echo "Running tests with coverage..."
@@ -204,7 +204,7 @@ valgrind: $(TEST_BINS)
 	@echo "Memory check passed - no leaks detected"
 
 $(BUILD_DIR)/crossvalidation_%: $(CROSSVAL_DIR)/crossvalidation_%.c $(LIB) | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -lpocketplus $(LDFLAGS) -o $@
+	$(CC) $(CFLAGS) $< -L$(BUILD_DIR) -lccsds124 $(LDFLAGS) -o $@
 
 # Usage: make crossvalidation [CROSSVAL_MODE=encoder|decoder|both]
 CROSSVAL_MODE ?= both

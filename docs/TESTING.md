@@ -1,4 +1,4 @@
-# POCKET+ Test Report
+# CCSDS 124.0-B-1 Test Report
 
 This document covers the comprehensive test suite for the C implementation, which serves as the reference implementation validated against ESA's original C code. Other implementations (C++, Python, Go, Rust, Java) validate correctness via shared test vectors but do not replicate the full test infrastructure (fuzzing, packet loss simulation, CCSDS-style generation).
 
@@ -102,7 +102,7 @@ docker-compose run c make test-reference
 **Method**:
 - Compress packets with various R values
 - Simulate packet loss by dropping packets
-- Notify decompressor via `pocket_decompressor_notify_packet_loss()`
+- Notify decompressor via `ccsds124_decompressor_notify_packet_loss()`
 - Verify: loss ≤ R allows recovery, loss > R causes corruption
 
 **Source**: [test_packet_loss.c](../implementations/c/tests/test_packet_loss.c)
@@ -172,7 +172,7 @@ FUZZ_DURATION=3600 docker-compose run c-fuzz      # Extended (1 hour each)
 | Compress | 301,920 | 0 |
 | Roundtrip | ~310,000 | 0 |
 
-**Note**: LeakSanitizer may report small leaks (56 bytes) at fuzzer shutdown. These are false positives from libFuzzer's internal bookkeeping on Alpine/musl, not from POCKET+ code. The library uses static allocation with no malloc/free.
+**Note**: LeakSanitizer may report small leaks (56 bytes) at fuzzer shutdown. These are false positives from libFuzzer's internal bookkeeping on Alpine/musl, not from CCSDS 124.0-B-1 code. The library uses static allocation with no malloc/free.
 
 ## CCSDS-Style Test Vector Generation
 
@@ -273,9 +273,9 @@ The encoder passes all 7,935 vectors. The decoder passes 15,102 of 16,965 vector
 
 ### Reverse-Engineered Validation Rules
 
-Three reference-decoder behaviors were reverse-engineered from the test vectors (improving the decoder from 14,924 to 15,102) and are implemented in `pocket_discover_packet_length()` and `pocket_decompress_packet_checked()`:
+Three reference-decoder behaviors were reverse-engineered from the test vectors (improving the decoder from 14,924 to 15,102) and are implemented in `ccsds124_discover_packet_length()` and `ccsds124_decompress_packet_checked()`:
 
-1. **Truncated reference packets still signal F**: when the bitstream runs out after `COUNT(F)` but before the full `I_t`, the signaled length "is to be considered" (cross-validation README). Reported as `POCKET_STATUS_TRUNCATED_LENGTH` for the output trailer.
+1. **Truncated reference packets still signal F**: when the bitstream runs out after `COUNT(F)` but before the full `I_t`, the signaled length "is to be considered" (cross-validation README). Reported as `CCSDS124_STATUS_TRUNCATED_LENGTH` for the output trailer.
 2. **Signaled-length validity (v1.6)**: a signaled `COUNT(F)` is trusted only if in range (1–65535) and consistent with the packet's own RLE spans (X_t span ≤ F, full-mask span ≤ F).
 3. **Reference packets tolerate excess trailing bits**: `rt=1` packets are self-delimiting via `COUNT(F)`; an oversized Received Packet Length means the remainder is ignored. Compressed (`rt=0`) packets keep the strict ≤7-padding-bits rule (v1.10).
 
@@ -293,11 +293,11 @@ Pattern: `rt=1, ft=1, mask_inconsistent=1, mask_synced=0`. Our logic guarantees 
 
 **16 vectors — unknown excess-rejection rule**: the reference rejects certain `rt=1` packets with small excess bit counts (48–344) after F is established, while accepting large excesses (4K–64K) on the stream's first valid reference packet. The exact discriminator is unidentified; these 16 are accepted as a trade-off for the 118 vectors the excess-tolerance rule fixes.
 
-**Path to 100%:** requires access to the UAB reference decoder source (or its accept/reject decision rules) — the categories interact, and rule combinations beyond the three implemented above produced net regressions. Tracked in [#89](https://github.com/tanagraspace/pocket-plus/issues/89); see also GOTCHAS.md #22.
+**Path to 100%:** requires access to the UAB reference decoder source (or its accept/reject decision rules) — the categories interact, and rule combinations beyond the three implemented above produced net regressions. Tracked in [#89](https://github.com/tanagraspace/ccsds124/issues/89); see also GOTCHAS.md #22.
 
 Other known gaps:
-- Cross-validation harnesses for C++, Python, Go, Rust, and Java are not yet implemented (`crossvalidation/<lang>/` are placeholders) — tracked in [#93](https://github.com/tanagraspace/pocket-plus/issues/93), deferred until #89 resolves. Those implementations are validated via the shared `test-vectors/` only.
-- The C++/Python/Go/Rust/Java decoders do not yet validate bitstream integrity (GOTCHAS.md #21) — corrupt input can produce silent wrong output instead of an error. Tracked in [#92](https://github.com/tanagraspace/pocket-plus/issues/92).
+- Cross-validation harnesses for C++, Python, Go, Rust, and Java are not yet implemented (`crossvalidation/<lang>/` are placeholders) — tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93), deferred until #89 resolves. Those implementations are validated via the shared `test-vectors/` only.
+- The C++/Python/Go/Rust/Java decoders do not yet validate bitstream integrity (GOTCHAS.md #21) — corrupt input can produce silent wrong output instead of an error. Tracked in [#92](https://github.com/tanagraspace/ccsds124/issues/92).
 
 ## Run All Tests
 

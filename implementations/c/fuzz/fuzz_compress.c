@@ -1,6 +1,6 @@
 /**
  * @file fuzz_compress.c
- * @brief libFuzzer harness for POCKET+ compression.
+ * @brief libFuzzer harness for CCSDS 124.0-B-1 compression.
  *
  * Tests the compressor with arbitrary input data to find crashes,
  * hangs, and memory safety issues.
@@ -17,7 +17,7 @@
  *   ./fuzz_compress corpus/ -max_len=8192
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
@@ -50,8 +50,8 @@ int main(void) {
     input_bytes = (input_bytes / packet_bytes) * packet_bytes;  /* Align to packets */
     if (input_bytes == 0) return 0;
 
-    pocket_compressor_t comp;
-    if (pocket_compressor_init(&comp, F, NULL, r, pt, ft, 0) != POCKET_OK) {
+    ccsds124_compressor_t comp;
+    if (ccsds124_compressor_init(&comp, F, NULL, r, pt, ft, 0) != CCSDS124_OK) {
         return 0;
     }
 
@@ -60,7 +60,7 @@ int main(void) {
     if (!output) return 0;
 
     size_t actual_output = 0;
-    (void)pocket_compress(&comp, data + 4, input_bytes,
+    (void)ccsds124_compress(&comp, data + 4, input_bytes,
                            output, output_size, &actual_output);
 
     free(output);
@@ -102,8 +102,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     }
 
     /* Initialize compressor */
-    pocket_compressor_t comp;
-    if (pocket_compressor_init(&comp, F, NULL, r, (int)pt, (int)ft, 0) != POCKET_OK) {
+    ccsds124_compressor_t comp;
+    if (ccsds124_compressor_init(&comp, F, NULL, r, (int)pt, (int)ft, 0) != CCSDS124_OK) {
         return 0;
     }
 
@@ -117,7 +117,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     /* Attempt compression - we don't care about the result,
      * just that it doesn't crash or hang */
     size_t actual_output = 0;
-    (void)pocket_compress(&comp, data + 4, input_bytes,
+    (void)ccsds124_compress(&comp, data + 4, input_bytes,
                            output, output_size, &actual_output);
 
     free(output);

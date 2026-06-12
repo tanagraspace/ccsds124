@@ -1,4 +1,4 @@
-//! Performance benchmarks for POCKET+ compression.
+//! Performance benchmarks for CCSDS 124.0-B-1 compression.
 //!
 //! Measures compression throughput for regression testing during development.
 //! Note: Desktop performance differs from embedded targets - use for relative
@@ -10,7 +10,7 @@
 
 #![allow(clippy::cast_precision_loss)]
 
-use pocketplus::{compress, decompress};
+use ccsds124::{compress, decompress};
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -164,7 +164,7 @@ fn main() {
         DEFAULT_ITERATIONS
     };
 
-    println!("POCKET+ Benchmarks (Rust Implementation)");
+    println!("CCSDS 124.0-B-1 Benchmarks (Rust Implementation)");
     println!("========================================");
     println!("Iterations: {iterations}");
     println!("Packet size: {PACKET_SIZE_BITS} bits ({PACKET_SIZE_BYTES} bytes)\n");

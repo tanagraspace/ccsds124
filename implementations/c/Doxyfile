@@ -1,11 +1,11 @@
-# Doxyfile for POCKET+ C Implementation
+# Doxyfile for CCSDS 124.0-B-1 C Implementation
 # Generated for Doxygen 1.9+
 
 #---------------------------------------------------------------------------
 # Project related configuration options
 #---------------------------------------------------------------------------
 
-PROJECT_NAME           = "POCKET+ C"
+PROJECT_NAME           = "CCSDS 124.0-B-1 C"
 PROJECT_NUMBER         = "1.0.0"
 PROJECT_BRIEF          = "CCSDS 124.0-B-1 Lossless Compression"
 PROJECT_LOGO           =

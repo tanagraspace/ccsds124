@@ -1,6 +1,6 @@
 /**
  * @file test_bench.c
- * @brief Performance benchmarks for POCKET+ compression.
+ * @brief Performance benchmarks for CCSDS 124.0-B-1 compression.
  *
  * Measures compression throughput for regression testing during development.
  * Note: Desktop performance differs from AVR32 target - use for relative
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "pocketplus.h"
+#include "ccsds124.h"
 
 #define DEFAULT_ITERATIONS 100
 #define PACKET_SIZE_BITS 720
@@ -69,12 +69,12 @@ static void bench_compress(const char *name, const char *path, int robustness,
     size_t num_packets = input_size / (PACKET_SIZE_BITS / 8U);
     uint8_t *output = malloc(input_size * 2U);
     size_t output_size = 0;
-    pocket_compressor_t comp;
+    ccsds124_compressor_t comp;
 
     /* Warmup run */
-    (void)pocket_compressor_init(&comp, PACKET_SIZE_BITS, NULL,
+    (void)ccsds124_compressor_init(&comp, PACKET_SIZE_BITS, NULL,
                                   robustness, pt, ft, rt);
-    (void)pocket_compress(&comp, input, input_size, output,
+    (void)ccsds124_compress(&comp, input, input_size, output,
                           input_size * 2U, &output_size);
 
     /* Benchmark */
@@ -82,9 +82,9 @@ static void bench_compress(const char *name, const char *path, int robustness,
     (void)clock_gettime(CLOCK_MONOTONIC, &start);
 
     for (int i = 0; i < iterations; i++) {
-        (void)pocket_compressor_init(&comp, PACKET_SIZE_BITS, NULL,
+        (void)ccsds124_compressor_init(&comp, PACKET_SIZE_BITS, NULL,
                                       robustness, pt, ft, rt);
-        (void)pocket_compress(&comp, input, input_size, output,
+        (void)ccsds124_compress(&comp, input, input_size, output,
                               input_size * 2U, &output_size);
     }
 
@@ -117,19 +117,19 @@ static void bench_decompress(const char *name, const char *path, int robustness,
     /* First compress the data */
     uint8_t *compressed = malloc(input_size * 2U);
     size_t compressed_size = 0;
-    pocket_compressor_t comp;
-    (void)pocket_compressor_init(&comp, PACKET_SIZE_BITS, NULL,
+    ccsds124_compressor_t comp;
+    (void)ccsds124_compressor_init(&comp, PACKET_SIZE_BITS, NULL,
                                   robustness, pt, ft, rt);
-    (void)pocket_compress(&comp, input, input_size, compressed,
+    (void)ccsds124_compress(&comp, input, input_size, compressed,
                           input_size * 2U, &compressed_size);
 
     uint8_t *output = malloc(input_size);
     size_t output_size = 0;
-    pocket_decompressor_t decomp;
+    ccsds124_decompressor_t decomp;
 
     /* Warmup run */
-    (void)pocket_decompressor_init(&decomp, PACKET_SIZE_BITS, NULL, robustness);
-    (void)pocket_decompress(&decomp, compressed, compressed_size, output,
+    (void)ccsds124_decompressor_init(&decomp, PACKET_SIZE_BITS, NULL, robustness);
+    (void)ccsds124_decompress(&decomp, compressed, compressed_size, output,
                             input_size, &output_size);
 
     /* Benchmark */
@@ -137,9 +137,9 @@ static void bench_decompress(const char *name, const char *path, int robustness,
     (void)clock_gettime(CLOCK_MONOTONIC, &start);
 
     for (int i = 0; i < iterations; i++) {
-        (void)pocket_decompressor_init(&decomp, PACKET_SIZE_BITS, NULL,
+        (void)ccsds124_decompressor_init(&decomp, PACKET_SIZE_BITS, NULL,
                                         robustness);
-        (void)pocket_decompress(&decomp, compressed, compressed_size, output,
+        (void)ccsds124_decompress(&decomp, compressed, compressed_size, output,
                                 input_size, &output_size);
     }
 
@@ -168,7 +168,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("POCKET+ Benchmarks (C Implementation)\n");
+    printf("CCSDS 124.0-B-1 Benchmarks (C Implementation)\n");
     printf("=====================================\n");
     printf("Iterations: %d\n", iterations);
     printf("Packet size: %d bits (%d bytes)\n\n",

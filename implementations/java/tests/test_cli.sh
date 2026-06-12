@@ -1,12 +1,12 @@
 #!/bin/sh
-# CLI round-trip tests for POCKET+ Java compress/decompress
+# CLI round-trip tests for CCSDS 124.0-B-1 Java compress/decompress
 #
 # Tests the CLI executable by compressing test vectors,
 # decompressing them, and verifying the output matches the original.
 
 set -e
 
-JAR="target/pocketplus-1.0.0.jar"
+JAR="target/ccsds124-1.0.0.jar"
 TEST_VECTORS_DIR="../../test-vectors/input"
 TEMP_DIR="$(mktemp -d)"
 TESTS_RUN=0

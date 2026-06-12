@@ -1,10 +1,10 @@
-//! Error types for POCKET+ compression/decompression.
+//! Error types for CCSDS 124.0-B-1 compression/decompression.
 
 use std::fmt;
 
-/// Errors that can occur during POCKET+ compression or decompression.
+/// Errors that can occur during CCSDS 124.0-B-1 compression or decompression.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PocketError {
+pub enum Ccsds124Error {
     /// Invalid packet size (must be > 0 and divisible by 8)
     InvalidPacketSize(usize),
 
@@ -30,7 +30,7 @@ pub enum PocketError {
     InvalidLength,
 }
 
-impl fmt::Display for PocketError {
+impl fmt::Display for Ccsds124Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidPacketSize(size) => {
@@ -64,7 +64,7 @@ impl fmt::Display for PocketError {
     }
 }
 
-impl std::error::Error for PocketError {}
+impl std::error::Error for Ccsds124Error {}
 
 #[cfg(test)]
 mod tests {
@@ -72,31 +72,31 @@ mod tests {
 
     #[test]
     fn test_error_display() {
-        let err = PocketError::InvalidPacketSize(0);
+        let err = Ccsds124Error::InvalidPacketSize(0);
         assert!(err.to_string().contains("invalid packet size"));
 
-        let err = PocketError::InvalidRobustness(10);
+        let err = Ccsds124Error::InvalidRobustness(10);
         assert!(err.to_string().contains("invalid robustness"));
 
-        let err = PocketError::InvalidInputLength {
+        let err = Ccsds124Error::InvalidInputLength {
             expected: 100,
             actual: 50,
         };
         assert!(err.to_string().contains("expected 100"));
 
-        let err = PocketError::UnexpectedEndOfInput;
+        let err = Ccsds124Error::UnexpectedEndOfInput;
         assert!(err.to_string().contains("unexpected end"));
 
-        let err = PocketError::InvalidFormat("test".to_string());
+        let err = Ccsds124Error::InvalidFormat("test".to_string());
         assert!(err.to_string().contains("invalid format"));
 
-        let err = PocketError::BufferOverflow;
+        let err = Ccsds124Error::BufferOverflow;
         assert!(err.to_string().contains("buffer overflow"));
 
-        let err = PocketError::Underflow;
+        let err = Ccsds124Error::Underflow;
         assert!(err.to_string().contains("not enough bits"));
 
-        let err = PocketError::InvalidLength;
+        let err = Ccsds124Error::InvalidLength;
         assert!(err.to_string().contains("invalid length"));
     }
 }

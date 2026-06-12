@@ -1,14 +1,14 @@
-# POCKET+ Go Implementation
+# CCSDS 124.0-B-1 Go Implementation
 
-[![Build](https://github.com/tanagraspace/pocket-plus/actions/workflows/go-build.yml/badge.svg)](https://github.com/tanagraspace/pocket-plus/actions/workflows/go-build.yml)
-[![Coverage](assets/coverage.svg)](https://tanagraspace.com/pocket-plus/go/coverage/)
+[![Build](https://github.com/tanagraspace/ccsds124/actions/workflows/go-build.yml/badge.svg)](https://github.com/tanagraspace/ccsds124/actions/workflows/go-build.yml)
+[![Coverage](assets/coverage.svg)](https://tanagraspace.com/ccsds124/go/coverage/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Go implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) POCKET+ lossless compression algorithm for fixed-length housekeeping data.
+A Go implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) lossless compression algorithm for fixed-length housekeeping data.
 
 ## Citation
 
-If POCKET+ contributes to your research, please cite:
+If CCSDS 124.0-B-1 contributes to your research, please cite:
 
 > D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," *Proceedings of the Small Satellite Conference*, Communications, SSC22-XII-03. https://digitalcommons.usu.edu/smallsat/2022/all2022/133/
 
@@ -16,7 +16,7 @@ If POCKET+ contributes to your research, please cite:
 <summary>BibTeX</summary>
 
 ```bibtex
-@inproceedings{evans2022pocketplus,
+@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labrèche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -53,20 +53,20 @@ docker-compose run --rm --build go            # Rebuild after changes
 
 ```bash
 # Compress
-./build/pocketplus compress -i <input> -o <output> -s <packet_size> -r <robustness> \
+./build/ccsds124 compress -i <input> -o <output> -s <packet_size> -r <robustness> \
     --pt <pt_limit> --ft <ft_limit> --rt <rt_limit>
 
 # Decompress
-./build/pocketplus decompress -i <input> -o <output> -s <packet_size> -r <robustness>
+./build/ccsds124 decompress -i <input> -o <output> -s <packet_size> -r <robustness>
 ```
 
 **Example:**
 ```bash
-./build/pocketplus compress -i data.bin -o data.pkt -s 90 -r 2 --pt 20 --ft 50 --rt 100
-./build/pocketplus decompress -i data.pkt -o data.restored -s 90 -r 2
+./build/ccsds124 compress -i data.bin -o data.pkt -s 90 -r 2 --pt 20 --ft 50 --rt 100
+./build/ccsds124 decompress -i data.pkt -o data.restored -s 90 -r 2
 ```
 
-Run `./build/pocketplus --help` for full usage.
+Run `./build/ccsds124 --help` for full usage.
 
 ## Library Usage
 
@@ -75,12 +75,12 @@ package main
 
 import (
     "fmt"
-    "github.com/tanagraspace/pocket-plus/implementations/go/pocketplus"
+    "github.com/tanagraspace/ccsds124/implementations/go/ccsds124"
 )
 
 func main() {
     // Compress
-    compressed, numBits, err := pocketplus.Compress(
+    compressed, numBits, err := ccsds124.Compress(
         inputData,  // []byte: multiple fixed-length packets
         90,         // packet size in bytes
         2,          // robustness (0-7)
@@ -88,7 +88,7 @@ func main() {
     )
 
     // Decompress
-    decompressed, err := pocketplus.Decompress(
+    decompressed, err := ccsds124.Decompress(
         compressed,
         numBits,
         90,  // packet size
@@ -108,7 +108,7 @@ func main() {
 
 ```
 implementations/go/
-├── pocketplus/
+├── ccsds124/
 │   ├── doc.go            # Package documentation
 │   ├── bitvector.go      # Fixed-length bit vectors
 │   ├── bitbuffer.go      # Variable-length output buffer
@@ -121,7 +121,7 @@ implementations/go/
 │   ├── decompress.go     # High-level Decompress API
 │   ├── decompressor.go   # Decompression algorithm
 │   └── *_test.go         # Unit tests
-├── cmd/pocketplus/       # CLI tool
+├── cmd/ccsds124/       # CLI tool
 ├── scripts/              # Documentation generators
 └── Makefile
 ```

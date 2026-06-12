@@ -1,6 +1,6 @@
 /**
  * @file fuzz_decompress.c
- * @brief libFuzzer harness for POCKET+ decompression.
+ * @brief libFuzzer harness for CCSDS 124.0-B-1 decompression.
  *
  * Tests the decompressor with arbitrary input data to find crashes,
  * hangs, and memory safety issues.
@@ -17,7 +17,7 @@
  *   ./fuzz_decompress corpus/ -max_len=4096
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <stdint.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -41,8 +41,8 @@ int main(void) {
     uint16_t F_raw = (uint16_t)(data[1] << 8) | data[2];
     size_t F = (F_raw % 1024) + 8;  /* Packet size 8-1031 bits */
 
-    pocket_decompressor_t decomp;
-    if (pocket_decompressor_init(&decomp, F, NULL, r) != POCKET_OK) {
+    ccsds124_decompressor_t decomp;
+    if (ccsds124_decompressor_init(&decomp, F, NULL, r) != CCSDS124_OK) {
         return 0;
     }
 
@@ -53,7 +53,7 @@ int main(void) {
     if (!output) return 0;
 
     size_t actual_output = 0;
-    (void)pocket_decompress(&decomp, data + 3, (size_t)len - 3,
+    (void)ccsds124_decompress(&decomp, data + 3, (size_t)len - 3,
                              output, output_size, &actual_output);
 
     free(output);
@@ -80,8 +80,8 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     size_t F = (F_raw % 1024) + 8;  /* Packet size 8-1031 bits */
 
     /* Initialize decompressor */
-    pocket_decompressor_t decomp;
-    if (pocket_decompressor_init(&decomp, F, NULL, r) != POCKET_OK) {
+    ccsds124_decompressor_t decomp;
+    if (ccsds124_decompressor_init(&decomp, F, NULL, r) != CCSDS124_OK) {
         return 0;
     }
 
@@ -97,7 +97,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     /* Attempt decompression - we don't care about the result,
      * just that it doesn't crash or hang */
     size_t actual_output = 0;
-    (void)pocket_decompress(&decomp, data + 3, size - 3,
+    (void)ccsds124_decompress(&decomp, data + 3, size - 3,
                              output, output_size, &actual_output);
 
     free(output);

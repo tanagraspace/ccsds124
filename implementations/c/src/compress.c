@@ -1,6 +1,6 @@
 /**
  * @file compress.c
- * @brief POCKET+ compression algorithm implementation.
+ * @brief CCSDS 124.0-B-1 compression algorithm implementation.
  *
  * @cond INTERNAL
  * ============================================================================
@@ -24,7 +24,7 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <string.h>
 
 /**
@@ -33,8 +33,8 @@
  */
 
 
-int pocket_compressor_init(
-    pocket_compressor_t *comp,
+int ccsds124_compressor_init(
+    ccsds124_compressor_t *comp,
     size_t F,
     const bitvector_t *initial_mask,
     uint8_t robustness,
@@ -42,12 +42,12 @@ int pocket_compressor_init(
     int ft_limit,
     int rt_limit
 ) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if (comp != NULL) {
-        if ((F == 0U) || (F > (size_t)POCKET_MAX_PACKET_LENGTH)) {
+        if ((F == 0U) || (F > (size_t)CCSDS124_MAX_PACKET_LENGTH)) {
             /* Invalid packet length - result already set */
-        } else if (robustness > (uint8_t)POCKET_MAX_ROBUSTNESS) {
+        } else if (robustness > (uint8_t)CCSDS124_MAX_ROBUSTNESS) {
             /* Invalid robustness - result already set */
         } else {
             /* Store configuration */
@@ -65,13 +65,13 @@ int pocket_compressor_init(
             (void)bitvector_init(&comp->initial_mask, F);
 
             /* Initialize change history */
-            for (size_t i = 0U; i < POCKET_MAX_HISTORY; i++) {
+            for (size_t i = 0U; i < CCSDS124_MAX_HISTORY; i++) {
                 (void)bitvector_init(&comp->change_history[i], F);
                 bitvector_zero(&comp->change_history[i]);
             }
 
             /* Initialize flag history for cₜ calculation */
-            for (size_t i = 0U; i < POCKET_MAX_VT_HISTORY; i++) {
+            for (size_t i = 0U; i < CCSDS124_MAX_VT_HISTORY; i++) {
                 comp->new_mask_flag_history[i] = 0U;
             }
             comp->flag_history_index = 0;
@@ -94,9 +94,9 @@ int pocket_compressor_init(
             (void)bitvector_init(&comp->work_diff, F);
 
             /* Reset state */
-            pocket_compressor_reset(comp);
+            ccsds124_compressor_reset(comp);
 
-            result = POCKET_OK;
+            result = CCSDS124_OK;
         }
     }
 
@@ -104,7 +104,7 @@ int pocket_compressor_init(
 }
 
 
-void pocket_compressor_reset(pocket_compressor_t *comp) {
+void ccsds124_compressor_reset(ccsds124_compressor_t *comp) {
     if (comp != NULL) {
         /* Reset time index */
         comp->t = 0U;
@@ -119,7 +119,7 @@ void pocket_compressor_reset(pocket_compressor_t *comp) {
         bitvector_zero(&comp->prev_input);
 
         /* Clear change history */
-        for (size_t i = 0U; i < POCKET_MAX_HISTORY; i++) {
+        for (size_t i = 0U; i < CCSDS124_MAX_HISTORY; i++) {
             bitvector_zero(&comp->change_history[i]);
         }
 
@@ -149,8 +149,8 @@ void pocket_compressor_reset(pocket_compressor_t *comp) {
  *       (ft=1, rt=1 for first Rt+1 packets).
  */
 static void get_default_params(
-    pocket_params_t *params,
-    const pocket_compressor_t *comp
+    ccsds124_params_t *params,
+    const ccsds124_compressor_t *comp
 ) {
     /* Default parameters */
     params->min_robustness = comp->robustness;
@@ -170,9 +170,9 @@ static void get_default_params(
  */
 
 
-void pocket_compute_robustness_window(
+void ccsds124_compute_robustness_window(
     bitvector_t *Xt,
-    const pocket_compressor_t *comp,
+    const ccsds124_compressor_t *comp,
     const bitvector_t *current_change
 ) {
     /* Xₜ = <(Dₜ₋ᴿₜ OR Dₜ₋ᴿₜ₊₁ OR ... OR Dₜ)>
@@ -195,7 +195,7 @@ void pocket_compute_robustness_window(
         /* OR with historical changes (going backwards from current)
          * Use in-place OR: Xt = Xt OR history[i] */
         for (size_t i = 1U; i <= num_changes; i++) {
-            size_t hist_idx = ((comp->history_index + (size_t)POCKET_MAX_HISTORY) - i) % (size_t)POCKET_MAX_HISTORY;
+            size_t hist_idx = ((comp->history_index + (size_t)CCSDS124_MAX_HISTORY) - i) % (size_t)CCSDS124_MAX_HISTORY;
             const bitvector_t *hist = &comp->change_history[hist_idx];
 
             /* In-place OR at word level */
@@ -207,8 +207,8 @@ void pocket_compute_robustness_window(
 }
 
 
-uint8_t pocket_compute_effective_robustness(
-    const pocket_compressor_t *comp,
+uint8_t ccsds124_compute_effective_robustness(
+    const ccsds124_compressor_t *comp,
     const bitvector_t *current_change
 ) {
     /* Vₜ = Rₜ + Cₜ (CCSDS Section 5.3.2.2)
@@ -230,7 +230,7 @@ uint8_t pocket_compute_effective_robustness(
         int done = 0;
 
         for (size_t i = (size_t)Rt + 1U; (i <= 15U) && (i <= comp->t) && (done == 0); i++) {
-            size_t hist_idx = ((comp->history_index + (size_t)POCKET_MAX_HISTORY) - i) % (size_t)POCKET_MAX_HISTORY;
+            size_t hist_idx = ((comp->history_index + (size_t)CCSDS124_MAX_HISTORY) - i) % (size_t)CCSDS124_MAX_HISTORY;
             if (bitvector_hamming_weight(&comp->change_history[hist_idx]) > 0U) {
                 done = 1;  /* Found a change, stop counting */
             } else {
@@ -251,7 +251,7 @@ uint8_t pocket_compute_effective_robustness(
 }
 
 
-int pocket_has_positive_updates(
+int ccsds124_has_positive_updates(
     const bitvector_t *Xt,
     const bitvector_t *mask
 ) {
@@ -279,8 +279,8 @@ int pocket_has_positive_updates(
 }
 
 
-int pocket_compute_ct_flag(
-    const pocket_compressor_t *comp,
+int ccsds124_compute_ct_flag(
+    const ccsds124_compressor_t *comp,
     uint8_t Vt,
     int current_new_mask_flag
 ) {
@@ -305,7 +305,7 @@ int pocket_compute_ct_flag(
 
         for (size_t i = 0U; i < iterations_to_check; i++) {
             /* Calculate history index going backwards from previous */
-            size_t hist_idx = ((comp->flag_history_index + (size_t)POCKET_MAX_VT_HISTORY) - 1U - i) % (size_t)POCKET_MAX_VT_HISTORY;
+            size_t hist_idx = ((comp->flag_history_index + (size_t)CCSDS124_MAX_VT_HISTORY) - 1U - i) % (size_t)CCSDS124_MAX_VT_HISTORY;
             if (comp->new_mask_flag_history[hist_idx] != 0U) {
                 count++;
             }
@@ -327,13 +327,13 @@ int pocket_compute_ct_flag(
  */
 
 
-int pocket_compress_packet(
-    pocket_compressor_t *comp,
+int ccsds124_compress_packet(
+    ccsds124_compressor_t *comp,
     const bitvector_t *input,
     bitbuffer_t *output,
-    const pocket_params_t *params
+    const ccsds124_params_t *params
 ) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((comp == NULL) || (input == NULL) || (output == NULL)) {
         /* Invalid arguments - result already set */
@@ -341,8 +341,8 @@ int pocket_compress_packet(
         /* Invalid input length - result already set */
     } else {
         /* Get parameters (use defaults if NULL) */
-        pocket_params_t local_params;
-        const pocket_params_t *effective_params = params;
+        ccsds124_params_t local_params;
+        const ccsds124_params_t *effective_params = params;
         if (params == NULL) {
             get_default_params(&local_params, comp);
             effective_params = &local_params;
@@ -363,18 +363,18 @@ int pocket_compress_packet(
 
         /* Update build vector (Equation 6) */
         if (comp->t > 0U) {
-            pocket_update_build(&comp->build, input, &comp->prev_input,
+            ccsds124_update_build(&comp->build, input, &comp->prev_input,
                                effective_params->new_mask_flag, comp->t);
         }
 
         /* Update mask vector (Equation 7) */
         if (comp->t > 0U) {
-            pocket_update_mask(&comp->mask, input, &comp->prev_input,
+            ccsds124_update_mask(&comp->mask, input, &comp->prev_input,
                               &comp->work_prev_build, effective_params->new_mask_flag);
         }
 
         /* Compute change vector (Equation 8) - use pre-allocated work buffer */
-        pocket_compute_change(&comp->work_change, &comp->mask, &comp->prev_mask, comp->t);
+        ccsds124_compute_change(&comp->work_change, &comp->mask, &comp->prev_mask, comp->t);
 
         /* Store change in history (circular buffer) */
         bitvector_copy(&comp->change_history[comp->history_index], &comp->work_change);
@@ -386,10 +386,10 @@ int pocket_compress_packet(
          * ==================================================================== */
 
         /* Calculate Xₜ (robustness window) - use pre-allocated work buffer */
-        pocket_compute_robustness_window(&comp->work_Xt, comp, &comp->work_change);
+        ccsds124_compute_robustness_window(&comp->work_Xt, comp, &comp->work_change);
 
         /* Calculate Vₜ (effective robustness) */
-        uint8_t Vt = pocket_compute_effective_robustness(comp, &comp->work_change);
+        uint8_t Vt = ccsds124_compute_effective_robustness(comp, &comp->work_change);
 
         /* Calculate ḋₜ flag */
         uint8_t dt = ((effective_params->send_mask_flag == 0U) && (effective_params->uncompressed_flag == 0U)) ? 1U : 0U;
@@ -400,7 +400,7 @@ int pocket_compress_packet(
          * ==================================================================== */
 
         /* 1. RLE(Xₜ) - Run-length encode the robustness window */
-        (void)pocket_rle_encode(output, &comp->work_Xt);
+        (void)ccsds124_rle_encode(output, &comp->work_Xt);
 
         /* 2. BIT₄(Vₜ) - 4-bit effective robustness level
          * CCSDS encodes Vt directly (reference implementation confirmed) */
@@ -414,7 +414,7 @@ int pocket_compress_packet(
         /* 3. eₜ, kₜ, cₜ - Only if Vₜ > 0 and there are mask changes */
         if ((Vt > 0U) && (bitvector_hamming_weight(&comp->work_Xt) > 0U)) {
             /* Calculate eₜ */
-            int et = pocket_has_positive_updates(&comp->work_Xt, &comp->mask);
+            int et = ccsds124_has_positive_updates(&comp->work_Xt, &comp->mask);
 
             (void)bitbuffer_append_bit(output, et);
 
@@ -426,10 +426,10 @@ int pocket_compress_packet(
                  * Use pre-allocated work buffer for inverted mask */
                 bitvector_not(&comp->work_inverted, &comp->mask);
 
-                (void)pocket_bit_extract_forward(output, &comp->work_inverted, &comp->work_Xt);
+                (void)ccsds124_bit_extract_forward(output, &comp->work_inverted, &comp->work_Xt);
 
                 /* Calculate and encode cₜ */
-                int ct = pocket_compute_ct_flag(comp, Vt, effective_params->new_mask_flag);
+                int ct = ccsds124_compute_ct_flag(comp, Vt, effective_params->new_mask_flag);
 
                 (void)bitbuffer_append_bit(output, ct);
             }
@@ -451,7 +451,7 @@ int pocket_compress_packet(
                 bitvector_left_shift(&comp->work_shifted, &comp->mask);
                 bitvector_xor(&comp->work_diff, &comp->mask, &comp->work_shifted);
 
-                (void)pocket_rle_encode(output, &comp->work_diff);
+                (void)ccsds124_rle_encode(output, &comp->work_diff);
             } else {
                 (void)bitbuffer_append_bit(output, 0);  /* Flag: no mask */
             }
@@ -466,7 +466,7 @@ int pocket_compress_packet(
             /* '1' ∥ COUNT(F) ∥ Iₜ */
             (void)bitbuffer_append_bit(output, 1);  /* Flag: full input follows */
 
-            (void)pocket_count_encode(output, (uint32_t)comp->F);
+            (void)ccsds124_count_encode(output, (uint32_t)comp->F);
 
             (void)bitbuffer_append_bitvector(output, input);
         } else {
@@ -476,17 +476,17 @@ int pocket_compress_packet(
             }
 
             /* Determine extraction mask based on cₜ */
-            int ct = pocket_compute_ct_flag(comp, Vt, effective_params->new_mask_flag);
+            int ct = ccsds124_compute_ct_flag(comp, Vt, effective_params->new_mask_flag);
 
             if ((ct != 0) && (Vt > 0U)) {
                 /* BE(Iₜ, (Xₜ OR Mₜ)) - extract bits where mask OR changes are set
                  * Reuse work_diff as extraction mask (not used at this point) */
                 bitvector_or(&comp->work_diff, &comp->mask, &comp->work_Xt);  /* Mₜ OR Xₜ */
 
-                (void)pocket_bit_extract(output, input, &comp->work_diff);
+                (void)ccsds124_bit_extract(output, input, &comp->work_diff);
             } else {
                 /* BE(Iₜ, Mₜ) - extract only unpredictable bits */
-                (void)pocket_bit_extract(output, input, &comp->mask);
+                (void)ccsds124_bit_extract(output, input, &comp->mask);
             }
         }
 
@@ -500,30 +500,30 @@ int pocket_compress_packet(
 
         /* Track new_mask_flag for cₜ calculation */
         comp->new_mask_flag_history[comp->flag_history_index] = effective_params->new_mask_flag;
-        comp->flag_history_index = (comp->flag_history_index + 1U) % (size_t)POCKET_MAX_VT_HISTORY;
+        comp->flag_history_index = (comp->flag_history_index + 1U) % (size_t)CCSDS124_MAX_VT_HISTORY;
 
         /* Advance time */
         comp->t++;
 
         /* Advance history index (circular buffer) */
-        comp->history_index = (comp->history_index + 1U) % (size_t)POCKET_MAX_HISTORY;
+        comp->history_index = (comp->history_index + 1U) % (size_t)CCSDS124_MAX_HISTORY;
 
-        result = POCKET_OK;
+        result = CCSDS124_OK;
     }
 
     return result;
 }
 
 
-int pocket_compress(
-    pocket_compressor_t *comp,
+int ccsds124_compress(
+    ccsds124_compressor_t *comp,
     const uint8_t *input_data,
     size_t input_size,
     uint8_t *output_buffer,
     size_t output_buffer_size,
     size_t *output_size
 ) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((comp == NULL) || (input_data == NULL) || (output_buffer == NULL) || (output_size == NULL)) {
         /* Invalid arguments - result already set */
@@ -539,7 +539,7 @@ int pocket_compress(
             size_t num_packets = input_size / packet_size_bytes;
 
             /* Reset compressor state */
-            pocket_compressor_reset(comp);
+            ccsds124_compressor_reset(comp);
 
             /* Output accumulation */
             size_t total_output_bytes = 0U;
@@ -557,7 +557,7 @@ int pocket_compress(
                 (void)bitvector_from_bytes(&input_vec, &input_data[i * packet_size_bytes], packet_size_bytes);
 
                 /* Compute parameters */
-                pocket_params_t params;
+                ccsds124_params_t params;
                 params.min_robustness = comp->robustness;
 
                 /* If limits are set, manage parameters automatically using countdown counters
@@ -616,18 +616,18 @@ int pocket_compress(
                 }
 
                 /* Compress packet */
-                int packet_result = pocket_compress_packet(comp, &input_vec, &packet_output, &params);
-                if (packet_result != POCKET_OK) {
+                int packet_result = ccsds124_compress_packet(comp, &input_vec, &packet_output, &params);
+                if (packet_result != CCSDS124_OK) {
                     result = packet_result;
                     compress_error = 1;
                 } else {
                     /* Convert packet to bytes with byte-boundary padding */
-                    uint8_t packet_bytes[POCKET_MAX_OUTPUT_BYTES];
+                    uint8_t packet_bytes[CCSDS124_MAX_OUTPUT_BYTES];
                     size_t packet_size = bitbuffer_to_bytes(&packet_output, packet_bytes, sizeof(packet_bytes));
 
                     /* Check if output buffer has space */
                     if ((total_output_bytes + packet_size) > output_buffer_size) {
-                        result = POCKET_ERROR_OVERFLOW;
+                        result = CCSDS124_ERROR_OVERFLOW;
                         compress_error = 1;
                     } else {
                         /* Append to output buffer */
@@ -640,7 +640,7 @@ int pocket_compress(
             /* Return total output size if successful */
             if (compress_error == 0) {
                 *output_size = total_output_bytes;
-                result = POCKET_OK;
+                result = CCSDS124_OK;
             }
         }
     }

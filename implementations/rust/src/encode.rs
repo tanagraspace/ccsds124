@@ -1,4 +1,4 @@
-//! POCKET+ encoding functions (COUNT, RLE, BE).
+//! CCSDS 124.0-B-1 encoding functions (COUNT, RLE, BE).
 //!
 //! Implements CCSDS 124.0-B-1 Section 5.2 encoding schemes:
 //! - Counter Encoding (COUNT) - Section 5.2.2, Table 5-1, Equation 9
@@ -11,7 +11,7 @@
 
 use crate::bitbuffer::BitBuffer;
 use crate::bitvector::BitVector;
-use crate::error::PocketError;
+use crate::error::Ccsds124Error;
 
 /// Pre-computed COUNT encodings for values 1-33.
 ///
@@ -44,9 +44,9 @@ const DEBRUIJN_LOOKUP: [u32; 32] = [
 ///
 /// # Returns
 /// `Ok(())` on success, error if value out of range or buffer overflow.
-pub fn count_encode(output: &mut BitBuffer, a: u32) -> Result<(), PocketError> {
+pub fn count_encode(output: &mut BitBuffer, a: u32) -> Result<(), Ccsds124Error> {
     if a == 0 || a > 65535 {
-        return Err(PocketError::InvalidFormat(
+        return Err(Ccsds124Error::InvalidFormat(
             "COUNT value out of range".into(),
         ));
     }
@@ -54,19 +54,19 @@ pub fn count_encode(output: &mut BitBuffer, a: u32) -> Result<(), PocketError> {
     if a == 1 {
         // Case 1: A = 1 → '0'
         if !output.append_bit(0) {
-            return Err(PocketError::BufferOverflow);
+            return Err(Ccsds124Error::BufferOverflow);
         }
     } else if a <= 33 {
         // Case 2: 2 ≤ A ≤ 33 → '110' || BIT5(A-2)
         // Use pre-computed lookup table
         if !output.append_value(u32::from(COUNT_VALUES[a as usize]), 8) {
-            return Err(PocketError::BufferOverflow);
+            return Err(Ccsds124Error::BufferOverflow);
         }
     } else {
         // Case 3: A ≥ 34 → '111' || BIT_E(A-2)
         // Append '111' prefix
         if !output.append_value(0b111, 3) {
-            return Err(PocketError::BufferOverflow);
+            return Err(Ccsds124Error::BufferOverflow);
         }
 
         // Calculate E = 2⌊log₂(A-2)+1⌋ - 6
@@ -76,7 +76,7 @@ pub fn count_encode(output: &mut BitBuffer, a: u32) -> Result<(), PocketError> {
 
         // Append BIT_E(A-2)
         if !output.append_value(value, e as usize) {
-            return Err(PocketError::BufferOverflow);
+            return Err(Ccsds124Error::BufferOverflow);
         }
     }
 
@@ -98,7 +98,7 @@ pub fn count_encode(output: &mut BitBuffer, a: u32) -> Result<(), PocketError> {
 ///
 /// # Returns
 /// `Ok(())` on success, error if buffer overflow.
-pub fn rle_encode(output: &mut BitBuffer, input: &BitVector) -> Result<(), PocketError> {
+pub fn rle_encode(output: &mut BitBuffer, input: &BitVector) -> Result<(), Ccsds124Error> {
     // Start from the end of the vector
     let mut old_bit_position = input.len() as i32;
 
@@ -141,7 +141,7 @@ pub fn rle_encode(output: &mut BitBuffer, input: &BitVector) -> Result<(), Pocke
 
     // Append terminator '10'
     if !output.append_value(0b10, 2) {
-        return Err(PocketError::BufferOverflow);
+        return Err(Ccsds124Error::BufferOverflow);
     }
 
     Ok(())
@@ -165,9 +165,9 @@ pub fn bit_extract(
     output: &mut BitBuffer,
     data: &BitVector,
     mask: &BitVector,
-) -> Result<(), PocketError> {
+) -> Result<(), Ccsds124Error> {
     if data.len() != mask.len() {
-        return Err(PocketError::InvalidInputLength {
+        return Err(Ccsds124Error::InvalidInputLength {
             expected: mask.len(),
             actual: data.len(),
         });
@@ -197,7 +197,7 @@ pub fn bit_extract(
                 // Extract and output data bit
                 let bit = u8::from((data_word & lsb) != 0);
                 if !output.append_bit(bit) {
-                    return Err(PocketError::BufferOverflow);
+                    return Err(Ccsds124Error::BufferOverflow);
                 }
             }
 
@@ -224,9 +224,9 @@ pub fn bit_extract_forward(
     output: &mut BitBuffer,
     data: &BitVector,
     mask: &BitVector,
-) -> Result<(), PocketError> {
+) -> Result<(), Ccsds124Error> {
     if data.len() != mask.len() {
-        return Err(PocketError::InvalidInputLength {
+        return Err(Ccsds124Error::InvalidInputLength {
             expected: mask.len(),
             actual: data.len(),
         });
@@ -255,7 +255,7 @@ pub fn bit_extract_forward(
                 let bit_mask = 1u32 << (31 - clz);
                 let bit = u8::from((data_word & bit_mask) != 0);
                 if !output.append_bit(bit) {
-                    return Err(PocketError::BufferOverflow);
+                    return Err(Ccsds124Error::BufferOverflow);
                 }
             }
 

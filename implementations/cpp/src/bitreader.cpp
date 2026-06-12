@@ -19,9 +19,9 @@
  * - Provides a compilation unit for the static library
  * - Can hold non-inline utilities if needed in the future
  *
- * @see include/pocketplus/bitreader.hpp for the full implementation
+ * @see include/ccsds124/bitreader.hpp for the full implementation
  */
 
-#include <pocketplus/bitreader.hpp>
+#include <ccsds124/bitreader.hpp>
 
 // All implementation is in the header (inline functions)

@@ -11,9 +11,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 IMPL_DIR="$(dirname "$SCRIPT_DIR")"
 REPO_ROOT="$(dirname "$(dirname "$IMPL_DIR")")"
 REF_DIR="$REPO_ROOT/test-vector-generator/c-reference"
-OUR_CLI="$IMPL_DIR/build/pocketplus"
-REF_COMPRESS="$REF_DIR/pocket_compress"
-REF_DECOMPRESS="$REF_DIR/pocket_decompress"
+OUR_CLI="$IMPL_DIR/build/ccsds124"
+REF_COMPRESS="$REF_DIR/ccsds124_compress"
+REF_DECOMPRESS="$REF_DIR/ccsds124_decompress"
 TMP_DIR=$(mktemp -d)
 
 # Cleanup on exit

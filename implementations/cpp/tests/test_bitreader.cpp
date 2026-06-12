@@ -3,11 +3,11 @@
  * @brief Unit tests for BitReader class.
  */
 
-#include <pocketplus/bitreader.hpp>
+#include <ccsds124/bitreader.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 TEST_CASE("BitReader construction", "[bitreader]") {
     std::uint8_t data[] = {0xAB, 0xCD};

@@ -1,6 +1,6 @@
-# POCKET+ Test Vectors
+# CCSDS 124.0-B-1 Test Vectors
 
-Validation data for POCKET+ implementations.
+Validation data for CCSDS 124.0-B-1 implementations.
 
 ## Test Vectors
 
@@ -49,7 +49,7 @@ pytest tests/test_vectors.py -v
 ### Go
 ```bash
 cd implementations/go
-go test -v ./pocketplus/ -run TestVector
+go test -v ./ccsds124/ -run TestVector
 ```
 
 ## Validation

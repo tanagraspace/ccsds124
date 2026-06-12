@@ -3,15 +3,15 @@
  * @brief Unit tests for Decoder functions (COUNT, RLE, bit insert).
  */
 
-#include <pocketplus/bitbuffer.hpp>
-#include <pocketplus/bitreader.hpp>
-#include <pocketplus/bitvector.hpp>
-#include <pocketplus/decoder.hpp>
-#include <pocketplus/encoder.hpp>
+#include <ccsds124/bitbuffer.hpp>
+#include <ccsds124/bitreader.hpp>
+#include <ccsds124/bitvector.hpp>
+#include <ccsds124/decoder.hpp>
+#include <ccsds124/encoder.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 TEST_CASE("COUNT decode A=1", "[decoder]") {
     // '0' encodes A=1

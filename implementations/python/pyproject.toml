@@ -3,16 +3,16 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pocketplus"
+name = "ccsds124"
 version = "1.0.0"
-description = "POCKET+ lossless compression algorithm (CCSDS 124.0-B-1) for spacecraft housekeeping data"
+description = "CCSDS 124.0-B-1 lossless compression algorithm for spacecraft housekeeping data"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 authors = [
     {name = "Tanagra Space"}
 ]
-keywords = ["compression", "spacecraft", "ccsds", "pocketplus", "housekeeping"]
+keywords = ["compression", "spacecraft", "ccsds", "ccsds124", "housekeeping"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -35,14 +35,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/tanagraspace/pocket-plus"
-Documentation = "https://github.com/tanagraspace/pocket-plus/tree/main/docs"
-Repository = "https://github.com/tanagraspace/pocket-plus"
-Issues = "https://github.com/tanagraspace/pocket-plus/issues"
+Homepage = "https://github.com/tanagraspace/ccsds124"
+Documentation = "https://github.com/tanagraspace/ccsds124/tree/main/docs"
+Repository = "https://github.com/tanagraspace/ccsds124"
+Issues = "https://github.com/tanagraspace/ccsds124/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pocketplus*"]
+include = ["ccsds124*"]
 
 [tool.ruff]
 line-length = 88
@@ -65,6 +65,6 @@ python_functions = ["test_*"]
 
 [tool.coverage.run]
 omit = [
-    "pocketplus/__main__.py",
-    "pocketplus/cli.py",
+    "ccsds124/__main__.py",
+    "ccsds124/cli.py",
 ]

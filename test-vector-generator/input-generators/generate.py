@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unified POCKET+ test vector generator.
+Unified CCSDS 124.0-B-1 test vector generator.
 
 Generates test vectors with optional fault injection into the compressed stream:
 - --inject-lost: Remove packets to simulate transmission loss
@@ -432,7 +432,7 @@ def parse_list(s: str, type_fn=str) -> List:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Generate POCKET+ test vectors with optional fault injection',
+        description='Generate CCSDS 124.0-B-1 test vectors with optional fault injection',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -466,7 +466,7 @@ Examples:
 
     # Implementation
     parser.add_argument('--impl', '-i', type=Path,
-                        help='Path to pocketplus CLI (auto-detected if not specified)')
+                        help='Path to ccsds124 CLI (auto-detected if not specified)')
 
     # Fault injection
     parser.add_argument('--inject-lost', action='store_true',
@@ -491,9 +491,9 @@ Examples:
     else:
         # Try to find it
         candidates = [
-            Path(__file__).parent.parent.parent / 'implementations/c/build/pocketplus',
-            Path.cwd() / 'implementations/c/build/pocketplus',
-            Path.home() / 'pocket-plus/implementations/c/build/pocketplus',
+            Path(__file__).parent.parent.parent / 'implementations/c/build/ccsds124',
+            Path.cwd() / 'implementations/c/build/ccsds124',
+            Path.home() / 'ccsds124/implementations/c/build/ccsds124',
         ]
         impl_path = None
         for c in candidates:
@@ -502,9 +502,9 @@ Examples:
                 break
 
     if not impl_path or not impl_path.exists():
-        print("Error: pocketplus CLI not found")
+        print("Error: ccsds124 CLI not found")
         print("Build with: cd implementations/c && make")
-        print("Or specify with: --impl /path/to/pocketplus")
+        print("Or specify with: --impl /path/to/ccsds124")
         sys.exit(1)
 
     # Parse parameters
@@ -517,7 +517,7 @@ Examples:
 
     # Print config
     print("=" * 60)
-    print("POCKET+ Test Vector Generator")
+    print("CCSDS 124.0-B-1 Test Vector Generator")
     print("=" * 60)
     print(f"Output:        {args.output_dir}")
     print(f"Target size:   {target_size:,} bytes ({target_size/1024/1024:.1f} MB)")

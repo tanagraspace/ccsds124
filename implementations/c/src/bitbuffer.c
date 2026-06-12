@@ -28,7 +28,7 @@
  * @see https://ccsds.org/Pubs/124x0b1.pdf CCSDS 124.0-B-1 Standard
  */
 
-#include "pocketplus.h"
+#include "ccsds124.h"
 #include <string.h>
 
 /**
@@ -42,7 +42,7 @@ void bitbuffer_init(bitbuffer_t *bb) {
         bb->num_bits = 0U;
         bb->acc = 0U;
         bb->acc_len = 0U;
-        (void)memset(bb->data, 0, POCKET_MAX_OUTPUT_BYTES);
+        (void)memset(bb->data, 0, CCSDS124_MAX_OUTPUT_BYTES);
     }
 }
 
@@ -75,13 +75,13 @@ static void bitbuffer_flush_acc(bitbuffer_t *bb) {
 
 
 int bitbuffer_append_bit(bitbuffer_t *bb, int bit) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if (bb != NULL) {
-        /* Check for overflow - POCKET_MAX_OUTPUT_BYTES * 8 bits */
-        size_t max_bits = POCKET_MAX_OUTPUT_BYTES * 8U;
+        /* Check for overflow - CCSDS124_MAX_OUTPUT_BYTES * 8 bits */
+        size_t max_bits = CCSDS124_MAX_OUTPUT_BYTES * 8U;
         if (bb->num_bits >= max_bits) {
-            result = POCKET_ERROR_OVERFLOW;
+            result = CCSDS124_ERROR_OVERFLOW;
         } else {
             /* Accumulate bit in MSB-first order */
             uint32_t bit_val = ((uint32_t)bit) & 1U;
@@ -94,7 +94,7 @@ int bitbuffer_append_bit(bitbuffer_t *bb, int bit) {
                 bitbuffer_flush_acc(bb);
             }
 
-            result = POCKET_OK;
+            result = CCSDS124_OK;
         }
     }
 
@@ -103,18 +103,18 @@ int bitbuffer_append_bit(bitbuffer_t *bb, int bit) {
 
 
 int bitbuffer_append_bits(bitbuffer_t *bb, const uint8_t *data, size_t num_bits) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((bb != NULL) && (data != NULL)) {
-        /* Check for overflow - POCKET_MAX_OUTPUT_BYTES * 8 bits */
-        size_t max_bits = POCKET_MAX_OUTPUT_BYTES * 8U;
+        /* Check for overflow - CCSDS124_MAX_OUTPUT_BYTES * 8 bits */
+        size_t max_bits = CCSDS124_MAX_OUTPUT_BYTES * 8U;
         if ((bb->num_bits + num_bits) > max_bits) {
-            result = POCKET_ERROR_OVERFLOW;
+            result = CCSDS124_ERROR_OVERFLOW;
         } else {
-            result = POCKET_OK;
+            result = CCSDS124_OK;
 
             /* Append each bit MSB-first */
-            for (size_t i = 0U; (i < num_bits) && (result == POCKET_OK); i++) {
+            for (size_t i = 0U; (i < num_bits) && (result == CCSDS124_OK); i++) {
                 size_t byte_index = i / 8U;
                 size_t bit_index = i % 8U;
 
@@ -146,16 +146,16 @@ int bitbuffer_append_bits(bitbuffer_t *bb, const uint8_t *data, size_t num_bits)
  * @param[out] bb       Bit buffer
  * @param[in]  value    Value containing bits (right-justified)
  * @param[in]  num_bits Number of bits to append (1-24)
- * @return POCKET_OK on success, error code otherwise
+ * @return CCSDS124_OK on success, error code otherwise
  */
 int bitbuffer_append_value(bitbuffer_t *bb, uint32_t value, size_t num_bits) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((bb != NULL) && (num_bits > 0U) && (num_bits <= 24U)) {
         /* Check for overflow */
-        size_t max_bits = POCKET_MAX_OUTPUT_BYTES * 8U;
+        size_t max_bits = CCSDS124_MAX_OUTPUT_BYTES * 8U;
         if ((bb->num_bits + num_bits) > max_bits) {
-            result = POCKET_ERROR_OVERFLOW;
+            result = CCSDS124_ERROR_OVERFLOW;
         } else {
             /* Add bits directly to accumulator.
              * Value is right-justified: the bottom 'num_bits' bits are the data.
@@ -170,7 +170,7 @@ int bitbuffer_append_value(bitbuffer_t *bb, uint32_t value, size_t num_bits) {
             /* Flush complete bytes */
             bitbuffer_flush_acc(bb);
 
-            result = POCKET_OK;
+            result = CCSDS124_OK;
         }
     }
 
@@ -179,16 +179,16 @@ int bitbuffer_append_value(bitbuffer_t *bb, uint32_t value, size_t num_bits) {
 
 
 int bitbuffer_append_bitvector(bitbuffer_t *bb, const bitvector_t *bv) {
-    int result = POCKET_ERROR_INVALID_ARG;
+    int result = CCSDS124_ERROR_INVALID_ARG;
 
     if ((bb != NULL) && (bv != NULL)) {
-        result = POCKET_OK;
+        result = CCSDS124_OK;
 
         /* Calculate number of bytes from bit length */
         size_t num_bytes = (bv->length + 7U) / 8U;
 
         /* CCSDS MSB-first: bytes in order, but bits within each byte from MSB to LSB */
-        for (size_t byte_idx = 0U; (byte_idx < num_bytes) && (result == POCKET_OK); byte_idx++) {
+        for (size_t byte_idx = 0U; (byte_idx < num_bytes) && (result == CCSDS124_OK); byte_idx++) {
             size_t bits_in_this_byte = 8U;
 
             /* Last byte may have fewer than 8 bits */
@@ -203,7 +203,7 @@ int bitbuffer_append_bitvector(bitbuffer_t *bb, const bitvector_t *bv) {
              * We want to append bits in order: MSB first, LSB last
              * So we iterate through positions 0, 1, 2, ..., bits_in_this_byte-1 */
             size_t start_bit = byte_idx * 8U;
-            for (size_t bit_offset = 0U; (bit_offset < bits_in_this_byte) && (result == POCKET_OK); bit_offset++) {
+            for (size_t bit_offset = 0U; (bit_offset < bits_in_this_byte) && (result == CCSDS124_OK); bit_offset++) {
                 size_t pos = start_bit + bit_offset;
                 int bit = bitvector_get_bit(bv, pos);
 

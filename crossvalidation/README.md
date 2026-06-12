@@ -18,7 +18,7 @@ crossvalidation/
   sandbox/                  # Original ESA reference code harness
 ```
 
-Harnesses for the other languages are tracked in [#93](https://github.com/tanagraspace/pocket-plus/issues/93) — deliberately deferred until the C accept/reject ruleset is finalized ([#89](https://github.com/tanagraspace/pocket-plus/issues/89)), with decoder bitstream hardening ([#92](https://github.com/tanagraspace/pocket-plus/issues/92)) as a prerequisite.
+Harnesses for the other languages are tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93) — deliberately deferred until the C accept/reject ruleset is finalized ([#89](https://github.com/tanagraspace/ccsds124/issues/89)), with decoder bitstream hardening ([#92](https://github.com/tanagraspace/ccsds124/issues/92)) as a prerequisite.
 
 ## Test Vectors
 
@@ -26,7 +26,7 @@ The suite contains **7,935 encoder** and **16,965 decoder** test vectors designe
 
 ## Methodology
 
-1. Each harness binary reads an input test vector, processes it through the implementation's API, and writes the output to a file. The C decoder harness uses `pocket_discover_packet_length()` to discover F from the compressed bitstream and `pocket_decompress_packet_checked()` for decompression with accuracy guarantee tracking (mask synchronization, status history, state save/restore, and the guarantee decision tree).
+1. Each harness binary reads an input test vector, processes it through the implementation's API, and writes the output to a file. The C decoder harness uses `ccsds124_discover_packet_length()` to discover F from the compressed bitstream and `ccsds124_decompress_packet_checked()` for decompression with accuracy guarantee tracking (mask synchronization, status history, state save/restore, and the guarantee decision tree).
 2. The runner script computes the **file size** and **SHA-256 hash** of each generated output.
 3. These are compared against the expected values in `file_list.csv` (the canonical manifest from the cross-validation suite).
 4. A vector passes if both size and SHA-256 match.

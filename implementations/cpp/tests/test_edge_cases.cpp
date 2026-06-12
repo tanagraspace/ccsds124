@@ -1,22 +1,22 @@
 /**
  * @file test_edge_cases.cpp
- * @brief Comprehensive edge case tests for POCKET+ implementation.
+ * @brief Comprehensive edge case tests for CCSDS 124.0-B-1 implementation.
  *
  * Tests boundary conditions, corner cases, and stress scenarios.
  */
 
-#include <pocketplus/bitbuffer.hpp>
-#include <pocketplus/bitreader.hpp>
-#include <pocketplus/bitvector.hpp>
-#include <pocketplus/compressor.hpp>
-#include <pocketplus/decoder.hpp>
-#include <pocketplus/decompressor.hpp>
-#include <pocketplus/encoder.hpp>
-#include <pocketplus/pocketplus.hpp>
+#include <ccsds124/bitbuffer.hpp>
+#include <ccsds124/bitreader.hpp>
+#include <ccsds124/bitvector.hpp>
+#include <ccsds124/ccsds124.hpp>
+#include <ccsds124/compressor.hpp>
+#include <ccsds124/decoder.hpp>
+#include <ccsds124/decompressor.hpp>
+#include <ccsds124/encoder.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
-using namespace pocketplus;
+using namespace ccsds124;
 
 // ============================================================================
 // BitVector Edge Cases

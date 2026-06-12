@@ -17,7 +17,7 @@ cat > "$OUTPUT_DIR/index.html" << 'HTMLEOF'
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POCKET+ Go Implementation</title>
+  <title>CCSDS 124.0-B-1 Go Implementation</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 900px; margin: 0 auto; padding: 2rem; line-height: 1.6; background: #f8f9fa; }
     h1 { color: #333; border-bottom: 2px solid #00ADD8; padding-bottom: 0.5rem; }
@@ -47,18 +47,18 @@ cat > "$OUTPUT_DIR/index.html" << 'HTMLEOF'
   </style>
 </head>
 <body>
-  <h1>POCKET+ Go Implementation</h1>
-  <p>Go implementation of the CCSDS 124.0-B-1 POCKET+ lossless compression algorithm of fixed-length housekeeping data.</p>
+  <h1>CCSDS 124.0-B-1 Go Implementation</h1>
+  <p>Go implementation of the CCSDS 124.0-B-1 lossless compression algorithm of fixed-length housekeeping data.</p>
 
   <div class="citation">
     <h2 style="margin-top: 0;">Citation</h2>
-    <p>If POCKET+ contributes to your research, please cite:</p>
+    <p>If CCSDS 124.0-B-1 contributes to your research, please cite:</p>
     <blockquote>
       D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," <em>Proceedings of the Small Satellite Conference</em>, Communications, SSC22-XII-03. <a href="https://digitalcommons.usu.edu/smallsat/2022/all2022/133/">https://digitalcommons.usu.edu/smallsat/2022/all2022/133/</a>
     </blockquote>
     <details>
       <summary>BibTeX</summary>
-      <pre>@inproceedings{evans2022pocketplus,
+      <pre>@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labreche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -79,8 +79,8 @@ cat > "$OUTPUT_DIR/index.html" << 'HTMLEOF'
   </div>
 
   <div class="package">
-    <h2 id="package">Package pocketplus</h2>
-    <p class="doc">Package pocketplus implements the CCSDS 124.0-B-1 POCKET+ lossless data compression algorithm for fixed-length housekeeping data.</p>
+    <h2 id="package">Package ccsds124</h2>
+    <p class="doc">Package ccsds124 implements the CCSDS 124.0-B-1 lossless data compression algorithm for fixed-length housekeeping data.</p>
 HTMLEOF
 
 # Generate documentation for types
@@ -92,7 +92,7 @@ cat >> "$OUTPUT_DIR/index.html" << 'HTMLEOF'
       <pre><code>type Compressor struct {
     // Contains filtered or unexported fields
 }</code></pre>
-      <p class="doc">Compressor maintains state for POCKET+ compression across multiple packets.</p>
+      <p class="doc">Compressor maintains state for CCSDS 124.0-B-1 compression across multiple packets.</p>
       <h4>Methods</h4>
       <div class="func">
         <div class="func-sig">func NewCompressor(F int, initialMask *BitVector, robustness, ptLimit, ftLimit, rtLimit int) (*Compressor, error)</div>
@@ -114,7 +114,7 @@ cat >> "$OUTPUT_DIR/index.html" << 'HTMLEOF'
     F          int        // Input vector length in bits
     // Contains filtered or unexported fields
 }</code></pre>
-      <p class="doc">Decompressor maintains state for POCKET+ decompression.</p>
+      <p class="doc">Decompressor maintains state for CCSDS 124.0-B-1 decompression.</p>
       <h4>Methods</h4>
       <div class="func">
         <div class="func-sig">func NewDecompressor(F int, initialMask *BitVector, robustness int) (*Decompressor, error)</div>

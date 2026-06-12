@@ -3,7 +3,7 @@
 //! These tests verify that the Rust implementation produces byte-identical
 //! output to the C reference implementation for all test vectors.
 
-use pocketplus::{compress, decompress};
+use ccsds124::{compress, decompress};
 use std::fs;
 use std::path::Path;
 

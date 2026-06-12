@@ -1,8 +1,8 @@
-# POCKET+ Algorithm Specification
+# CCSDS 124.0-B-1 Algorithm Specification
 
 ## Overview
 
-POCKET+ (CCSDS 124.0-B-1) is a lossless compression algorithm designed for fixed-length housekeeping telemetry data. It exploits the property that many bits in consecutive packets remain unchanged, achieving compression by only transmitting the bits that change.
+CCSDS 124.0-B-1 is a lossless compression algorithm designed for fixed-length housekeeping telemetry data. It exploits the property that many bits in consecutive packets remain unchanged, achieving compression by only transmitting the bits that change.
 
 **Key Features:**
 - **Lossless compression** of fixed-length binary vectors

@@ -20,9 +20,9 @@
  * - Provides a compilation unit for the static library
  * - Can hold non-template utilities if needed in the future
  *
- * @see include/pocketplus/encoder.hpp for the full implementation
+ * @see include/ccsds124/encoder.hpp for the full implementation
  */
 
-#include <pocketplus/encoder.hpp>
+#include <ccsds124/encoder.hpp>
 
 // All implementation is in the header (template functions)

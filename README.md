@@ -38,7 +38,7 @@ Conforms to **CCSDS 124.0-B-1** (Blue Book, February 2023), demonstrated two way
 
 ## Documentation
 
-- 📘 **[Implementer's Guide](docs/GOTCHAS.md)** — if you are implementing CCSDS 124.0-B-1 yourself, start here. It documents the 21 byte-level pitfalls (each tagged as spec-mandated or a reference-conformance detail, with section/equation citations) that you must get right to produce byte-identical output.
+- **[Implementer's Guide](docs/GOTCHAS.md)** — if you are implementing CCSDS 124.0-B-1 yourself, start here. It documents the 21 byte-level pitfalls (each tagged as spec-mandated or a reference-conformance detail, with section/equation citations) that you must get right to produce byte-identical output.
 - **[Algorithm Reference](docs/ALGORITHM.md)** — the encoding/decoding steps, equations, and worked examples.
 - **[Conformance](docs/CONFORMANCE.md)** — what the project conforms to and the evidence: byte-identical-to-reference plus the UAB/CNES cross-validation results and documented gaps.
 - **[Test Report](docs/TESTING.md)** — the engineering test suite: unit, malformed-input, robustness, packet-loss, fuzzing, and reference-vector tests.

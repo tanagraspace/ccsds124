@@ -8,6 +8,8 @@ For the engineering test report (unit, malformed-input, robustness, packet-loss,
 
 **CCSDS 124.0-B-1**, *Robust Compression of Fixed-Length Housekeeping Data* — Blue Book, Issue 1, February 2023 ([PDF](https://ccsds.org/Pubs/124x0b1.pdf)). The algorithm is based on ESA's patented POCKET+.
 
+This implementation conforms specifically to **Issue 1 (the `-B-1` suffix)**. The `124.0` series number is stable; the issue suffix would change only if CCSDS publishes a corrigendum or a future re-issue (e.g. `124.0-B-2`). Any such change — and any conformance impact — will be tracked via the [issue tracker](https://github.com/tanagraspace/ccsds124/issues) and reflected here.
+
 ## How conformance is demonstrated
 
 Two independent, complementary checks:
@@ -74,7 +76,7 @@ Pattern: `rt=1, ft=1, mask_inconsistent=1, mask_synced=0`. Our logic guarantees 
 
 Other known gaps:
 - Cross-validation harnesses for C++, Python, Go, Rust, and Java are not yet implemented (`crossvalidation/<lang>/` are placeholders) — tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93), deferred until #89 resolves. Those implementations are validated via the shared `test-vectors/` only.
-- The C++/Python/Go/Rust/Java decoders do not yet validate bitstream integrity (GOTCHAS.md #20) — corrupt input can produce silent wrong output instead of an error. Tracked in [#92](https://github.com/tanagraspace/ccsds124/issues/92).
+- The C++/Python/Go/Rust/Java decoders validate bitstream integrity — corrupt or truncated input is rejected with an error (RLE-delta bounds and underflow checks, completed in [#92](https://github.com/tanagraspace/ccsds124/issues/92)). They do not yet implement the C decoder's full **accuracy-guarantee** layer (the guaranteed/unguaranteed accept-reject decisions and padding verification); that moves with [#93](https://github.com/tanagraspace/ccsds124/issues/93).
 
 ## Per-implementation conformance status
 

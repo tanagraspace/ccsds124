@@ -32,6 +32,13 @@ POCKET+ is an European Space Agency (ESA) patented lossless compression algorith
 
 The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compressing fixed-length spacecraft housekeeping packets.
 
+## Documentation
+
+- 📘 **[Implementer's Guide](docs/GOTCHAS.md)** — if you are implementing CCSDS 124.0-B-1 yourself, start here. It documents the 21 byte-level pitfalls (each tagged as spec-mandated or a reference-conformance detail, with section/equation citations) that you must get right to produce byte-identical output.
+- **[Algorithm Reference](docs/ALGORITHM.md)** — the encoding/decoding steps, equations, and worked examples.
+- **[Conformance & Testing](docs/TESTING.md)** — test vectors, cross-validation results, and documented gaps.
+- **[Implementation Guidelines](docs/GUIDELINES.md)** — per-language build, test, and style notes.
+
 ## Implementations
 
 | Language | Version | Validated¹ | Cross-Validated² | Target | Location |

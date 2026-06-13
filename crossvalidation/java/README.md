@@ -2,4 +2,4 @@
 
 TODO: Implement the cross-validation harness for the Java implementation — tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93), deliberately deferred until the C accept/reject ruleset is finalized ([#89](https://github.com/tanagraspace/ccsds124/issues/89)).
 
-Prerequisite: port the decoder bitstream hardening (GOTCHAS.md #20) to the Java implementation — tracked in [#92](https://github.com/tanagraspace/ccsds124/issues/92).
+The decoder bitstream hardening (GOTCHAS.md #20) is complete (#92). The Java cross-validation harness — and the accuracy-guarantee layer it needs — is tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93) (blocked on #89).

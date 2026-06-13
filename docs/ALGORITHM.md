@@ -13,120 +13,9 @@ CCSDS 124.0-B-1 is a lossless compression algorithm designed for fixed-length ho
 
 ## ⚠️ Critical Implementation Notes
 
-**READ THIS FIRST!** These are the most common implementation pitfalls that will cause your output to diverge from the reference implementation:
+Implementing this algorithm has several non-obvious pitfalls that cause divergence from the reference: the Rₜ+1 initialization phase, flag timing (countdown counters, with the first trigger at `period + 1` because the first packet is the initialization packet), the Vₜ change-history window, D₀ = 0 at initialization, kₜ inversion and forward extraction order, MSB-aligned masking for non-byte-aligned lengths, and decoder bitstream validation.
 
-### 1. Initialization Phase: First Rₜ+1 Packets (Not Rₜ+2!)
-
-The CCSDS spec (Section 3.3.2 c–d) mandates ḟₜ=1 and ṙₜ=1 for the **first Rₜ+1 packets** (t ≤ Rₜ). The spec leaves ṗₜ user-specified at every t; the reference implementation additionally uses ṗₜ=0 during initialization, and matching it is required for byte-identical output.
-
-**Example for Rₜ=1:**
-- Packet 0 (first packet): init phase → ḟₜ=1, ṙₜ=1, ṗₜ=0
-- Packet 1 (second packet): init phase → ḟₜ=1, ṙₜ=1, ṗₜ=0
-- Packet 2 (third packet): **normal operation begins**
-
-**Common mistake:** Applying init phase to Rₜ+2 packets instead of Rₜ+1 packets.
-
-**Correct condition:** `packet_index ≤ Rₜ` triggers init phase
-**Wrong condition:** `packet_index < Rₜ + 2` (applies to 3 packets when Rₜ=1)
-
-### 2. Flag Timing: Countdown Counters, Not Modulo Arithmetic
-
-The reference implementation uses **countdown counters** that start at the period limit and decrement each packet. Flags trigger when the counter reaches 1, then reset.
-
-**Pattern for Rₜ=1, periods (10, 20, 50):**
-- ṗₜ=1 (new mask) at packets: **11, 21, 31, 41...** (not 10, 20, 30!)
-- ḟₜ=1 (send mask) at packets: **21, 41, 61, 81...** (not 20, 40, 60!)
-- ṙₜ=1 (uncompressed) at packets: **51, 101, 151, 201...** (not 50, 100, 150!)
-
-**Key insight:** First trigger happens at `period + Rₜ`, not at `period`.
-
-**Example for pt_period=10, Rₜ=1:**
-- pt_first_trigger = 10 + 1 = **packet 11**
-- Subsequent triggers: packets 21, 31, 41... (every 10 packets)
-
-**Common mistake:** Using `(packet_num % period) == 0` which triggers one packet too early (at packets 10, 20, 30 instead of 11, 21, 31).
-
-### 3. Vₜ Calculation: Start from Rₜ+1
-
-Per CCSDS Section 5.3.2.2 (NOTE to Equation 14), Cₜ counts consecutive occurrences of no mask changes, starting from the first cycle not covered by Rₜ — i.e., Rₜ+1 cycles back — and working backwards in time.
-
-**Correct algorithm:**
-1. For t ≤ Rₜ: Vₜ = Rₜ (initialization phase)
-2. For t > Rₜ: Count backward starting from position Rₜ+1
-   - Check D_{t-(Rₜ+1)}, D_{t-(Rₜ+2)}, ...
-   - Stop when finding a change or reaching the maximum Cₜ = min(t, 15) - Rₜ (Eq. 14)
-   - Vₜ = Rₜ + Cₜ
-
-**Example for Rₜ=2, t=5:**
-- Start checking from i=3 (Rₜ+1=3)
-- Check D_{t-3}, D_{t-4}, D_{t-5}, ...
-- If all empty, Cₜ increases accordingly
-
-**Common mistake:** Starting from i=2 regardless of Rₜ. This works for R=1 but fails for R=2.
-
-### 4. Packet Indexing: 0-Based vs 1-Based in Flag Calculations
-
-The CCSDS reference implementation uses **1-based packet numbering** (packets 1, 2, 3...). If your implementation uses **0-based loop indexing** (i=0, 1, 2...), you MUST convert to 1-based when calculating flag triggers.
-
-**The Reference Uses 1-Based Packet Numbers:**
-- Packet 1 = first packet (our i=0)
-- Packet 11 = eleventh packet (our i=10) ← first ṗₜ trigger for Rₜ=1
-- Packet 21 = twenty-first packet (our i=20) ← first ḟₜ trigger for Rₜ=1
-
-**Example for Rₜ=1, pt_period=10:**
-
-| Loop Index (i) | Packet Number | Expected ṗₜ | Wrong (using i) | Impact |
-|----------------|---------------|-------------|-----------------|---------|
-| i=10 | Packet 11 | **1** (trigger!) | 0 | Flag missed! |
-| i=20 | Packet 21 | **1** (trigger!) | 0 | Flag missed! |
-| i=30 | Packet 31 | **1** (trigger!) | 0 | Flag missed! |
-
-**The Fix:** Use `packet_num = i + 1` when calculating flag triggers.
-- For i=10: packet_num=11, check if `11 % 10 == 1` ✓ Triggers correctly!
-- For i=20: packet_num=21, check if `21 % 10 == 1` ✓ Triggers correctly!
-
-**Common mistake:** Using loop index `i` directly for modulo arithmetic when flag triggers are defined in 1-based terms.
-
-**Why this matters:**
-- Wrong flags corrupt the dₜ calculation (flag_no_mask_updates_in_Xt)
-- Wrong ṗₜ causes mask/build updates at incorrect times
-- Wrong ḟₜ omits required mask transmission
-- Wrong ṙₜ sends compressed data when uncompressed is expected
-- **Result:** Complete divergence within 20-30 packets
-
-### 5. Component kₜ: Inverted Mask Values (Not Direct Mask Values!)
-
-The kₜ component encodes mask values at changed positions, but **outputs the INVERSE** of the mask bits.
-
-**CCSDS spec defines (Equations 19–20):** kₜ = yₜ = BE(<~Mₜ>, Xₜ) — the inversion (`~Mₜ`) is explicit in the formula, even though the Section 5.1 overview prose just calls it "information on the mask values for each change".
-**In practice:** Output '1' for positive updates (mask changed to 0), '0' for negative updates (mask changed to 1)
-
-**Correct encoding:**
-- When Xₜ has '1' at position i (bit changed):
-  - If mask[i] = 0 (now predictable): output **1** in kₜ
-  - If mask[i] = 1 (now unpredictable): output **0** in kₜ
-- This is the **INVERSE** of the mask values
-
-**Example:**
-- Xₜ = '1' at positions [43, 142]
-- Mask values at those positions: [0, 0] (both predictable)
-- kₜ output (extracted in forward order, low to high position): **11** (not 00!)
-
-**Why this matters:**
-- The eₜ flag indicates if there are "positive updates" (mask bits changed from 1→0, becoming predictable)
-- kₜ outputs '1' to mark these positive updates
-- Extracting mask values directly gives the opposite encoding
-- **Result:** 2-bit error per changed position, causing divergence at byte ~30% into output
-
-**Implementation:**
-```
-inverted_mask[i] = !mask[i]  // Invert the entire mask
-kt = BE(inverted_mask, Xt)   // Extract inverted values at changed positions
-```
-
-### Summary
-
-See [GOTCHAS.md](GOTCHAS.md) for the complete list of implementation pitfalls.
+These are documented in full — with worked examples, correct code, and impact analysis — in **[GOTCHAS.md](GOTCHAS.md)**. Read it before implementing. This section is intentionally a pointer rather than a copy, so the two documents cannot drift.
 
 ## High-Level Data Flow
 
@@ -224,7 +113,7 @@ Dₜ = Mₜ XOR Mₜ₋₁
 
 Initial condition: the spec (Equation 8) defines **D₀ = 0** directly (the XOR case applies only for t > 0). A convenient implementation strategy is to set M₋₁ = M₀ before the first packet so the XOR yields 0 without a special case.
 
-⚠️ **See [GOTCHAS.md #19](GOTCHAS.md#19-d₀-must-be-zero-at-initialization-not-m₀)** — A common mistake is treating the initial mask as a "change" (D₀ = M₀), which is wrong.
+⚠️ **See [GOTCHAS.md #18](GOTCHAS.md#18-d₀-must-be-zero-at-initialization-not-m₀)** — A common mistake is treating the initial mask as a "change" (D₀ = M₀), which is wrong.
 
 **Flow Diagram:**
 ```
@@ -266,7 +155,7 @@ Where:
 
 - **Vₜ**: Effective robustness level (4 bits, value 0-15)
 - **eₜ**: '1' if any changed position became predictable (a "positive update": mask bit now 0), '0' if all changes became unpredictable
-- **kₜ**: Inverted mask values at changed positions, kₜ = BE(<~Mₜ>, Xₜ) — see Critical Implementation Note #5
+- **kₜ**: Inverted mask values at changed positions, kₜ = BE(<~Mₜ>, Xₜ) — see [GOTCHAS.md #5](GOTCHAS.md#5--component-kₜ-forward-extraction-order-not-reverse)
 - **cₜ**: '1' if the new_mask_flag (ṗ) was set more than once in {max(0, t−Vₜ), …, t} (the current packet plus the previous Vₜ cycles)
 - **ḋₜ**: Flag indicating if both ḟₜ and ṙₜ are zero
 
@@ -376,16 +265,16 @@ BE(a, b) = a₆ ∥ a₄ ∥ a₁ = '100' (highest position extracted first)
 
 **Special Constraints:**
 - For the **first Rₜ+1 packets** (t ≤ Rₜ), the spec (3.3.2 c–d) mandates ḟₜ = 1 and ṙₜ = 1 (full mask and full input during initialization); the reference implementation additionally uses ṗₜ = 0
-  - ⚠️ **See [Critical Implementation Note #1](#1-initialization-phase-first-rₜ1-packets-not-rₜ2)** - Common off-by-one error!
+  - ⚠️ **See [GOTCHAS.md #1](GOTCHAS.md#1-initialization-phase-first-rₜ1-packets-not-rₜ2)** - Common off-by-one error!
 - In the reference implementation and shared test vectors, the timing of the ṗₜ, ḟₜ, ṙₜ flags is driven by period counters that start during initialization (the spec itself leaves the flags user-specified per packet)
-  - ⚠️ **See [Critical Implementation Note #2](#2-flag-timing-countdown-counters-not-modulo-arithmetic)** - Flags don't trigger when you expect!
+  - ⚠️ **See [GOTCHAS.md #2](GOTCHAS.md#2-flag-timing-countdown-counters-not-modulo-arithmetic)** - Flags don't trigger when you expect!
 - All parameters needed for decompression are encoded in the output bitstream
 
 ## Bit Numbering Convention
 
 ⚠️ **CRITICAL**: the **MSB is transmitted first**. What matters for interoperability is the *transmission order*; be careful not to confuse the standard's bit *labels* with the index convention used in this documentation and the implementations.
 
-**The standard's labeling (CCSDS 124.0-B-1 Section 1.6.3):** bits are numbered N−1 down to 0, with **bit N−1 = MSB = first transmitted**:
+**The standard's labeling (CCSDS 124.0-B-1 Section 1.6.1):** bits are numbered N−1 down to 0, with **bit N−1 = MSB = first transmitted**:
 ```
 ┌─────┬─────┬─────┬───┬───┬───┐
 │ N-1 │ N-2 │ N-3 │ … │ 1 │ 0 │  ← Bit labels in the standard
@@ -447,7 +336,7 @@ Vₜ = Rₜ + Cₜ
 - **Rₜ**: User-specified minimum required robustness level (0-7)
 - **Cₜ**: Additional robustness from consecutive unchanged masks
 
-**Important:** ⚠️ **See [Critical Implementation Note #3](#3-vₜ-calculation-start-from-rₜ1)** for common pitfalls!
+**Important:** ⚠️ **See [GOTCHAS.md #3](GOTCHAS.md#3-vₜ-calculation-start-from-rₜ1-not-position-2)** for common pitfalls!
 
 Per CCSDS 124.0-B-1 Section 5.3.2.2 (Equation 14), Cₜ is defined as:
 

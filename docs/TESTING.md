@@ -269,7 +269,7 @@ make crossvalidation \
 
 **Total**: 23,037 of 24,900 cross-validation vectors passed
 
-The encoder passes all 7,935 vectors. The decoder passes 15,102 of 16,965 vectors. The remaining 1,863 failures are documented gaps recorded in `crossvalidation/known-failures.txt` — the runner reports **PASS (matches known-failures baseline)** when actual failures match that list exactly, and **FAIL** only on regressions or new failures. The suite covers valid and invalid parameters, non-byte-aligned packet lengths, non-zero initial masks, packet loss scenarios, and edge cases. Four gotchas were discovered and fixed during cross-validation (see [GOTCHAS.md](GOTCHAS.md) #19, #20, #21, and #22).
+The encoder passes all 7,935 vectors. The decoder passes 15,102 of 16,965 vectors. The remaining 1,863 failures are documented gaps recorded in `crossvalidation/known-failures.txt` — the runner reports **PASS (matches known-failures baseline)** when actual failures match that list exactly, and **FAIL** only on regressions or new failures. The suite covers valid and invalid parameters, non-byte-aligned packet lengths, non-zero initial masks, packet loss scenarios, and edge cases. Four gotchas were discovered and fixed during cross-validation (see [GOTCHAS.md](GOTCHAS.md) #18, #19, #20, and #21).
 
 ### Reverse-Engineered Validation Rules
 
@@ -293,11 +293,11 @@ Pattern: `rt=1, ft=1, mask_inconsistent=1, mask_synced=0`. Our logic guarantees 
 
 **16 vectors — unknown excess-rejection rule**: the reference rejects certain `rt=1` packets with small excess bit counts (48–344) after F is established, while accepting large excesses (4K–64K) on the stream's first valid reference packet. The exact discriminator is unidentified; these 16 are accepted as a trade-off for the 118 vectors the excess-tolerance rule fixes.
 
-**Path to 100%:** requires access to the UAB reference decoder source (or its accept/reject decision rules) — the categories interact, and rule combinations beyond the three implemented above produced net regressions. Tracked in [#89](https://github.com/tanagraspace/ccsds124/issues/89); see also GOTCHAS.md #22.
+**Path to 100%:** requires access to the UAB reference decoder source (or its accept/reject decision rules) — the categories interact, and rule combinations beyond the three implemented above produced net regressions. Tracked in [#89](https://github.com/tanagraspace/ccsds124/issues/89); see also GOTCHAS.md #21.
 
 Other known gaps:
 - Cross-validation harnesses for C++, Python, Go, Rust, and Java are not yet implemented (`crossvalidation/<lang>/` are placeholders) — tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93), deferred until #89 resolves. Those implementations are validated via the shared `test-vectors/` only.
-- The C++/Python/Go/Rust/Java decoders do not yet validate bitstream integrity (GOTCHAS.md #21) — corrupt input can produce silent wrong output instead of an error. Tracked in [#92](https://github.com/tanagraspace/ccsds124/issues/92).
+- The C++/Python/Go/Rust/Java decoders do not yet validate bitstream integrity (GOTCHAS.md #20) — corrupt input can produce silent wrong output instead of an error. Tracked in [#92](https://github.com/tanagraspace/ccsds124/issues/92).
 
 ## Run All Tests
 

@@ -15,6 +15,6 @@ Releases are tagged `c/vX.Y.Z`.
 - CLI tool for compress/decompress operations
 - `ccsds124_decompress_packet_checked()` — single-packet decompression with accuracy guarantee tracking (mask synchronization, status history, state save/restore, guarantee decision tree)
 - `ccsds124_discover_packet_length()` — discover F from a compressed packet bitstream, with signaled-length validity rules (range 1–65535, RLE span consistency) and truncated-reference signaling via `CCSDS124_STATUS_TRUNCATED_LENGTH`
-- Bitstream integrity validation in the decoder: underflow detection, RLE delta bounds checking, post-decompression padding verification (GOTCHAS.md #21)
+- Bitstream integrity validation in the decoder: underflow detection, RLE delta bounds checking, post-decompression padding verification (GOTCHAS.md #20)
 - Reference packets (`rt=1`) tolerate excess trailing bits in checked decompression (self-delimiting via `COUNT(F)`); compressed packets (`rt=0`) keep the strict ≤7-padding-bits rule
 - MISRA-C:2012 compliance, fuzzing harnesses, and CCSDS cross-validation harness (UAB suite)

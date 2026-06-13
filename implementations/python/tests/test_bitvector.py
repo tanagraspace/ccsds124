@@ -178,7 +178,7 @@ class TestBitVectorBitwiseOps:
             assert result.get_bit(i) == 0
 
     def test_not_msb_aligned_non_byte_aligned(self) -> None:
-        """GOTCHAS #20 (issue #103): NOT of a non-byte-aligned vector must set
+        """GOTCHAS #19 (issue #103): NOT of a non-byte-aligned vector must set
         the valid (high) bits and leave padding zero.
 
         NOT of an all-zero length-12 vector: positions 0..11 must all be 1.

@@ -313,7 +313,7 @@ class TestBitInsertForward:
 
 
 class TestRLEDeltaValidation:
-    """GOTCHAS #21 / issue #92: invalid RLE deltas must be rejected."""
+    """GOTCHAS #20 / issue #92: invalid RLE deltas must be rejected."""
 
     def test_rle_decode_rejects_delta_beyond_position(self) -> None:
         # COUNT(9) = '110'+BIT5(7), then terminator '10' -> 0xC7 0x80.

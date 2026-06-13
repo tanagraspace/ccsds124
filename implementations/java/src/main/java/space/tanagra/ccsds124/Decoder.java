@@ -108,7 +108,7 @@ public final class Decoder {
 
     while (delta != 0) {
       // A delta beyond the remaining bit position means the encoding is
-      // invalid for this vector length (GOTCHAS #21): reject it instead of
+      // invalid for this vector length (GOTCHAS #20): reject it instead of
       // silently skipping.
       if (delta > bitPosition) {
         throw new Ccsds124Exception("Invalid RLE delta: exceeds remaining bit position");

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 class MaskOperationsTest {
 
   /**
-   * Regression test for GOTCHAS #19 (issue #98): CCSDS Eq. 8 defines D0 = 0 regardless of the
+   * Regression test for GOTCHAS #18 (issue #98): CCSDS Eq. 8 defines D0 = 0 regardless of the
    * initial mask M0 — there is no change to communicate at initialization. The pre-fix behavior (D0
    * = M0) wrongly encoded a non-zero initial mask as a change.
    */

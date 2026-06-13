@@ -387,7 +387,7 @@ TEST_CASE("Compress/decompress round trip - alternating patterns", "[decompresso
 }
 
 TEST_CASE("Decompress rejects truncated packet", "[decompressor][hardening]") {
-    // GOTCHAS #21 / issue #92: a packet that ends mid-header must produce an
+    // GOTCHAS #20 / issue #92: a packet that ends mid-header must produce an
     // error, not silently decode garbage. Two bits: RLE terminator '10',
     // then the stream ends before BIT4(Vt).
     std::uint8_t data[] = {0x80};

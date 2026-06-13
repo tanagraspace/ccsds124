@@ -352,7 +352,7 @@ class TestEffectiveRobustnessCap:
 
 
 class TestNonZeroInitialMask:
-    """Regression tests for GOTCHAS #19: D0 = 0 per CCSDS Eq. 8 (issue #98)."""
+    """Regression tests for GOTCHAS #18: D0 = 0 per CCSDS Eq. 8 (issue #98)."""
 
     def test_first_packet_starts_with_rle_terminator(self) -> None:
         """With a non-zero M0, the first packet must still encode X0 = 0.

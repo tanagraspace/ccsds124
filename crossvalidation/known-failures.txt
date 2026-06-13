@@ -1,6 +1,6 @@
 # CCSDS 124.0-B-1 cross-validation known-failures baseline
 # These decoder vectors are documented gaps in the accuracy guarantee
-# accept/reject logic (see docs/TESTING.md 'Known Gaps' and GOTCHAS.md #22).
+# accept/reject logic (see docs/TESTING.md 'Known Gaps' and GOTCHAS.md #21).
 # The runner passes when actual failures match this list exactly.
 # Remove entries as they are fixed; never add entries without investigation.
 decoder_sequence_08724.raw+large_f

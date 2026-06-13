@@ -91,6 +91,9 @@ mod encode;
 mod error;
 mod mask;
 
+#[cfg(test)]
+mod differential_test;
+
 pub use bitbuffer::BitBuffer;
 pub use bitreader::BitReader;
 pub use bitvector::BitVector;

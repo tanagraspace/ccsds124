@@ -92,6 +92,7 @@ if(CCSDS124_BUILD_TESTS)
         tests/test_decompressor.cpp
         tests/test_vectors.cpp
         tests/test_edge_cases.cpp
+        tests/test_differential.cpp
     )
     target_link_libraries(tests PRIVATE ccsds124_cxx Catch2::Catch2WithMain)
 

@@ -19,31 +19,30 @@ Each gotcha includes:
 1. [Initialization Phase: First Rₜ+1 Packets (Not Rₜ+2!)](#1-initialization-phase-first-rₜ1-packets-not-rₜ2)
 2. [Flag Timing: Countdown Counters, Not Modulo Arithmetic](#2-flag-timing-countdown-counters-not-modulo-arithmetic)
 3. [Vₜ Calculation: Start from Rₜ+1, Not Position 2!](#3-vₜ-calculation-start-from-rₜ1-not-position-2)
-4. [Packet Indexing: 0-Based vs 1-Based in Flag Calculations](#4-packet-indexing-0-based-vs-1-based-in-flag-calculations)
-5. [Component kₜ: Inverted Mask Values (Not Direct Mask Values!)](#5-component-kₜ-inverted-mask-values-not-direct-mask-values)
-6. [Component kₜ: Forward Extraction Order (Not Reverse!)](#6--component-kₜ-forward-extraction-order-not-reverse)
-7. [Reference Implementation's Final Padding (FIXED)](#-gotcha-7-reference-implementations-final-padding-fixed)
-8. [cₜ Calculation: Include Current Packet's pₜ Flag!](#8-cₜ-calculation-include-current-packets-pₜ-flag)
-19. [D₀ Must Be Zero at Initialization (Not M₀!)](#19-d₀-must-be-zero-at-initialization-not-m₀)
-20. [Bitvector NOT: MSB-Aligned Masking for Non-Byte-Aligned Lengths](#20-bitvector-not-msb-aligned-masking-for-non-byte-aligned-lengths)
+4. [Component kₜ: Inverted Mask Values (Not Direct Mask Values!)](#4-component-kₜ-inverted-mask-values-not-direct-mask-values)
+5. [Component kₜ: Forward Extraction Order (Not Reverse!)](#5--component-kₜ-forward-extraction-order-not-reverse)
+6. [Reference Implementation's Final Padding (FIXED)](#-gotcha-6-reference-implementations-final-padding-fixed)
+7. [cₜ Calculation: Include Current Packet's pₜ Flag!](#7-cₜ-calculation-include-current-packets-pₜ-flag)
+18. [D₀ Must Be Zero at Initialization (Not M₀!)](#18-d₀-must-be-zero-at-initialization-not-m₀)
+19. [Bitvector NOT: MSB-Aligned Masking for Non-Byte-Aligned Lengths](#19-bitvector-not-msb-aligned-masking-for-non-byte-aligned-lengths)
 
 ### High-Level API Gotchas
 
-17. [Packet Byte-Boundary Padding](#17-packet-byte-boundary-padding)
-18. [COUNT Extended Format ('111'): Include Terminating '1' in Value](#18-count-extended-format-111-include-terminating-1-in-value)
+16. [Packet Byte-Boundary Padding](#16-packet-byte-boundary-padding)
+17. [COUNT Extended Format ('111'): Include Terminating '1' in Value](#17-count-extended-format-111-include-terminating-1-in-value)
 
 ### Decompression Gotchas
 
-9. [COUNT Decoding: '10' is Terminator, Not a Value](#9-count-decoding-10-is-terminator-not-a-value)
-10. [kₜ Reading Order: Forward (Low to High Position)](#10-kₜ-reading-order-forward-low-to-high-position)
-11. [kₜ Bit Interpretation: Inverted Mask Values](#11-kₜ-bit-interpretation-inverted-mask-values)
-12. [Unpredictable Bits: Insert in Reverse Order (BE)](#12-unpredictable-bits-insert-in-reverse-order-be)
-13. [Horizontal XOR Mask Decoding](#13-horizontal-xor-mask-decoding)
-14. [ḋₜ Flag Optimization](#14-ḋₜ-flag-optimization)
-15. [Vₜ=0 Special Case: Toggle Mask Bits](#15-vₜ0-special-case-toggle-mask-bits)
-16. [Extraction Mask: cₜ Affects Which Bits to Read](#16-extraction-mask-cₜ-affects-which-bits-to-read)
-21. [Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets](#21-decoder-must-validate-bitstream-integrity-to-reject-corrupt-packets)
-22. [Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees](#22-decoder-cross-validation-mask-synchronization-and-accuracy-guarantees)
+8. [COUNT Decoding: '10' is Terminator, Not a Value](#8-count-decoding-10-is-terminator-not-a-value)
+9. [kₜ Reading Order: Forward (Low to High Position)](#9-kₜ-reading-order-forward-low-to-high-position)
+10. [kₜ Bit Interpretation: Inverted Mask Values](#10-kₜ-bit-interpretation-inverted-mask-values)
+11. [Unpredictable Bits: Insert in Reverse Order (BE)](#11-unpredictable-bits-insert-in-reverse-order-be)
+12. [Horizontal XOR Mask Decoding](#12-horizontal-xor-mask-decoding)
+13. [ḋₜ Flag Optimization](#13-ḋₜ-flag-optimization)
+14. [Vₜ=0 Special Case: Toggle Mask Bits](#14-vₜ0-special-case-toggle-mask-bits)
+15. [Extraction Mask: cₜ Affects Which Bits to Read](#15-extraction-mask-cₜ-affects-which-bits-to-read)
+20. [Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets](#20-decoder-must-validate-bitstream-integrity-to-reject-corrupt-packets)
+21. [Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees](#21-decoder-cross-validation-mask-synchronization-and-accuracy-guarantees)
 
 ---
 
@@ -108,17 +107,21 @@ This triggers **one packet too early**:
 - ḟₜ=1 (send mask) at packets: **21, 41, 61, 81...** ✅ CORRECT
 - ṙₜ=1 (uncompressed) at packets: **51, 101, 151, 201...** ✅ CORRECT
 
-**Key insight:** First trigger happens at `period + Rₜ`, not at `period`.
+**Key insight:** The first trigger lands at `period + 1`, not `period`: the very first packet is the initialization packet and is emitted before the period counters start counting, so each counter completes its first full cycle one packet later. (For Rₜ=1 this happens to equal `period + Rₜ`, but the offset is always +1, regardless of Rₜ.)
 
-**Example for pt_period=10, Rₜ=1:**
+**Example for pt_period=10** (countdown counter, matching the title — not modulo):
 ```c
-int pt_first_trigger = pt_period + Rt;  // 10 + 1 = 11
-int packet_num = i + 1;  // Convert 0-based to 1-based
-
-if (packet_num >= pt_first_trigger &&
-    packet_num % pt_period == (pt_first_trigger % pt_period)) {
-    pt_flag = 1;  // Triggers at packets 11, 21, 31, ...
+// Counters start at the period limit. The first (init) packet is emitted
+// before counting begins; from the next packet onward, decrement and fire
+// when the counter reaches 1, then reload:
+if (pt_counter == 1) {
+    pt_flag = 1;
+    pt_counter = pt_period;   // reload
+} else {
+    pt_flag = 0;
+    pt_counter--;
 }
+// For pt_period = 10 this fires at packets 11, 21, 31, ...
 ```
 
 ### 📊 Impact
@@ -190,61 +193,7 @@ Vt = Rt + Ct;
 
 ---
 
-## 4. Packet Indexing: 0-Based vs 1-Based in Flag Calculations
-
-### ✅ What the Spec Says
-
-The CCSDS reference implementation uses **1-based packet numbering** (packets 1, 2, 3...).
-
-### ❌ Common Mistake
-
-Using loop index `i` directly for flag calculations when implementing with 0-based indexing:
-
-```c
-// WRONG: Uses 0-based index directly
-for (int i = 0; i < num_packets; i++) {
-    if (i % pt_period == 0) {  // ❌ Triggers at i=10, 20, 30...
-        pt_flag = 1;
-    }
-}
-```
-
-**Impact table:**
-
-| Loop Index (i) | Packet Number | Expected ṗₜ | Wrong (using i) | Impact |
-|----------------|---------------|-------------|-----------------|---------|
-| i=10 | Packet 11 | **1** (trigger!) | 0 | Flag missed! |
-| i=20 | Packet 21 | **1** (trigger!) | 0 | Flag missed! |
-| i=30 | Packet 31 | **1** (trigger!) | 0 | Flag missed! |
-
-### 🔧 Correct Implementation
-
-```c
-// CORRECT: Convert to 1-based packet numbering
-for (int i = 0; i < num_packets; i++) {
-    int packet_num = i + 1;  // 0-based → 1-based conversion
-
-    if (packet_num >= pt_first_trigger &&
-        packet_num % pt_period == (pt_first_trigger % pt_period)) {
-        pt_flag = 1;  // ✅ Correctly triggers at packets 11, 21, 31...
-    }
-}
-```
-
-### 📊 Impact
-
-- **Divergence:** Byte 200-300 (30-50% into stream)
-- **Symptom:** Wrong flags cause complete corruption
-- **Size error:** 20-30% size difference
-- **Why this matters:**
-  - Wrong flags corrupt the dₜ calculation
-  - Wrong ṗₜ causes mask/build updates at incorrect times
-  - Wrong ḟₜ omits required mask transmission
-  - Wrong ṙₜ sends compressed data when uncompressed is expected
-
----
-
-## 5. Component kₜ: Inverted Mask Values (Not Direct Mask Values!)
+## 4. Component kₜ: Inverted Mask Values (Not Direct Mask Values!)
 
 ### ✅ What the Spec Says
 
@@ -296,7 +245,7 @@ kt = BE(inverted_mask, Xt);  // Extract inverted values at changed positions
 
 ---
 
-## 6. ⭐ Component kₜ: Forward Extraction Order (Not Reverse!)
+## 5. ⭐ Component kₜ: Forward Extraction Order (Not Reverse!)
 
 **⭐ Latest Discovery - December 2025**
 
@@ -432,12 +381,12 @@ The reference implementation has different code paths for these operations, and 
    - Should match perfectly if #1-3 are correct
 
 2. **Packets 10-12:** Check flag values
-   - Tests: Flag timing, packet indexing
+   - Tests: Flag timing
    - Print pt, ft, rt for each packet
 
 3. **Packets 20-30:** Check for divergence
    - Tests: All flag-related issues
-   - Should match if #1-4 are correct
+   - Should match if #1-3 are correct
 
 4. **Packets 30-50:** Check kₜ component
    - Tests: kₜ inversion and extraction order
@@ -487,7 +436,7 @@ Packet 2: Vt=2 (Rt + Ct, where Ct=1 from D0=0)
 Packet 3+: Varies based on mask changes
 ```
 
-**Note:** D₀ is always 0 (see [Gotcha #19](#19-d₀-must-be-zero-at-initialization-not-m₀)). At t=0 the caller sets M₋₁ = M₀, so D₀ = M₀ XOR M₀ = 0 regardless of M₀'s value.
+**Note:** D₀ is always 0 (see [Gotcha #18](#18-d₀-must-be-zero-at-initialization-not-m₀)). At t=0 the caller sets M₋₁ = M₀, so D₀ = M₀ XOR M₀ = 0 regardless of M₀'s value.
 
 ---
 
@@ -523,15 +472,14 @@ Before declaring your implementation "working":
 | Divergence at byte 30-50 | Flag timing wrong (#2) | Check countdown logic |
 | Divergence at byte 5-15 | Vₜ wrong (#3) | Start from Rₜ+1, not i=2 |
 | Byte mismatch in R=2 tests | Vₜ start position wrong (#3) | Use i=Rₜ+1 not i=2 |
-| Divergence at byte 200-300 | Packet indexing wrong (#4) | Convert i to packet_num |
-| 1-bit errors in kₜ | kₜ not inverted (#5) | Invert mask before extraction |
-| 2-bit shift at byte 300+ | kₜ extraction order wrong (#6) | Use forward order for kₜ |
-| Size off by 10%+ | Multiple flag issues | Check #2 and #4 |
-| Size matches but content wrong | Bit-level issues | Check #5 and #6 |
-| Size off by ~100 bytes (10KB test) | cₜ missing current flag (#8) | Include current pₜ in cₜ count |
-| edge-cases fails, simple passes | cₜ calculation wrong (#8) | Check Vₜ+1 entries for cₜ |
-| First 2 bits `11...` not `10` with non-zero M₀ | D₀ = M₀ instead of 0 (#19) | Set prev_mask = mask before t=0 |
-| Extra 1-bits in non-byte-aligned vectors | NOT masks low bits not high (#20) | Use MSB-aligned byte mask in NOT |
+| 1-bit errors in kₜ | kₜ not inverted (#4) | Invert mask before extraction |
+| 2-bit shift at byte 300+ | kₜ extraction order wrong (#5) | Use forward order for kₜ |
+| Size off by 10%+ | Multiple flag issues | Check #1 and #2 |
+| Size matches but content wrong | Bit-level issues | Check #4 and #5 |
+| Size off by ~100 bytes (10KB test) | cₜ missing current flag (#7) | Include current pₜ in cₜ count |
+| edge-cases fails, simple passes | cₜ calculation wrong (#7) | Check Vₜ+1 entries for cₜ |
+| First 2 bits `11...` not `10` with non-zero M₀ | D₀ = M₀ instead of 0 (#18) | Set prev_mask = mask before t=0 |
+| Extra 1-bits in non-byte-aligned vectors | NOT masks low bits not high (#19) | Use MSB-aligned byte mask in NOT |
 
 ---
 
@@ -559,7 +507,7 @@ Each of these seemingly minor differences will cause your implementation to fail
 
 ---
 
-## 🎯 Gotcha #7: Reference Implementation's Final Padding (FIXED)
+## 🎯 Gotcha #6: Reference Implementation's Final Padding (FIXED)
 
 ### ✅ Status: FIXED
 
@@ -596,7 +544,7 @@ See [../test-vector-generator/c-reference/CHANGES.md](../test-vector-generator/c
 
 ---
 
-## 8. cₜ Calculation: Include Current Packet's pₜ Flag!
+## 7. cₜ Calculation: Include Current Packet's pₜ Flag!
 
 **⭐ Discovery - December 2025**
 
@@ -681,7 +629,7 @@ The following gotchas are specific to implementing the decompressor.
 
 ---
 
-## 9. COUNT Decoding: '10' is Terminator, Not a Value
+## 8. COUNT Decoding: '10' is Terminator, Not a Value
 
 ### ✅ What the Spec Says
 
@@ -721,7 +669,7 @@ if (bit0 == 0) {
 
 ---
 
-## 10. kₜ Reading Order: Forward (Low to High Position)
+## 9. kₜ Reading Order: Forward (Low to High Position)
 
 ### ✅ What Happens During Compression
 
@@ -757,7 +705,7 @@ for (size_t i = 0; i < F; i++) {
 
 ---
 
-## 11. kₜ Bit Interpretation: Inverted Mask Values
+## 10. kₜ Bit Interpretation: Inverted Mask Values
 
 ### ✅ What the Encoder Outputs
 
@@ -793,7 +741,7 @@ if (kt_bits[kt_idx] == 1) {
 
 ---
 
-## 12. Unpredictable Bits: Insert in Reverse Order (BE)
+## 11. Unpredictable Bits: Insert in Reverse Order (BE)
 
 ### ✅ What the Encoder Does
 
@@ -831,7 +779,7 @@ for (size_t i = count; i > 0; i--) {
 
 ---
 
-## 13. Horizontal XOR Mask Decoding
+## 12. Horizontal XOR Mask Decoding
 
 ### ✅ What the Encoder Sends
 
@@ -874,7 +822,7 @@ for (size_t i = F - 1; i > 0; i--) {
 
 ---
 
-## 14. ḋₜ Flag Optimization
+## 13. ḋₜ Flag Optimization
 
 ### ✅ What the Spec Says (Equation 13)
 
@@ -914,7 +862,7 @@ if (dt == 0) {
 
 ---
 
-## 15. Vₜ=0 Special Case: Toggle Mask Bits
+## 14. Vₜ=0 Special Case: Toggle Mask Bits
 
 ### ✅ What Happens
 
@@ -957,7 +905,7 @@ if (Vt > 0 && change_count > 0) {
 
 ---
 
-## 16. Extraction Mask: cₜ Affects Which Bits to Read
+## 15. Extraction Mask: cₜ Affects Which Bits to Read
 
 ### ✅ What the Spec Says
 
@@ -1023,7 +971,7 @@ Before declaring your decompressor "working":
 
 ---
 
-## 17. Packet Byte-Boundary Padding
+## 16. Packet Byte-Boundary Padding
 
 **⭐ Discovery - December 2025**
 
@@ -1088,7 +1036,7 @@ return output.toByteArray();
 
 ---
 
-## 18. COUNT Extended Format ('111'): Include Terminating '1' in Value
+## 17. COUNT Extended Format ('111'): Include Terminating '1' in Value
 
 **⭐ Discovery - December 2025**
 
@@ -1175,7 +1123,7 @@ return value + 2;
 
 ---
 
-## 19. D₀ Must Be Zero at Initialization (Not M₀!)
+## 18. D₀ Must Be Zero at Initialization (Not M₀!)
 
 **⭐ Discovery - February 2026 (CCSDS Cross-Validation)**
 
@@ -1238,7 +1186,7 @@ bitvector_xor(change, mask, prev_mask);  // D₀ = M₀ XOR M₀ = 0
 
 ---
 
-## 20. Bitvector NOT: MSB-Aligned Masking for Non-Byte-Aligned Lengths
+## 19. Bitvector NOT: MSB-Aligned Masking for Non-Byte-Aligned Lengths
 
 **⭐ Discovery - February 2026 (CCSDS Cross-Validation)**
 
@@ -1292,7 +1240,7 @@ result_byte = (~input_byte) & byte_mask;
 
 ---
 
-## 21. Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets
+## 20. Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets
 
 **Category:** Decompression
 **Discovery:** CCSDS cross-validation (decoder vectors include intentionally corrupt/fuzzed packets)
@@ -1339,7 +1287,7 @@ bitvector_set_bit(result, bit_position, 1);
 
 ---
 
-## 22. Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees
+## 21. Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees
 
 **Category:** Decompression
 **Discovery:** CCSDS cross-validation (decoder vectors with unknown initial mask and fuzzed packets)

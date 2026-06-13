@@ -322,7 +322,7 @@ TEST_CASE("Bit insert with empty mask", "[decoder]") {
 }
 
 TEST_CASE("RLE decode rejects invalid delta", "[decoder][hardening]") {
-    // GOTCHAS #21 / issue #92: an RLE delta exceeding the remaining bit
+    // GOTCHAS #20 / issue #92: an RLE delta exceeding the remaining bit
     // position must be rejected, not silently skipped.
     // COUNT(9) = '110'+BIT5(7), then terminator '10' -> 0xC7 0x80.
     std::uint8_t data[] = {0xC7, 0x80};
@@ -334,7 +334,7 @@ TEST_CASE("RLE decode rejects invalid delta", "[decoder][hardening]") {
 }
 
 TEST_CASE("Bit insert rejects truncated input", "[decoder][hardening]") {
-    // GOTCHAS #21 / issue #92: bit_insert must fail on underflow instead of
+    // GOTCHAS #20 / issue #92: bit_insert must fail on underflow instead of
     // silently skipping positions. Mask needs 8 bits but only 3 available.
     std::uint8_t data[] = {0xE0};
     BitReader reader(data, 3);

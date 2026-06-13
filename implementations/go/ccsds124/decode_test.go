@@ -433,7 +433,7 @@ func TestBitInsertInsufficientBits(t *testing.T) {
 	}
 }
 
-// TestRLEDecodeRejectsInvalidDelta verifies GOTCHAS #21 / issue #92:
+// TestRLEDecodeRejectsInvalidDelta verifies GOTCHAS #20 / issue #92:
 // an RLE delta exceeding the remaining bit position must be rejected,
 // not silently skipped.
 func TestRLEDecodeRejectsInvalidDelta(t *testing.T) {

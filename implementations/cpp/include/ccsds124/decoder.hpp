@@ -143,7 +143,7 @@ template <std::size_t N> Error rle_decode(BitReader& reader, BitVector<N>& resul
     while (status == Error::Ok && delta != 0) {
         // Delta represents (count of zeros + 1). A delta beyond the
         // remaining bit position means the encoding is invalid for this
-        // vector length (GOTCHAS #21): reject it instead of silently
+        // vector length (GOTCHAS #20): reject it instead of silently
         // skipping.
         if (delta > bit_position) {
             return Error::Overflow;
@@ -180,7 +180,7 @@ Error bit_insert(BitReader& reader, BitVector<N>& data, const BitVector<N>& mask
         return Error::Ok;
     }
 
-    // GOTCHAS #21: fail on underflow instead of silently skipping positions
+    // GOTCHAS #20: fail on underflow instead of silently skipping positions
     if (reader.remaining() < hamming) {
         return Error::Underflow;
     }
@@ -225,7 +225,7 @@ Error bit_insert(BitReader& reader, BitVector<N>& data, const BitVector<N>& mask
  */
 template <std::size_t N>
 Error bit_insert_forward(BitReader& reader, BitVector<N>& data, const BitVector<N>& mask) noexcept {
-    // GOTCHAS #21: fail on underflow instead of silently skipping positions
+    // GOTCHAS #20: fail on underflow instead of silently skipping positions
     if (reader.remaining() < mask.hamming_weight()) {
         return Error::Underflow;
     }

@@ -95,7 +95,7 @@ pub fn rle_decode(reader: &mut BitReader, length: usize) -> Result<BitVector, Cc
     while delta != 0 {
         // Delta represents (count of zeros + 1). A delta beyond the
         // remaining bit position means the encoding is invalid for this
-        // vector length (GOTCHAS #21): reject it instead of silently
+        // vector length (GOTCHAS #20): reject it instead of silently
         // skipping.
         if (delta as usize) > bit_position {
             return Err(Ccsds124Error::InvalidFormat(
@@ -155,7 +155,7 @@ pub fn bit_insert(
 mod tests {
     use super::*;
 
-    /// GOTCHAS #21 / issue #92: an RLE delta exceeding the remaining bit
+    /// GOTCHAS #20 / issue #92: an RLE delta exceeding the remaining bit
     /// position must be rejected, not silently skipped.
     #[test]
     fn test_rle_decode_rejects_invalid_delta() {

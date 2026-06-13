@@ -277,7 +277,7 @@ class BitVector:
 
             # Create mask for valid bits in big-endian word.
             # MSB-first: valid bits in a partial last byte are at the HIGH
-            # end of the byte, so mask 0xFF << (8 - bits) (GOTCHAS #20).
+            # end of the byte, so mask 0xFF << (8 - bits) (GOTCHAS #19).
             mask = 0
             for byte in range(bytes_in_last_word):
                 if byte == bytes_in_last_word - 1:

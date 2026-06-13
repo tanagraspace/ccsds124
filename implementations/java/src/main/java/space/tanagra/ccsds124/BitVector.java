@@ -193,7 +193,7 @@ public final class BitVector {
 
       // Create mask for valid bits in big-endian word.
       // MSB-first: valid bits in a partial last byte are at the HIGH end of
-      // the byte, so mask 0xFF << (8 - bits) (GOTCHAS #20).
+      // the byte, so mask 0xFF << (8 - bits) (GOTCHAS #19).
       int mask = 0;
       for (int b = 0; b < bytesInLastWord; b++) {
         int byteMask;

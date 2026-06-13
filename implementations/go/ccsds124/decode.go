@@ -128,7 +128,7 @@ func RLEDecode(br *BitReader, length int) (*BitVector, error) {
 
 		// Move position back by count. A delta beyond the remaining bit
 		// position means the encoding is invalid for this vector length
-		// (GOTCHAS #21): reject it instead of silently skipping.
+		// (GOTCHAS #20): reject it instead of silently skipping.
 		if count > position {
 			return nil, fmt.Errorf("RLE decode: invalid delta %d exceeds remaining bit position %d", count, position)
 		}

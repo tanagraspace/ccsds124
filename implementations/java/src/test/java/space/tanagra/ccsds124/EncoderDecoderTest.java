@@ -200,7 +200,7 @@ class EncoderDecoderTest {
   }
 
   /**
-   * GOTCHAS #21 / issue #92: an RLE delta exceeding the remaining bit position must be rejected,
+   * GOTCHAS #20 / issue #92: an RLE delta exceeding the remaining bit position must be rejected,
    * not silently skipped.
    */
   @Test

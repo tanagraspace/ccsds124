@@ -123,7 +123,7 @@ def rle_decode(reader: "BitReader", length: int) -> "BitVector":
 
         # Move position back by count. A delta beyond the remaining bit
         # position means the encoding is invalid for this vector length
-        # (GOTCHAS #21): reject it instead of silently skipping.
+        # (GOTCHAS #20): reject it instead of silently skipping.
         if count > position:
             raise ValueError("invalid RLE delta: exceeds remaining bit position")
         position -= count

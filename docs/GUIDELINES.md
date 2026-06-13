@@ -2,7 +2,7 @@
 
 ## Before You Start
 
-**Read [GOTCHAS.md](GOTCHAS.md) first!** It documents 22 critical pitfalls that will cause your implementation to fail silently.
+**Read [GOTCHAS.md](GOTCHAS.md) first!** It documents 21 critical pitfalls that will cause your implementation to fail silently.
 
 ## Validation Requirements
 

@@ -110,7 +110,7 @@ class BitVectorTest {
     assertEquals(0, result.getBit(7));
   }
 
-  // GOTCHAS #20 (issue #103): NOT of a non-byte-aligned vector must set the
+  // GOTCHAS #19 (issue #103): NOT of a non-byte-aligned vector must set the
   // valid (high) bits and leave padding zero. NOT of an all-zero length-12
   // vector: positions 0..12 must all be 1.
   @Test

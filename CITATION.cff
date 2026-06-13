@@ -1,0 +1,47 @@
+cff-version: 1.2.0
+message: >-
+  This repository implements the CCSDS 124.0-B-1 standard. If you use it in
+  academic work, please cite the paper below (Evans et al., 2022) rather than
+  the software or the repository.
+title: "CCSDS 124.0-B-1: multi-language implementations of the lossless housekeeping compression standard"
+abstract: >-
+  Independent, interoperable implementations (C, C++, Python, Go, Rust, Java) of
+  the CCSDS 124.0-B-1 lossless compression standard for fixed-length spacecraft
+  housekeeping telemetry, based on ESA's patented POCKET+ algorithm.
+type: software
+authors:
+  - family-names: "Labrèche"
+    given-names: "Georges"
+    affiliation: "Tanagra Space"
+repository-code: "https://github.com/tanagraspace/ccsds124"
+url: "https://tanagraspace.com/ccsds124"
+license: MIT
+version: "1.0.0"
+preferred-citation:
+  type: conference-paper
+  title: "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1"
+  authors:
+    - family-names: "Evans"
+      given-names: "David"
+    - family-names: "Labrèche"
+      given-names: "Georges"
+    - family-names: "Marszk"
+      given-names: "Dominik"
+    - family-names: "Bammens"
+      given-names: "Samuel"
+    - family-names: "Hernandez-Cabronero"
+      given-names: "Miguel"
+    - family-names: "Zelenevskiy"
+      given-names: "Vladimir"
+    - family-names: "Shiradhonkar"
+      given-names: "Vasundhara"
+    - family-names: "Starcik"
+      given-names: "Mario"
+    - family-names: "Henkel"
+      given-names: "Maximilian"
+  collection-title: "Proceedings of the Small Satellite Conference"
+  conference:
+    name: "36th Annual Small Satellite Conference"
+  year: 2022
+  notes: "SSC22-XII-03"
+  url: "https://digitalcommons.usu.edu/smallsat/2022/all2022/133/"

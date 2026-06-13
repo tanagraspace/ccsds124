@@ -1,6 +1,7 @@
 # CCSDS 124.0-B-1
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Paper: SmallSat 2022](https://img.shields.io/badge/SmallSat_2022-CCSDS_124.0--B--1-blue)](https://digitalcommons.usu.edu/smallsat/2022/all2022/133/)
 
 The definitive implementation of the [CCSDS 124.0-B-1](https://ccsds.org/Pubs/124x0b1.pdf) lossless compression algorithm of fixed-length housekeeping data.
 
@@ -28,9 +29,9 @@ If CCSDS 124.0-B-1 contributes to your research, please cite:
 
 ## About
 
-POCKET+ is an European Space Agency (ESA) patented lossless compression algorithm implemented using very low-level instructions such as OR, XOR, AND, etc. It has been designed to run on spacecraft command and control processors with low CPU power available and tight real-time constraints. An earlier version of POCKET+ was flight-proven onboard both the Nanomind 3200 flight computer and SEPP payload computer of ESA's OPS-SAT-1 spacecraft.
+CCSDS 124.0-B-1 is the CCSDS standard for lossless compression of fixed-length spacecraft housekeeping data. It standardizes **POCKET+**, an European Space Agency (ESA) patented algorithm implemented using very low-level instructions such as OR, XOR, AND, etc., designed to run on spacecraft command and control processors with low CPU power available and tight real-time constraints.
 
-The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compressing fixed-length spacecraft housekeeping packets.
+An earlier version of POCKET+ was flight-proven onboard both the Nanomind 3200 flight computer and SEPP payload computer of ESA's OPS-SAT-1 spacecraft.
 
 ## Conformance
 

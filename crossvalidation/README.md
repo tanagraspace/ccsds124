@@ -67,7 +67,7 @@ ENCODER_BIN=./build/encoder DECODER_BIN=./build/decoder bash crossvalidation/run
 
 ## Known-Failures Baseline
 
-The C decoder has **1,863 documented gaps** in the accuracy guarantee accept/reject logic (see [docs/TESTING.md](../docs/TESTING.md#known-gaps-1863-decoder-vectors) for the full analysis). These vector names are recorded in `known-failures.txt`. The runner's verdict is:
+The C decoder has **1,863 documented gaps** in the accuracy guarantee accept/reject logic (see [docs/CONFORMANCE.md](../docs/CONFORMANCE.md#known-gaps-1863-decoder-vectors) for the full analysis). These vector names are recorded in `known-failures.txt`. The runner's verdict is:
 
 - **PASS** — zero failures
 - **PASS (matches known-failures baseline)** — every failure is listed in the baseline; any baseline entries that now pass are reported so the file can be trimmed

@@ -32,12 +32,17 @@ POCKET+ is an European Space Agency (ESA) patented lossless compression algorith
 
 The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compressing fixed-length spacecraft housekeeping packets.
 
+## Conformance
+
+Conforms to **CCSDS 124.0-B-1** (Blue Book, February 2023), demonstrated two ways: **byte-identical output to the ESA reference implementation** on all shared reference vectors, and validation against the **UAB/CNES cross-validation suite** — the standard's own 24,900-vector test bench. Full results, the standard issue conformed to, per-implementation status, and documented gaps are in **[CONFORMANCE.md](docs/CONFORMANCE.md)**.
+
 ## Documentation
 
 - 📘 **[Implementer's Guide](docs/GOTCHAS.md)** — if you are implementing CCSDS 124.0-B-1 yourself, start here. It documents the 21 byte-level pitfalls (each tagged as spec-mandated or a reference-conformance detail, with section/equation citations) that you must get right to produce byte-identical output.
 - **[Algorithm Reference](docs/ALGORITHM.md)** — the encoding/decoding steps, equations, and worked examples.
-- **[Conformance & Testing](docs/TESTING.md)** — test vectors, cross-validation results, and documented gaps.
-- **[Implementation Guidelines](docs/GUIDELINES.md)** — per-language build, test, and style notes.
+- **[Conformance](docs/CONFORMANCE.md)** — what the project conforms to and the evidence: byte-identical-to-reference plus the UAB/CNES cross-validation results and documented gaps.
+- **[Test Report](docs/TESTING.md)** — the engineering test suite: unit, malformed-input, robustness, packet-loss, fuzzing, and reference-vector tests.
+- **[Porting & Build Notes](docs/GUIDELINES.md)** — per-language build, test, and style notes.
 
 ## Implementations
 
@@ -51,7 +56,7 @@ The algorithm has been standardized by CCSDS as **CCSDS 124.0-B-1** for compress
 | Java | 1.0.0 | Yes | No | Embedded Linux / Desktop / Server | [`implementations/java/`](implementations/java/) |
 
 ¹ Byte-for-byte validated against the ESA reference implementation via the shared [test vectors](test-vectors/).
-² Validated against the UAB CCSDS 124.0-B-1 cross-validation suite (24,900 vectors): encoder 100%, decoder 89% with [documented gaps](docs/TESTING.md#known-gaps-1863-decoder-vectors) in the accuracy guarantee logic for fuzzed packets. Harnesses for the other implementations are tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93).
+² Validated against the UAB/CNES CCSDS 124.0-B-1 cross-validation suite (24,900 vectors); see [CONFORMANCE.md](docs/CONFORMANCE.md) for results and documented gaps. Harnesses for the other implementations are tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93).
 
 ### Which implementation should I use?
 

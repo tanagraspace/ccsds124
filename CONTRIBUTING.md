@@ -40,7 +40,7 @@ git push origin python/v1.0.0
 ## Documentation
 
 - [Algorithm Specification](docs/ALGORITHM.md) - CCSDS 124.0-B-1 algorithm details
-- [Implementation Guidelines](docs/GUIDELINES.md) - Quick start for implementers
+- [Porting & Build Notes](docs/GUIDELINES.md) - per-language build, test, and style notes
 - [Common Gotchas](docs/GOTCHAS.md) - Critical pitfalls to avoid
 - [Test Vectors](test-vectors/README.md) - Validation test data
 
@@ -63,7 +63,7 @@ All implementations are designed to be interoperable:
 
 Contributions are welcome! Please:
 
-1. Read the [Implementation Guide](docs/GUIDELINES.md)
+1. Read the [Porting & Build Notes](docs/GUIDELINES.md)
 2. Ensure your changes pass all test vectors
 3. Update relevant CHANGELOG.md
 4. Follow language-specific conventions

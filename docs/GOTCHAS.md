@@ -1,11 +1,25 @@
-# CCSDS 124.0-B-1 Implementation Gotchas
+# CCSDS 124.0-B-1 Implementer's Guide
 
 **⚠️ READ THIS BEFORE IMPLEMENTING!**
 
-This document contains **critical implementation pitfalls** that will cause your output to diverge from the reference implementation. These are **not obvious** from reading the CCSDS spec and were discovered through extensive debugging.
+This is a practical guide to implementing **CCSDS 124.0-B-1** (the lossless housekeeping-telemetry compression standard, based on ESA's POCKET+ algorithm) so that your output is **byte-identical to the ESA reference implementation**. It documents 21 byte-level pitfalls — most of them not obvious from the standard alone — found by validating six independent implementations byte-for-byte against the ESA reference, with the C implementation additionally run against the UAB conformance suite.
 
-Each gotcha includes:
-- ✅ **What the spec says** (or doesn't say clearly)
+## What this guide refers to
+
+Four things are referenced throughout — keep them distinct:
+
+- **The standard** — *CCSDS 124.0-B-1, Robust Compression of Fixed-Length Housekeeping Data* (Blue Book, February 2023), the normative specification. All section and equation citations in this guide refer to it.
+- **The ESA reference implementation** — ESA/ESOC's original C program in [`test-vector-generator/c-reference/`](../test-vector-generator/c-reference/) (`pocket_compress.c` / `pocket_decompress.c`). It is the **conformance oracle**: "byte-identical output" everywhere in this guide means identical to what this program produces. It is kept verbatim — not modified, and not one of the implementations below.
+- **This repository's implementations** — the six independent, interoperable implementations in [`implementations/`](../implementations/) (C, C++, Python, Go, Rust, Java) that this guide was written to get right.
+- **The UAB conformance suite** — a 24,900-vector cross-validation set (valid and invalid parameters, packet loss, fuzzed packets) produced by the UAB team under CNES supervision. The C implementation is additionally validated against it; see [Conformance & Testing](TESTING.md).
+
+Each pitfall is tagged by where the requirement comes from:
+
+- 📘 **Spec-mandated** — defined by the standard (cited by section/equation). Getting it wrong is non-conformant.
+- 🔧 **Conformance detail** — the standard is silent or ambiguous here; the behavior shown is what the ESA reference does, and matching it is what makes your output byte-identical and lets you pass cross-validation.
+
+Most entries include:
+- ✅ **What the spec says** (with the citation) — or, for conformance details, **what the reference does**
 - ❌ **Common mistake** that seems reasonable but is wrong
 - 🔧 **Correct implementation**
 - 📊 **Impact** when you get it wrong
@@ -48,6 +62,8 @@ Each gotcha includes:
 
 ## 1. Initialization Phase: First Rₜ+1 Packets (Not Rₜ+2!)
 
+📘 **Spec-mandated** — §3.3.2 c–d: ḟₜ=1 and ṙₜ=1 for the first Rₜ+1 packets.
+
 ### ✅ What the Spec Says
 
 The CCSDS spec (Section 3.3.2 c–d) mandates ḟₜ=1 and ṙₜ=1 for the **first Rₜ+1 packets** (t ≤ Rₜ). ṗₜ is user-specified per the spec; the reference implementation uses ṗₜ=0 during initialization, and matching it is required for byte-identical output.
@@ -87,9 +103,11 @@ if (packet_index <= Rt) {
 
 ## 2. Flag Timing: Countdown Counters, Not Modulo Arithmetic
 
-### ✅ What the Spec Says
+🔧 **Conformance detail** — the ṗₜ/ḟₜ/ṙₜ flags and their period parameters are defined in §3.3.2; the exact first-trigger packet (`period + 1`) and countdown behavior match the ESA reference.
 
-The reference implementation uses **countdown counters** that start at the period limit and decrement each packet. Flags trigger when the counter reaches 1, then reset.
+### ✅ What the reference does
+
+The spec (§3.3.2) defines the ṗₜ/ḟₜ/ṙₜ flags and their period parameters but not the exact per-packet cadence. The ESA reference uses **countdown counters** that start at the period limit and decrement each packet; a flag triggers when its counter reaches 1, then the counter reloads.
 
 ### ❌ Common Mistake
 
@@ -134,6 +152,8 @@ if (pt_counter == 1) {
 ---
 
 ## 3. Vₜ Calculation: Start from Rₜ+1, Not Position 2!
+
+📘 **Spec-mandated** — §5.3.2.2, Eq 14 (the Cₜ window and Vₜ = Rₜ + Cₜ).
 
 ### ✅ What the Spec Says
 
@@ -195,11 +215,13 @@ Vt = Rt + Ct;
 
 ## 4. Component kₜ: Inverted Mask Values (Not Direct Mask Values!)
 
+📘 **Spec-mandated** — §5.3.3.1, Eq 17 (yₜ = BE(<~Mₜ>, Xₜ); the `~Mₜ` inversion is explicit here) and Eq 19 (kₜ = yₜ).
+
 ### ✅ What the Spec Says
 
 The kₜ component encodes mask values at changed positions, but **outputs the INVERSE** of the mask bits.
 
-**CCSDS spec defines (Equations 19–20):** kₜ = yₜ = BE(<~Mₜ>, Xₜ) — the inversion (`~Mₜ`) is explicit in the formula (the Section 5.1 overview prose calls it "information on the mask values for each change").
+**CCSDS spec defines (Equations 17 and 19):** kₜ = yₜ = BE(<~Mₜ>, Xₜ) — the inversion (`~Mₜ`) is explicit in the formula (the Section 5.1 overview prose calls it "information on the mask values for each change").
 
 **In practice:** Output '1' for positive updates (mask changed to 0), '0' for negative updates (mask changed to 1)
 
@@ -247,11 +269,13 @@ kt = BE(inverted_mask, Xt);  // Extract inverted values at changed positions
 
 ## 5. ⭐ Component kₜ: Forward Extraction Order (Not Reverse!)
 
+📘 **Spec-mandated** — §5.2.4 Bit Extraction (Eq 11; positions counted from the MSB) and §5.3.3.1, Eq 17/19 (kₜ = yₜ = BE(<~Mₜ>, Xₜ)).
+
 **⭐ Latest Discovery - December 2025**
 
 ### ✅ What the Spec Says (Subtly!)
 
-CCSDS 124.0-B-1 Equations 19–20 define:
+CCSDS 124.0-B-1 Equations 17 and 19 define:
 ```
 kₜ = yₜ = BE(<~Mₜ>, Xₜ)
 ```
@@ -509,6 +533,8 @@ Each of these seemingly minor differences will cause your implementation to fail
 
 ## 🎯 Gotcha #6: Reference Implementation's Final Padding (FIXED)
 
+🔧 **Conformance detail** — a fixed defect in the ESA reference's final-byte padding, not a spec requirement.
+
 ### ✅ Status: FIXED
 
 The original ESA/ESOC reference implementation had a bug that added **2 extra null bytes** (`0x00 0x00`) at the end of the compressed output. This has been **fixed** in the current reference implementation.
@@ -546,11 +572,13 @@ See [../test-vector-generator/c-reference/CHANGES.md](../test-vector-generator/c
 
 ## 7. cₜ Calculation: Include Current Packet's pₜ Flag!
 
+📘 **Spec-mandated** — §5.3.3.1, Eq 20 (cₜ counts the current packet's ṗₜ plus the previous Vₜ entries).
+
 **⭐ Discovery - December 2025**
 
 ### ✅ What the Spec Says
 
-Per CCSDS Section 5.3.2.2 (Equation 20), cₜ = 1 if the new_mask_flag (pₜ) was set **2 or more times** in the last Vₜ iterations.
+Per CCSDS Section 5.3.3.1 (Equation 20), cₜ = 1 if the new_mask_flag (pₜ) was set **2 or more times** in the last Vₜ iterations.
 
 ### ❌ Common Mistake
 
@@ -631,6 +659,8 @@ The following gotchas are specific to implementing the decompressor.
 
 ## 8. COUNT Decoding: '10' is Terminator, Not a Value
 
+📘 **Spec-mandated** — §5.2.2 Counter Encoding (table 5-1) and §5.2.3 RLE (note 2: a vector with no ‘1’ bits encodes as the ‘10’ terminator).
+
 ### ✅ What the Spec Says
 
 COUNT encoding uses prefixes: '0' for 1, '110xxxxx' for 2-33, '111...' for larger values.
@@ -671,6 +701,8 @@ if (bit0 == 0) {
 
 ## 9. kₜ Reading Order: Forward (Low to High Position)
 
+📘 **Spec-mandated** — §5.2.4 Bit Extraction (Eq 11): gᵢ is the position of the i-th ‘1’ bit in 𝒃, counted from the MSB.
+
 ### ✅ What Happens During Compression
 
 The encoder extracts kₜ bits in **forward order** (lowest position index to highest).
@@ -707,6 +739,8 @@ for (size_t i = 0; i < F; i++) {
 
 ## 10. kₜ Bit Interpretation: Inverted Mask Values
 
+📘 **Spec-mandated** — §5.3.3.1, Eq 17/19: kₜ = yₜ = BE(<~Mₜ>, Xₜ) encodes the inverted mask values (`~Mₜ`).
+
 ### ✅ What the Encoder Outputs
 
 The encoder outputs the **inverse** of mask values at changed positions:
@@ -742,6 +776,8 @@ if (kt_bits[kt_idx] == 1) {
 ---
 
 ## 11. Unpredictable Bits: Insert in Reverse Order (BE)
+
+📘 **Spec-mandated** — §5.2.4 Bit Extraction (Eq 11) and §5.3.3.3, Eq 22 (uₜ).
 
 ### ✅ What the Encoder Does
 
@@ -780,6 +816,8 @@ for (size_t i = count; i > 0; i--) {
 ---
 
 ## 12. Horizontal XOR Mask Decoding
+
+📘 **Spec-mandated** — §5.3.3.2, Eq 21 (qₜ = ‘1’ ∥ RLE of Mₜ XOR (Mₜ)≪ — the mask XORed with its 1-bit left shift — sent when ḟₜ=1), via §5.2.3 RLE (Eq 10).
 
 ### ✅ What the Encoder Sends
 
@@ -824,6 +862,8 @@ for (size_t i = F - 1; i > 0; i--) {
 
 ## 13. ḋₜ Flag Optimization
 
+📘 **Spec-mandated** — §5.3.2.1, Eq 13 (ḋₜ).
+
 ### ✅ What the Spec Says (Equation 13)
 
 ḋₜ = 1 implies **both** ḟₜ = 0 and ṙₜ = 0 (compressed packet with no mask transmission).
@@ -863,6 +903,8 @@ if (dt == 0) {
 ---
 
 ## 14. Vₜ=0 Special Case: Toggle Mask Bits
+
+📘 **Spec-mandated** — §5.3.2.2, Eq 14 (the Vₜ = 0 case).
 
 ### ✅ What Happens
 
@@ -906,6 +948,8 @@ if (Vt > 0 && change_count > 0) {
 ---
 
 ## 15. Extraction Mask: cₜ Affects Which Bits to Read
+
+📘 **Spec-mandated** — §5.3.3.1, Eq 20 (cₜ) and §5.3.3.3, Eq 22 (uₜ): cₜ selects whether changed bits are read against Mₜ or Xₜ ∣ Mₜ.
 
 ### ✅ What the Spec Says
 
@@ -973,6 +1017,8 @@ Before declaring your decompressor "working":
 
 ## 16. Packet Byte-Boundary Padding
 
+🔧 **Conformance detail** — the output binary vector is a bitstream (§5.3.1, Eq 12); padding the final packet to a byte boundary matches the ESA reference's packetization.
+
 **⭐ Discovery - December 2025**
 
 ### ✅ What the Reference Does
@@ -1037,6 +1083,8 @@ return output.toByteArray();
 ---
 
 ## 17. COUNT Extended Format ('111'): Include Terminating '1' in Value
+
+📘 **Spec-mandated** — §5.2.2 Counter Encoding (table 5-1, the ‘111’ extended-format row).
 
 **⭐ Discovery - December 2025**
 
@@ -1125,6 +1173,8 @@ return value + 2;
 
 ## 18. D₀ Must Be Zero at Initialization (Not M₀!)
 
+📘 **Spec-mandated** — §4.2.3, Eq 8: the change vector is Dₜ = Mₜ XOR Mₜ₋₁, so D₀ = M₋₁ XOR M₀ = 0 when the caller sets M₋₁ = M₀ at t=0.
+
 **⭐ Discovery - February 2026 (CCSDS Cross-Validation)**
 
 ### ✅ What the Spec Says
@@ -1188,6 +1238,8 @@ bitvector_xor(change, mask, prev_mask);  // D₀ = M₀ XOR M₀ = 0
 
 ## 19. Bitvector NOT: MSB-Aligned Masking for Non-Byte-Aligned Lengths
 
+📘 **Spec-mandated** — §1.6.1: bit N−1 is the MSB and is transmitted first; masking must be MSB-aligned.
+
 **⭐ Discovery - February 2026 (CCSDS Cross-Validation)**
 
 ### ✅ What CCSDS 124.0-B-1 Requires
@@ -1242,6 +1294,8 @@ result_byte = (~input_byte) & byte_mask;
 
 ## 20. Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets
 
+🔧 **Conformance detail** — the standard does not specify decoder error handling; rejecting corrupt bitstreams is required to pass the cross-validation suite.
+
 **Category:** Decompression
 **Discovery:** CCSDS cross-validation (decoder vectors include intentionally corrupt/fuzzed packets)
 
@@ -1288,6 +1342,8 @@ bitvector_set_bit(result, bit_position, 1);
 ---
 
 ## 21. Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees
+
+🔧 **Conformance detail** — §2 defines the accuracy guarantee (a packet stays decodable after ≤ the effective robustness level of consecutive losses); the exact accept/reject decision rules are underspecified in the standard and were reverse-engineered from the conformance vectors.
 
 **Category:** Decompression
 **Discovery:** CCSDS cross-validation (decoder vectors with unknown initial mask and fuzzed packets)

@@ -11,7 +11,7 @@ Four things are referenced throughout — keep them distinct:
 - **The standard** — *CCSDS 124.0-B-1, Robust Compression of Fixed-Length Housekeeping Data* (Blue Book, February 2023), the normative specification. All section and equation citations in this guide refer to it.
 - **The ESA reference implementation** — ESA/ESOC's original C program in [`test-vector-generator/c-reference/`](../test-vector-generator/c-reference/) (`pocket_compress.c` / `pocket_decompress.c`). It is the **conformance oracle**: "byte-identical output" everywhere in this guide means identical to what this program produces. It is kept verbatim — not modified, and not one of the implementations below.
 - **This repository's implementations** — the six independent, interoperable implementations in [`implementations/`](../implementations/) (C, C++, Python, Go, Rust, Java) that this guide was written to get right.
-- **The UAB conformance suite** — a 24,900-vector cross-validation set (valid and invalid parameters, packet loss, fuzzed packets) produced by the UAB team under CNES supervision. The C implementation is additionally validated against it; see [Conformance & Testing](TESTING.md).
+- **The UAB conformance suite** — a 24,900-vector cross-validation set (valid and invalid parameters, packet loss, fuzzed packets) produced by the UAB team under CNES supervision. The C implementation is additionally validated against it; see [Conformance](CONFORMANCE.md).
 
 Each pitfall is tagged by where the requirement comes from:
 
@@ -1383,7 +1383,7 @@ On decompression failure or unguaranteed status: restore the decompressor state 
 ### 📊 Impact
 
 - **Cross-validation improvement:** Decoder pass count increased from 12,315 to 14,924, then to 15,102 with additional reverse-engineered rules (of 16,965 vectors)
-- **Remaining failures (1,863):** Fuzzed packets with corrupted `COUNT(F)` fields and complex mask synchronization edge cases where the reference implementation handles specific corruption patterns differently — see TESTING.md "Known Gaps" for the full categorization
+- **Remaining failures (1,863):** Fuzzed packets with corrupted `COUNT(F)` fields and complex mask synchronization edge cases where the reference implementation handles specific corruption patterns differently — see CONFORMANCE.md "Known Gaps" for the full categorization
 
 ### Additional Reverse-Engineered Rules (June 2026)
 

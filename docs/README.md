@@ -4,11 +4,12 @@ Shared documentation for all CCSDS 124.0-B-1 implementations.
 
 ## Contents
 
-- [Algorithm](ALGORITHM.md) - Algorithm specification and details
-- [Guidelines](GUIDELINES.md) - Implementation quick start
-- [Gotchas](GOTCHAS.md) - Critical pitfalls (read this first!)
-- [Benchmark](BENCHMARK.md) - Performance comparison across implementations
-- [Testing](TESTING.md) - Test report and validation procedures
+- [Implementer's Guide](GOTCHAS.md) - byte-level pitfalls; read this first if you are implementing CCSDS 124.0-B-1
+- [Algorithm Reference](ALGORITHM.md) - algorithm specification and details
+- [Conformance](CONFORMANCE.md) - conformance evidence and cross-validation results
+- [Test Report](TESTING.md) - engineering test report and validation procedures
+- [Porting & Build Notes](GUIDELINES.md) - per-language build, test, and style notes
+- [Benchmark](BENCHMARK.md) - performance comparison across implementations
 - [Cross-Validation](../crossvalidation/README.md) - CCSDS 124.0-B-1 cross-validation suite, runner, and known-failures baseline
 - [Test Vectors](../test-vectors/README.md) - Validation data
 - [Test Vector Generator](../test-vector-generator/README.md) - Deterministic test vector generation

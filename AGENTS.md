@@ -135,9 +135,10 @@ python: fix decompression bug
 
 ## Important Files to Check
 
-- `docs/GOTCHAS.md` - Critical implementation pitfalls (read first!)
-- `docs/GUIDELINES.md` - Implementation quick start
+- `docs/GOTCHAS.md` - Implementer's Guide: byte-level pitfalls (read first!)
 - `docs/ALGORITHM.md` - Algorithm specification
+- `docs/CONFORMANCE.md` - Conformance evidence and cross-validation results
+- `docs/GUIDELINES.md` - Porting & build notes (per-language build/test/style)
 - `test-vectors/README.md` - Test data format and usage
 - Each implementation's `README.md` and `CHANGELOG.md`
 
@@ -159,7 +160,7 @@ make crossvalidation
 
 The runner script writes a results file (defaults to `build/crossvalidation-results.txt` when invoked via `make`). Override via `RESULTS_FILE` env var. The file contains a header (date, binaries, mode), per-phase pass/fail counts, failure details, and a final PASS/FAIL verdict.
 
-The verdict honors the known-failures baseline (`crossvalidation/known-failures.txt`): failures that match the baseline exactly produce **PASS (matches known-failures baseline)**; only regressions or new failures produce **FAIL**. The baseline entries are documented gaps in the decoder accuracy guarantee logic (see `docs/TESTING.md` Known Gaps).
+The verdict honors the known-failures baseline (`crossvalidation/known-failures.txt`): failures that match the baseline exactly produce **PASS (matches known-failures baseline)**; only regressions or new failures produce **FAIL**. The baseline entries are documented gaps in the decoder accuracy guarantee logic (see `docs/CONFORMANCE.md` Known Gaps).
 
 ### Environment Variables
 

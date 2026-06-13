@@ -1,36 +1,18 @@
-# CCSDS 124.0-B-1 Implementation Guidelines
+# CCSDS 124.0-B-1 Porting & Build Notes
+
+Per-language build, test, and style notes for working on or porting the implementations. This is the *how to build it* companion to the other docs: for the byte-level pitfalls you must get right see the [Implementer's Guide](GOTCHAS.md), for the algorithm itself the [Algorithm Reference](ALGORITHM.md), and for conformance evidence [CONFORMANCE.md](CONFORMANCE.md).
 
 ## Before You Start
 
-**Read [GOTCHAS.md](GOTCHAS.md) first!** It documents 21 critical pitfalls that will cause your implementation to fail silently.
+**Read the [Implementer's Guide](GOTCHAS.md) first.** It documents the 21 byte-level pitfalls that will otherwise make your implementation fail silently.
 
 ## Validation Requirements
 
-Your implementation must produce **byte-for-byte identical output** to the reference for all test vectors:
-
-| Test Vector | Input | Expected Output | Parameters |
-|-------------|-------|-----------------|------------|
-| simple | 9,000 bytes | 641 bytes | R=1, pt=10, ft=20, rt=50 |
-| hiro | 9,000 bytes | 1,533 bytes | R=7, pt=10, ft=20, rt=50 |
-| housekeeping | 900,000 bytes | 223,078 bytes | R=2, pt=20, ft=50, rt=100 |
-| edge-cases | 45,000 bytes | 10,124 bytes | R=1, pt=10, ft=20, rt=50 |
-| venus-express | 13,608,000 bytes | 5,891,500 bytes | R=2, pt=20, ft=50, rt=100 |
-
-Test vectors location: `test-vectors/`
+Your implementation must produce **byte-for-byte identical output** to the ESA reference for all five reference vectors (in `test-vectors/`). The vectors, their parameters, and expected output sizes are listed in [TESTING.md → Reference Test Vectors](TESTING.md#reference-test-vectors); the overall conformance bar is in [CONFORMANCE.md](CONFORMANCE.md).
 
 ## Critical Implementation Details
 
-These are **not obvious** from the CCSDS spec:
-
-1. **Vt calculation** - Start from position Rt+1, not position 2
-2. **ct calculation** - Include current packet's pt flag (Vt+1 total entries)
-3. **kt extraction** - Use forward order (low to high position)
-4. **BE extraction** - Use reverse order (high to low position)
-5. **Flag counters** - Use countdown counters, not modulo arithmetic
-6. **Init phase** - First Rt+1 packets have ft=1, rt=1, pt=0
-7. **D₀ = 0** - Set prev_mask = mask at init so D₀ = M₀ XOR M₀ = 0
-8. **NOT masking** - MSB-aligned: mask high bits, not low bits, for non-byte-aligned vectors
-9. **Decoder validation** - Validate bitstream integrity (sufficient bits, valid RLE deltas, consumed padding) to reject corrupt packets per CCSDS cross-validation expectations
+The non-obvious, spec-divergent pitfalls — the Vₜ window, cₜ, kₜ extraction order, BE order, countdown counters, the init phase, D₀ = 0, MSB-aligned NOT, and decoder validation — are documented in full, with citations, examples, and fixes, in the [Implementer's Guide](GOTCHAS.md). Read it before implementing; this doc does not duplicate it.
 
 ## Implementation Checklist
 
@@ -208,18 +190,11 @@ mvn checkstyle:check      # Check style
 
 ## Documentation
 
-- `ALGORITHM.md` - Detailed algorithm description
-- `GOTCHAS.md` - Critical implementation pitfalls
+- [Implementer's Guide](GOTCHAS.md) — byte-level pitfalls and how to get byte-identical output
+- [Algorithm Reference](ALGORITHM.md) — encoding/decoding steps and equations
+- [Conformance](CONFORMANCE.md) — conformance evidence and cross-validation results
+- [Test Report](TESTING.md) — the engineering test suite
 
 ## Quick Debugging
 
-| Symptom | Likely Cause |
-|---------|--------------|
-| R=2 tests fail, R=1 passes | Vt starts at wrong position |
-| edge-cases fails, simple passes | ct missing current flag |
-| Bit-level errors mid-stream | kt using wrong extraction order |
-| Size off by 10%+ | Flag timing wrong |
-| First packet wrong with non-zero M₀ | D₀ = M₀ instead of 0 |
-| Non-byte-aligned F fails | NOT masks low bits not high |
-
-See [GOTCHAS.md](GOTCHAS.md) for detailed diagnosis.
+See the [Implementer's Guide → Common Symptoms and Diagnosis](GOTCHAS.md#common-symptoms-and-diagnosis) for the symptom → cause → fix table.

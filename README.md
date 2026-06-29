@@ -35,7 +35,7 @@ An earlier version of POCKET+ was flight-proven onboard both the Nanomind 3200 f
 
 ## Conformance
 
-Conforms to **CCSDS 124.0-B-1** (Blue Book, February 2023), demonstrated two ways: **byte-identical output to the ESA reference implementation** on all shared reference vectors, and validation against the **UAB/CNES cross-validation suite** — the standard's own 24,900-vector test bench. Full results, the standard issue conformed to, per-implementation status, and documented gaps are in **[CONFORMANCE.md](docs/CONFORMANCE.md)**.
+Conforms to **CCSDS 124.0-B-1** (Blue Book, February 2023), demonstrated two ways: **byte-identical output to the ESA reference implementation** on all shared reference vectors, and validation against the **UAB/CNES cross-validation suite** — a 24,900-vector compatibility test bench for CCSDS 124.0-B-1 implementations. Full results, the standard issue conformed to, per-implementation status, and documented gaps are in **[CONFORMANCE.md](docs/CONFORMANCE.md)**.
 
 ## Documentation
 

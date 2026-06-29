@@ -8,7 +8,7 @@ Cross-validation against the comprehensive test vector suite produced by the Uni
 crossvalidation/
   README.md                 # This file
   file_list.csv             # Canonical manifest (expected sizes + SHA-256 hashes)
-  known-failures.txt        # Documented-gap baseline (1,863 decoder vectors)
+  known-failures.txt        # Documented UAB/CNES compatibility-gap baseline (1,863 decoder vectors)
   run_crossvalidation.sh    # Shared runner script (parameterized for binary paths)
   c/                        # C implementation harness
   cpp/                      # C++ implementation harness (TODO: #93)
@@ -18,7 +18,7 @@ crossvalidation/
   sandbox/                  # Original ESA reference code harness
 ```
 
-Harnesses for the other languages are tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93) — deliberately deferred until the C accept/reject ruleset is finalized ([#89](https://github.com/tanagraspace/ccsds124/issues/89)), with decoder bitstream hardening ([#92](https://github.com/tanagraspace/ccsds124/issues/92)) as a prerequisite.
+Harnesses for the other languages are tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93) — deliberately deferred until the C UAB/CNES compatibility ruleset is finalized ([#89](https://github.com/tanagraspace/ccsds124/issues/89)), with decoder bitstream hardening ([#92](https://github.com/tanagraspace/ccsds124/issues/92)) as a prerequisite.
 
 ## Test Vectors
 
@@ -67,7 +67,7 @@ ENCODER_BIN=./build/encoder DECODER_BIN=./build/decoder bash crossvalidation/run
 
 ## Known-Failures Baseline
 
-The C decoder has **1,863 documented gaps** in the accuracy guarantee accept/reject logic (see [docs/CONFORMANCE.md](../docs/CONFORMANCE.md#known-gaps-1863-decoder-vectors) for the full analysis). These vector names are recorded in `known-failures.txt`. The runner's verdict is:
+The C decoder has **1,863 documented UAB/CNES compatibility gaps** in the malformed-input accept/reject logic (see [docs/CONFORMANCE.md](../docs/CONFORMANCE.md#known-gaps-1863-decoder-vectors) for the full analysis). These vector names are recorded in `known-failures.txt`. The runner's verdict is:
 
 - **PASS** — zero failures
 - **PASS (matches known-failures baseline)** — every failure is listed in the baseline; any baseline entries that now pass are reported so the file can be trimmed

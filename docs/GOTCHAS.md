@@ -1294,14 +1294,14 @@ result_byte = (~input_byte) & byte_mask;
 
 ## 20. Decoder Must Validate Bitstream Integrity to Reject Corrupt Packets
 
-🔧 **Conformance detail** — the standard does not specify decoder error handling; rejecting corrupt bitstreams is required to pass the cross-validation suite.
+🔧 **Conformance detail** — the standard does not specify decoder error handling; rejecting corrupt bitstreams is required for UAB/CNES cross-validation compatibility.
 
 **Category:** Decompression
 **Discovery:** CCSDS cross-validation (decoder vectors include intentionally corrupt/fuzzed packets)
 
 ### The Problem
 
-The CCSDS 124.0-B-1 decoder must not silently produce wrong output when given corrupt compressed data. The UAB reference decoder implements strict validation checks (documented in README_crossvalidation.md v1.4-v1.13) that reject invalid packets. Without these checks, the decoder happily decompresses garbage into wrong output, causing cross-validation failures where the expected behavior is an error status (0x01).
+For UAB/CNES cross-validation compatibility, a CCSDS 124.0-B-1 decoder must not silently produce wrong output when given corrupt compressed data. The UAB decoder implements strict validation checks (documented in README_crossvalidation.md v1.4-v1.13) that reject invalid packets. Without these checks, the decoder happily decompresses garbage into wrong output, causing cross-validation failures where the UAB/CNES expected output records an error status (0x01).
 
 ### Three Categories of Validation
 
@@ -1343,14 +1343,14 @@ bitvector_set_bit(result, bit_position, 1);
 
 ## 21. Decoder Cross-Validation: Mask Synchronization and Accuracy Guarantees
 
-🔧 **Conformance detail** — §2 defines the accuracy guarantee (a packet stays decodable after ≤ the effective robustness level of consecutive losses); the exact accept/reject decision rules are underspecified in the standard and were reverse-engineered from the conformance vectors.
+🔧 **Conformance detail** — §2 defines the accuracy guarantee (a packet stays decodable after ≤ the effective robustness level of consecutive losses); the exact decoder status policy for corrupt bitstreams is underspecified in the standard and was reverse-engineered from the UAB/CNES cross-validation vectors.
 
 **Category:** Decompression
 **Discovery:** CCSDS cross-validation (decoder vectors with unknown initial mask and fuzzed packets)
 
 ### The Problem
 
-When the decoder doesn't know the encoder's initial mask (`large_m_0`), it starts with an all-zero mask. This creates a mask desynchronization that persists until a full mask transmission (`ft=1`) is received. A naive decoder that ignores desynchronization will produce too many "guaranteed" outputs (status `0x00`) for packets that the reference decoder correctly marks as unguaranteed (`0x01`).
+When the decoder doesn't know the encoder's initial mask (`large_m_0`), it starts with an all-zero mask. This creates a mask desynchronization that persists until a full mask transmission (`ft=1`) is received. A naive decoder that ignores desynchronization will produce too many "guaranteed" outputs (status `0x00`) for packets that the UAB/CNES expected outputs mark as unguaranteed (`0x01`).
 
 ### Library Support
 
@@ -1366,16 +1366,16 @@ These behaviors are handled automatically by `ccsds124_decompress_packet_checked
 The decoder must track whether its mask has been synchronized with the encoder's via a full mask transmission (`ft=1`). Start with `mask_synced=0`. Set to `1` only when a guaranteed (`0x00`) packet with `ft=1` is successfully decoded. Reset to `0` on decompression failure, packet loss, or mask inconsistency detection.
 
 **2. Reference packet guarantee (rt=1):**
-A reference packet (uncompressed, `rt=1`) is only guaranteed if the mask is synchronized (`mask_synced=1`) or the packet itself provides a full mask (`ft=1`) to resynchronize. Without this check, desynchronized decoders incorrectly accept reference packets.
+A reference packet (uncompressed, `rt=1`) is treated as guaranteed by the UAB/CNES expected outputs only if the mask is synchronized (`mask_synced=1`) or the packet itself provides a full mask (`ft=1`) to resynchronize. Without this check, desynchronized decoders incorrectly accept reference packets for cross-validation purposes.
 
 **3. Mask inconsistency detection (ft=1):**
-When `ft=1`, compare the delta-updated mask with the full mask received. If they differ (`mask_inconsistent`), the packet is corrupt or the decoder is desynchronized. When detected while synced: restore state, lose sync, output `0x01`. When detected while not synced: expected behavior — keep state (full mask is correct) but still output `0x01`.
+When `ft=1`, compare the delta-updated mask with the full mask received. If they differ (`mask_inconsistent`), the packet is corrupt or the decoder is desynchronized. When detected while synced: restore state, lose sync, output `0x01`. When detected while not synced: UAB/CNES expected behavior is to keep state (full mask is correct) but still output `0x01`.
 
 **4. COUNT(F) validation:**
 For `rt=1` packets, the self-delimiting `COUNT(F)` field encodes the packet length. If `COUNT(F)` doesn't match the expected `F`, the packet bitstream is corrupt (wrong bit offset for `I_t` data). Flag as diagnostic (`count_f_mismatch`) and let the harness decide whether to accept or reject.
 
 **5. Robustness window for non-reference packets (rt=0):**
-Non-reference packets are only guaranteed if the preceding `Vt` received packets were all successful (`0x00`). Skip lost packets (`0x02`) in the window since the robustness guarantee applies to decoded packets only.
+Non-reference packets are treated as guaranteed by the UAB/CNES expected outputs only if the preceding `Vt` received packets were all successful (`0x00`). Skip lost packets (`0x02`) in the window since the robustness guarantee applies to decoded packets only.
 
 **6. State management on failure:**
 On decompression failure or unguaranteed status: restore the decompressor state from a saved copy to prevent error propagation to subsequent packets.

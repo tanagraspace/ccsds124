@@ -160,7 +160,7 @@ make crossvalidation
 
 The runner script writes a results file (defaults to `build/crossvalidation-results.txt` when invoked via `make`). Override via `RESULTS_FILE` env var. The file contains a header (date, binaries, mode), per-phase pass/fail counts, failure details, and a final PASS/FAIL verdict.
 
-The verdict honors the known-failures baseline (`crossvalidation/known-failures.txt`): failures that match the baseline exactly produce **PASS (matches known-failures baseline)**; only regressions or new failures produce **FAIL**. The baseline entries are documented gaps in the decoder accuracy guarantee logic (see `docs/CONFORMANCE.md` Known Gaps).
+The verdict honors the known-failures baseline (`crossvalidation/known-failures.txt`): failures that match the baseline exactly produce **PASS (matches known-failures baseline)**; only regressions or new failures produce **FAIL**. The baseline entries are documented UAB/CNES compatibility gaps in decoder malformed-input accept/reject behavior (see `docs/CONFORMANCE.md` Known Gaps).
 
 ### Environment Variables
 

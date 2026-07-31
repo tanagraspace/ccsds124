@@ -10,6 +10,7 @@ crossvalidation/
   file_list.csv             # Canonical manifest (expected sizes + SHA-256 hashes)
   known-failures.txt        # Documented UAB/CNES compatibility-gap baseline (1,863 decoder vectors)
   run_crossvalidation.sh    # Shared runner script (parameterized for binary paths)
+  interoperability/         # Pairwise interoperability runner (#48)
   c/                        # C implementation harness
   cpp/                      # C++ implementation harness (TODO: #93)
   go/                       # Go implementation harness (TODO: #93)
@@ -17,6 +18,11 @@ crossvalidation/
   java/                     # Java implementation harness (TODO: #93)
   sandbox/                  # Original ESA reference code harness
 ```
+
+[`interoperability/`](interoperability/README.md) answers a different question
+from `run_crossvalidation.sh`: instead of validating one implementation against
+the UAB/CNES expected output, it compares two implementations against each other
+on the same inputs, over separate processes.
 
 Harnesses for the other languages are tracked in [#93](https://github.com/tanagraspace/ccsds124/issues/93) — deliberately deferred until the C UAB/CNES compatibility ruleset is finalized ([#89](https://github.com/tanagraspace/ccsds124/issues/89)), with decoder bitstream hardening ([#92](https://github.com/tanagraspace/ccsds124/issues/92)) as a prerequisite.
 

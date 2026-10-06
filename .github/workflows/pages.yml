@@ -325,6 +325,7 @@ jobs:
           cp docs/index.html _site/index.html
           cp docs/og-image.png _site/og-image.png
           cp docs/splash.jpg _site/splash.jpg
+          cp -r docs/assets _site/assets
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

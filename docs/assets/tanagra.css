@@ -1,0 +1,108 @@
+/*
+ * Tanagra Space project page theme.
+ * Shared, identical copy in boresight, ccsds124, and hyperscape100-emu (docs/assets/tanagra.css).
+ * Matches tanagraspace.com: charcoal ground, brand yellow accent, Nunito Sans and IBM Plex Mono.
+ * Pages set the hero photo with background-image on .hero in their own <style>.
+ */
+:root {
+  --ts-yellow: #ffcb24; --ts-charcoal: #2d2d2d; --ts-ground: #161616; --ts-surface: #202020;
+  --ts-text: #e8e4dc; --ts-muted: #a19c93; --ts-line: #333333;
+  --ts-width: 1120px; --ts-gutter: clamp(1rem, 4vw, 2rem);
+  --ts-sans: "Nunito Sans", "Avenir Next", Avenir, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --ts-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { font-family: var(--ts-sans); font-size: 17px; line-height: 1.65; background: var(--ts-ground); color: var(--ts-text);
+  -webkit-font-smoothing: antialiased; padding-top: env(safe-area-inset-top, 0px); }
+::selection { background: var(--ts-yellow); color: var(--ts-charcoal); }
+img { max-width: 100%; }
+a { color: var(--ts-yellow); text-decoration: none; text-underline-offset: .18em; }
+a:hover { color: #ffe07a; text-decoration: underline; }
+h1, h2, h3 { color: #fff; letter-spacing: -.01em; line-height: 1.2; }
+strong { color: #fff; }
+
+/* header, same as tanagraspace.com */
+.ts-header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; background: rgba(22,22,22,.86);
+  backdrop-filter: saturate(140%) blur(10px); -webkit-backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,.06); }
+.ts-header__inner { max-width: var(--ts-width); margin: 0 auto; padding: .8rem var(--ts-gutter);
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.ts-brand { display: inline-flex; align-items: center; gap: .65rem; color: #fff !important; text-decoration: none !important; }
+.ts-brand img { width: 22px; height: auto; display: block; }
+.ts-brand span { font-size: 1.08rem; font-weight: 400; }
+.ts-nav { display: flex; gap: clamp(1rem, 3vw, 2rem); list-style: none; }
+.ts-nav a { color: var(--ts-text); font-size: .92rem; font-weight: 600; text-decoration: none; }
+.ts-nav a:hover { color: var(--ts-yellow); text-decoration: none; }
+@media (max-width: 420px) { .ts-brand span { display: none; } }
+
+/* hero: the project photo under a left-to-right scrim, copy on the page grid */
+.hero { position: relative; isolation: isolate; border-bottom: 1px solid var(--ts-line);
+  background-color: var(--ts-ground); background-position: center; background-size: cover; background-repeat: no-repeat; }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(22,22,22,.96) 0%, rgba(22,22,22,.82) 45%, rgba(22,22,22,.5) 100%); }
+.hero__inner { max-width: var(--ts-width); margin: 0 auto; padding: clamp(3.5rem, 8vw, 5.5rem) var(--ts-gutter) clamp(3rem, 7vw, 4.5rem); }
+.hero .eyebrow, .eyebrow { font-family: var(--ts-mono); font-size: .74rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ts-yellow); margin: 0 0 .6rem; max-width: none; }
+.hero h1 { font-size: clamp(2.2rem, 5.5vw, 3.6rem); font-weight: 800; letter-spacing: -.02em; line-height: 1.05; }
+.hero p { font-size: clamp(1.05rem, 1.7vw, 1.25rem); color: #d9d4ca; max-width: 38rem; margin-top: 1rem; line-height: 1.5; }
+.hero-label { position: absolute; bottom: 10px; right: 12px; color: rgba(255,255,255,.55); font-size: .7rem;
+  background: rgba(0,0,0,.5); padding: 3px 8px; border-radius: 3px; }
+
+/* article column */
+.content { max-width: var(--ts-width); margin: 0 auto; padding: 2.6rem var(--ts-gutter) 0; }
+.content > * { max-width: 46rem; }
+.content p + p, .content p + figure, .content figure + p { margin-top: 1em; }
+.content h2 { font-size: 1.45rem; font-weight: 700; margin: 2.6rem 0 1rem; padding-bottom: .45rem; border-bottom: 1px solid var(--ts-line); }
+.content h3 { font-size: 1.05rem; font-weight: 700; }
+.content ul, .content ol { padding-left: 1.4rem; margin: .8rem 0; }
+.content li { margin-bottom: .45em; }
+.content li::marker { color: var(--ts-muted); }
+blockquote { border-left: 3px solid var(--ts-yellow); padding-left: 1.1rem; margin: 1em 0; color: #d9d4ca; font-size: .92em; }
+details { margin: 1em 0; }
+summary { cursor: pointer; color: var(--ts-yellow); font-weight: 600; }
+figure { margin: 1.5rem 0; }
+figure img { width: 100%; display: block; border-radius: 12px; border: 1px solid var(--ts-line); }
+figcaption { font-size: .86rem; color: var(--ts-muted); margin-top: .6rem; text-align: center; }
+
+/* code */
+code { font-family: var(--ts-mono); font-size: .86em; }
+p code, li code, td code { background: var(--ts-surface); border: 1px solid var(--ts-line); padding: .08em .35em; border-radius: 5px; }
+pre { background: #0f0f0f; color: #d4d4d4; border: 1px solid var(--ts-line); padding: 1rem 1.1rem; border-radius: 10px;
+  overflow-x: auto; font-size: .84em; line-height: 1.55; margin: 1em 0; }
+pre code { background: none; border: 0; padding: 0; font-size: 1em; }
+pre .comment { color: #7d8a75; }
+pre .cmd { color: var(--ts-yellow); }
+pre .path { color: #9cc8e8; }
+
+/* cards */
+.impl-grid, .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+.impl, .feature { background: var(--ts-surface); border: 1px solid var(--ts-line); border-radius: 12px; padding: 1rem 1.1rem; }
+.impl h3, .feature h3 { margin-bottom: .45rem; }
+.feature p { font-size: .9rem; color: var(--ts-muted); line-height: 1.55; }
+.impl-links { font-size: .9rem; line-height: 1.9; display: grid; grid-template-columns: auto auto; gap: 0 .9rem; justify-content: start; }
+.impl-links br { display: none; }
+
+/* tables */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: .88em; }
+th { background: var(--ts-surface); color: #fff; text-align: left; padding: .55em .75em; border-bottom: 1px solid var(--ts-line); }
+td { padding: .45em .75em; border-bottom: 1px solid var(--ts-line); }
+tr:last-child td { border-bottom: 0; }
+
+/* footer, same as tanagraspace.com */
+.ts-footer-wrap { background: #111; border-top: 1px solid rgba(255,255,255,.06); margin-top: 5rem; color: var(--ts-muted); }
+.ts-footer-wrap > div { max-width: var(--ts-width); margin: 0 auto;
+  padding: 2.6rem var(--ts-gutter) calc(2.2rem + env(safe-area-inset-bottom, 0px)); }
+.ts-footer { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; flex-wrap: wrap; }
+.ts-footer__brand { display: flex; gap: .8rem; align-items: center; }
+.ts-footer__brand img { width: 22px; }
+.ts-footer__brand strong { color: #fff; font-weight: 400; font-size: 1.05rem; display: block; }
+.ts-footer__brand span { display: block; font-size: .86rem; }
+.ts-footer__links { display: flex; gap: 1.6rem; list-style: none; flex-wrap: wrap; }
+.ts-footer__links a { color: var(--ts-text); font-size: .9rem; font-weight: 600; }
+.ts-footer__links a:hover { color: var(--ts-yellow); }
+.ts-footer__legal { margin-top: 2rem; font-size: .8rem; color: #77736c; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

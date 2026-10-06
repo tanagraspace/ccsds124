@@ -11,7 +11,7 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tanagra Space</title>
+  <title>CCSDS 124.0-B-1 · Tanagra Space</title>
   <meta name="description" content="CCSDS 124.0-B-1 is a lossless compression algorithm for satellite housekeeping telemetry data, standardized as CCSDS 124.0-B-1. Flight-proven on ESA's OPS-SAT-1 spacecraft.">
   <meta name="keywords" content="CCSDS 124.0-B-1, satellite telemetry, lossless compression, housekeeping data, spacecraft, ESA, OPS-SAT, space software">
   <meta name="author" content="Tanagra Space">
@@ -32,32 +32,20 @@
   <meta name="twitter:image" content="https://tanagraspace.com/ccsds124/og-image.png">
   <link rel="icon" type="image/svg+xml" href="/assets/favicon/favicon.svg">
   <link rel="icon" type="image/png" href="/assets/favicon/favicon.png">
+  <meta name="theme-color" content="#161616">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Nunito+Sans:opsz,wght@6..12,300..800&display=swap">
+  <link rel="stylesheet" href="assets/tanagra.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", Arial, sans-serif; line-height: 1.5; background-color: #e8d5b7; color: #000; }
-    .hero { position: relative; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('splash.jpg'); background-size: cover; background-position: center; min-height: 280px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 2rem; }
-    .hero h1 { color: #fff; font-size: 2.5rem; font-weight: 700; margin-bottom: 0.25rem; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 4px rgba(0,0,0,0.5); }
+    .hero { background-image: url('splash.jpg'); }
     .hero h1 span { font-weight: 400; font-style: italic; font-size: 0.5em; opacity: 0.9; }
-    .hero p { color: #fff; font-size: 1.2rem; max-width: 600px; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 2px 2px 4px rgba(0,0,0,0.5); }
-    .content { max-width: 800px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #000; margin-top: 2rem; border-bottom: 2px solid #fc3a52; padding-bottom: 0.5rem; }
-    .impl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1rem 0; }
-    .impl { background: #ddd0ba; padding: 1rem; border-radius: 4px; border: 1px solid #baaa92; }
-    .impl h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; }
-    .impl-links { font-size: 0.9rem; line-height: 1.8; display: grid; grid-template-columns: auto auto; gap: 0 0.75rem; justify-content: start; }
-    .impl-links br { display: none; }
-    a { color: #e3344a; text-decoration: none; }
-    a:hover { color: #ea6777; }
-    a:visited { color: #aa2738; }
-    ul { padding-left: 1.5rem; }
-    li { margin-bottom: 0.5em; }
-
-    /* Satellite animation */
-    .sat-animation { display: flex; align-items: center; justify-content: center; gap: 0; margin: 0.5rem 0 1.5rem 0; font-size: 2rem; transform: rotate(15deg); }
+    /* uplink animation: a satellite and a ground antenna with a signal between them */
+    .sat-animation { display: flex; align-items: center; justify-content: flex-start; gap: 0; margin: 1rem 0 3.4rem .5rem; font-size: 2rem; transform: rotate(15deg); transform-origin: left center; }
     .sat-animation .satellite { display: inline-block; animation: float-sat 3s ease-in-out infinite; }
     .sat-animation .antenna { display: inline-block; font-size: 1.8rem; animation: float-antenna 3s ease-in-out infinite; }
     .sat-animation .signal { display: flex; align-items: center; width: 120px; justify-content: space-around; overflow: hidden; transform-origin: right center; transform: rotate(4deg) translateY(5px); }
-    .sat-animation .dash { color: #fff; font-weight: bold; opacity: 0; animation: transmit 1.5s linear infinite; text-shadow: 0 0 8px rgba(255,255,255,0.8); }
+    .sat-animation .dash { color: var(--ts-yellow); font-weight: bold; opacity: 0; animation: transmit 1.5s linear infinite; text-shadow: 0 0 8px rgba(255,203,36,0.7); }
     .sat-animation .dash:nth-child(1) { animation-delay: 0s; }
     .sat-animation .dash:nth-child(2) { animation-delay: 0.3s; }
     .sat-animation .dash:nth-child(3) { animation-delay: 0.6s; }
@@ -69,34 +57,48 @@
   </style>
 </head>
 <body>
-  <header class="hero">
-    <h1>CCSDS 124.0-B-1</h1>
-    <div class="sat-animation">
-      <span class="satellite">🛰️</span>
-      <span class="signal">
-        <span class="dash">—</span>
-        <span class="dash">—</span>
-        <span class="dash">—</span>
-        <span class="dash">—</span>
-        <span class="dash">—</span>
-      </span>
-      <span class="antenna">📡</span>
+  <header class="ts-header">
+    <div class="ts-header__inner">
+      <a class="ts-brand" href="https://tanagraspace.com/"><img src="assets/mark-yellow.svg" alt="" width="22" height="31"><span>Tanagra Space</span></a>
+      <nav aria-label="Main">
+        <ul class="ts-nav">
+          <li><a href="https://tanagraspace.com/#projects">Projects</a></li>
+          <li><a href="https://tanagraspace.com/press/">Press</a></li>
+          <li><a href="https://tanagraspace.com/#contact">Contact</a></li>
+        </ul>
+      </nav>
     </div>
-    <p>Lossless compression for satellite housekeeping telemetry data.</p>
+  </header>
+  <header class="hero">
+    <div class="hero__inner">
+      <p class="eyebrow">Open source &middot; MIT licensed</p>
+      <h1>CCSDS 124.0-B-1</h1>
+      <div class="sat-animation">
+        <span class="satellite">🛰️</span>
+        <span class="signal">
+          <span class="dash">—</span>
+          <span class="dash">—</span>
+          <span class="dash">—</span>
+          <span class="dash">—</span>
+          <span class="dash">—</span>
+        </span>
+        <span class="antenna">📡</span>
+      </div>
+      <p>Lossless compression for satellite housekeeping telemetry data.</p>
+    </div>
   </header>
   <div class="content">
     <p>The definitive implementation of the <a href="https://ccsds.org/Pubs/124x0b1.pdf">CCSDS 124.0-B-1</a> lossless compression algorithm of fixed-length housekeeping data.</p>
-    <br>
     <p>Designed by the <a href="https://www.esa.int/">European Space Agency (ESA)</a>, implemented on the OPS-SAT-1 flight computer by <a href="https://georges.fyi">georges.fyi</a>, and flight validated in orbit, CCSDS 124.0-B-1 was then standardized by the <a href="https://ccsds.org/">Consultative Committee for Space Data Systems (CCSDS)</a>. The implementations here are also by georges.fyi at <a href="https://tanagraspace.com/">Tanagra Space</a>, under the <a href="https://github.com/tanagraspace/ccsds124/blob/main/LICENSE">MIT License</a>.</p>
 
     <h2>Citation</h2>
     <p>If CCSDS 124.0-B-1 contributes to your research, please cite:</p>
-    <blockquote style="font-size: 0.9em; border-left: 3px solid #baaa92; padding-left: 1em; margin: 1em 0;">
+    <blockquote>
       D. Evans, G. Labrèche, D. Marszk, S. Bammens, M. Hernandez-Cabronero, V. Zelenevskiy, V. Shiradhonkar, M. Starcik, and M. Henkel. 2022. "Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1," <em>Proceedings of the Small Satellite Conference</em>, Communications, SSC22-XII-03. <a href="https://digitalcommons.usu.edu/smallsat/2022/all2022/133/">https://digitalcommons.usu.edu/smallsat/2022/all2022/133/</a>
     </blockquote>
-    <details style="margin: 1em 0;">
-      <summary style="cursor: pointer; color: #e3344a;">BibTeX</summary>
-      <pre style="background: #ddd0ba; padding: 1em; border-radius: 4px; overflow-x: auto; font-size: 0.85em; margin-top: 0.5em;">@inproceedings{evans2022ccsds124,
+    <details>
+      <summary>BibTeX</summary>
+      <pre>@inproceedings{evans2022ccsds124,
   author    = {Evans, David and Labreche, Georges and Marszk, Dominik and Bammens, Samuel and Hernandez-Cabronero, Miguel and Zelenevskiy, Vladimir and Shiradhonkar, Vasundhara and Starcik, Mario and Henkel, Maximilian},
   title     = {Implementing the New CCSDS Housekeeping Data Compression Standard 124.0-B-1 (based on POCKET+) on OPS-SAT-1},
   booktitle = {Proceedings of the Small Satellite Conference},
@@ -177,5 +179,22 @@
       <li><a href="https://digitalcommons.usu.edu/smallsat/2022/all2022/133/">POCKET+ on OPS-SAT-1 (SmallSat 2022)</a></li>
     </ul>
   </div>
+  <footer class="ts-footer-wrap">
+    <div>
+      <div class="ts-footer">
+        <div class="ts-footer__brand">
+          <img src="assets/mark-yellow.svg" alt="" width="22" height="31">
+          <div><strong>Tanagra Space</strong><span>Machine learning for autonomous space operations.</span></div>
+        </div>
+        <ul class="ts-footer__links">
+          <li><a href="https://tanagraspace.com/#projects">Projects</a></li>
+          <li><a href="https://tanagraspace.com/press/">Press</a></li>
+          <li><a href="https://tanagraspace.com/#contact">Contact</a></li>
+          <li><a href="https://github.com/tanagraspace/ccsds124">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="ts-footer__legal">&copy; 2026 Tanagra Space. All rights reserved.</div>
+    </div>
+  </footer>
 </body>
 </html>

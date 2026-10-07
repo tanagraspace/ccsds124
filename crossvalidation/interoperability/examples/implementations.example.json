@@ -1,0 +1,24 @@
+{
+  "_comment": [
+    "Declare two or more external executables to compare. Every unique pair is",
+    "evaluated, with both cross-decoding directions tested. Paths are",
+    "site-specific: copy this file, edit the paths, and keep your copy out of",
+    "version control.",
+    "",
+    "Each executable must honour the CLI/JSON contract in",
+    "schemas/result.schema.json. This repository neither builds nor ships any",
+    "external implementation; you provide the binaries."
+  ],
+  "implementations": [
+    {
+      "name": "tanagra-c",
+      "executable": "/absolute/path/to/tanagra_harness"
+    },
+    {
+      "name": "external-impl",
+      "executable": "/absolute/path/to/external_harness",
+      "extra_args": [],
+      "timeout": 300
+    }
+  ]
+}

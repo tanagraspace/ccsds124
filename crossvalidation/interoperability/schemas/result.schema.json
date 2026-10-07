@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tanagraspace/ccsds124/crossvalidation/interoperability/schemas/result.schema.json",
+  "title": "CCSDS 124.0-B-1 interoperability harness result",
+  "description": "Contract an external executable must satisfy to be driven by run_correctness.py. The executable is invoked as:\n  <exe> compress   --in F --out F --json F --packet-bytes N --R n --pt n --ft n --rt n\n  <exe> decompress --in F --out F --json F --packet-bytes N --R n\nIt must write the payload to --out and this JSON object to --json, and exit 0 on success. Only the fields listed here are consumed; anything else is ignored.",
+  "type": "object",
+  "required": [
+    "impl",
+    "mode",
+    "rc",
+    "input_bytes",
+    "output_bytes"
+  ],
+  "properties": {
+    "impl": {
+      "type": "string",
+      "description": "Identifier the wrapper declares for itself. Recorded as reported_impl in the results; never compared against the configured alias.",
+      "minLength": 1
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "compress",
+        "decompress"
+      ],
+      "description": "Must match the mode the executable was invoked with."
+    },
+    "rc": {
+      "type": "integer",
+      "description": "Implementation-level return code, 0 on success. Distinct from the process exit code; both are recorded and both must be 0 for the invocation to count as successful."
+    },
+    "input_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Size in bytes of the file passed to --in. Must match the file on disk."
+    },
+    "output_bytes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Size in bytes of the payload written to --out. Must match the file on disk."
+    },
+    "error": {
+      "type": "string",
+      "description": "Human-readable error message. Empty or absent on success."
+    }
+  },
+  "additionalProperties": true
+}
